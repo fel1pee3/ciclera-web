@@ -2,11 +2,12 @@ import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import { Inter, Sora } from 'next/font/google'
 import { logoUrl } from '@/components/landing/brand'
+import { getSiteUrl } from '@/lib/site-url'
 import './globals.css'
 
 const inter=Inter({subsets:['latin'],variable:'--font-inter',display:'swap'})
 const sora=Sora({subsets:['latin'],variable:'--font-sora',display:'swap'})
-const base=process.env.NEXT_PUBLIC_SITE_URL ?? 'https://ciclera.com.br'
+const base=getSiteUrl()
 export const metadata:Metadata={metadataBase:new URL(base),title:'Ciclera | Gestão de serviços externos do chamado ao caixa',description:'Organize ordens de serviço, execução em campo, evidências, revisão e serviços prontos para faturar em uma plataforma web.',alternates:{canonical:'/'},openGraph:{title:'Ciclera | Do chamado ao caixa',description:'Organize o caminho entre execução e faturamento em uma plataforma web.',url:'/',siteName:'Ciclera',locale:'pt_BR',type:'website',images:[{url:logoUrl,width:1536,height:1024,alt:'Símbolo da Ciclera'}]},robots:{index:true,follow:true}}
 export const viewport:Viewport={themeColor:'#092E2E',colorScheme:'light',width:'device-width',initialScale:1,maximumScale:5}
 const jsonLd={ '@context':'https://schema.org','@type':'SoftwareApplication',name:'Ciclera',applicationCategory:'BusinessApplication',operatingSystem:'Web',description:'Plataforma web B2B para gestão de serviços externos entre ordem de serviço e faturamento.',url:base }
