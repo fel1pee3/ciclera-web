@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>Ciclera</title>
+  <path d="M29 9A23 23 0 0 0 29 55" fill="none" stroke="#075355" stroke-width="10" stroke-linecap="butt"/>
+  <path d="M35 9A23 23 0 0 1 52 19" fill="none" stroke="#009C8C" stroke-width="10" stroke-linecap="round"/>
+  <path d="M52 45A23 23 0 0 1 35 55" fill="none" stroke="#009C8C" stroke-width="10" stroke-linecap="round"/>
+</svg>
