@@ -142,17 +142,17 @@ O acesso autenticado depende da API e das variáveis de ambiente estarem correta
 
 O `package.json` deve manter scripts equivalentes aos seguintes:
 
-| Comando | Responsabilidade |
-| --- | --- |
-| `npm run dev` | Iniciar o servidor de desenvolvimento |
-| `npm run build` | Gerar o build de produção |
-| `npm run start` | Executar o build de produção |
-| `npm run lint` | Executar as regras de lint |
-| `npm run typecheck` | Gerar os tipos do Next.js e validar tipos sem gerar build |
-| `npm test` | Executar testes unitários e de componentes |
-| `npm run test:watch` | Executar testes em modo interativo |
-| `npm run format` | Formatar os arquivos suportados |
-| `npm run format:check` | Verificar a formatação sem alterar arquivos |
+| Comando                | Responsabilidade                                          |
+| ---------------------- | --------------------------------------------------------- |
+| `npm run dev`          | Iniciar o servidor de desenvolvimento                     |
+| `npm run build`        | Gerar o build de produção                                 |
+| `npm run start`        | Executar o build de produção                              |
+| `npm run lint`         | Executar as regras de lint                                |
+| `npm run typecheck`    | Gerar os tipos do Next.js e validar tipos sem gerar build |
+| `npm test`             | Executar testes unitários e de componentes                |
+| `npm run test:watch`   | Executar testes em modo interativo                        |
+| `npm run format`       | Formatar os arquivos suportados                           |
+| `npm run format:check` | Verificar a formatação sem alterar arquivos               |
 
 Este README deve refletir os scripts reais. Se um script ainda não existir, ele deve ser implementado antes de ser utilizado no fluxo de CI.
 
@@ -160,13 +160,13 @@ Este README deve refletir os scripts reais. Se um script ainda não existir, ele
 
 Manter um `.env.example` versionado e sincronizado com a validação de ambiente da aplicação.
 
-| Variável | Escopo | Obrigatória | Finalidade |
-| --- | --- | ---: | --- |
-| `NEXT_PUBLIC_APP_URL` | Público | Sim | URL canônica da aplicação web |
-| `NEXT_PUBLIC_API_URL` | Público | Sim | URL pública da `ciclera-api` |
-| `NEXT_PUBLIC_WHATSAPP_NUMBER` | Público | Não | WhatsApp usado nos CTAs públicos |
-| `NEXT_PUBLIC_CONTACT_EMAIL` | Público | Não | E-mail público de contato da Ciclera |
-| `LEAD_WEBHOOK_URL` | Servidor | Conforme captação | Destino server-side dos leads do piloto |
+| Variável                      | Escopo   |       Obrigatória | Finalidade                              |
+| ----------------------------- | -------- | ----------------: | --------------------------------------- |
+| `NEXT_PUBLIC_APP_URL`         | Público  |               Sim | URL canônica da aplicação web           |
+| `NEXT_PUBLIC_API_URL`         | Público  |               Sim | URL pública da `ciclera-api`            |
+| `NEXT_PUBLIC_WHATSAPP_NUMBER` | Público  |               Não | WhatsApp usado nos CTAs públicos        |
+| `NEXT_PUBLIC_CONTACT_EMAIL`   | Público  |               Não | E-mail público de contato da Ciclera    |
+| `LEAD_WEBHOOK_URL`            | Servidor | Conforme captação | Destino server-side dos leads do piloto |
 
 Exemplo seguro:
 
@@ -184,7 +184,10 @@ Regras:
 - Nunca versionar `.env.local`.
 - Validar variáveis obrigatórias na inicialização.
 - Não espalhar chamadas diretas a `process.env` por componentes.
-- Centralizar leitura e validação em um módulo como `src/config/env.ts`.
+- Centralizar schema e parsing em `config/env-schema.ts`, valores públicos em
+  `config/public-env.ts` e valores privados em `config/server-env.ts`.
+- O módulo privado utiliza `server-only` e não pode ser importado por Client
+  Components.
 - O formulário público não pode exibir sucesso se o lead não tiver sido persistido ou entregue ao destino configurado.
 - Se o lead for futuramente recebido pela API, remover a responsabilidade de webhook do frontend e atualizar esta documentação.
 
@@ -194,42 +197,42 @@ As rotas devem usar Route Groups para separar contextos sem adicionar segmentos 
 
 ### Rotas públicas
 
-| Rota | Finalidade |
-| --- | --- |
-| `/` | Landing page da Ciclera |
-| `/privacidade` | Política de Privacidade |
-| `/termos` | Termos de Uso |
-| `/login` | Autenticação |
-| `/recuperar-senha` | Solicitação de recuperação de senha |
-| `/redefinir-senha` | Definição de uma nova senha a partir de token válido |
+| Rota                       | Finalidade                                           |
+| -------------------------- | ---------------------------------------------------- |
+| `/`                        | Landing page da Ciclera                              |
+| `/politica-de-privacidade` | Política de Privacidade                              |
+| `/termos-de-uso`           | Termos de Uso                                        |
+| `/login`                   | Autenticação                                         |
+| `/recuperar-senha`         | Solicitação de recuperação de senha                  |
+| `/redefinir-senha`         | Definição de uma nova senha a partir de token válido |
 
 ### Área administrativa
 
-| Rota | Finalidade | Perfis |
-| --- | --- | --- |
-| `/app` | Dashboard operacional | `OWNER`, `ADMIN` |
-| `/app/clientes` | Lista de clientes | `OWNER`, `ADMIN` |
-| `/app/clientes/novo` | Cadastro de cliente | `OWNER`, `ADMIN` |
-| `/app/clientes/[customerId]` | Detalhes do cliente, locais e histórico | `OWNER`, `ADMIN` |
-| `/app/equipamentos` | Busca e lista de equipamentos | `OWNER`, `ADMIN` |
-| `/app/equipamentos/[equipmentId]` | Detalhes e histórico do equipamento | `OWNER`, `ADMIN` |
-| `/app/equipe` | Gerenciamento básico de usuários | `OWNER`, `ADMIN` |
-| `/app/agenda` | Agenda operacional | `OWNER`, `ADMIN` |
-| `/app/ordens` | Lista de ordens de serviço | `OWNER`, `ADMIN` |
-| `/app/ordens/nova` | Criação de ordem | `OWNER`, `ADMIN` |
-| `/app/ordens/[workOrderId]` | Detalhes e histórico da ordem | `OWNER`, `ADMIN` |
-| `/app/revisao` | Fila aguardando revisão ou correção | `OWNER`, `ADMIN` |
-| `/app/revisao/[workOrderId]` | Conferência da execução e evidências | `OWNER`, `ADMIN` |
-| `/app/faturamento` | Fila pronta para faturar | `OWNER`, `ADMIN` |
-| `/app/configuracoes` | Configurações básicas | `OWNER`, `ADMIN` conforme ação |
+| Rota                              | Finalidade                              | Perfis                         |
+| --------------------------------- | --------------------------------------- | ------------------------------ |
+| `/app`                            | Dashboard operacional                   | `OWNER`, `ADMIN`               |
+| `/app/clientes`                   | Lista de clientes                       | `OWNER`, `ADMIN`               |
+| `/app/clientes/novo`              | Cadastro de cliente                     | `OWNER`, `ADMIN`               |
+| `/app/clientes/[customerId]`      | Detalhes do cliente, locais e histórico | `OWNER`, `ADMIN`               |
+| `/app/equipamentos`               | Busca e lista de equipamentos           | `OWNER`, `ADMIN`               |
+| `/app/equipamentos/[equipmentId]` | Detalhes e histórico do equipamento     | `OWNER`, `ADMIN`               |
+| `/app/equipe`                     | Gerenciamento básico de usuários        | `OWNER`, `ADMIN`               |
+| `/app/agenda`                     | Agenda operacional                      | `OWNER`, `ADMIN`               |
+| `/app/ordens`                     | Lista de ordens de serviço              | `OWNER`, `ADMIN`               |
+| `/app/ordens/nova`                | Criação de ordem                        | `OWNER`, `ADMIN`               |
+| `/app/ordens/[workOrderId]`       | Detalhes e histórico da ordem           | `OWNER`, `ADMIN`               |
+| `/app/revisao`                    | Fila aguardando revisão ou correção     | `OWNER`, `ADMIN`               |
+| `/app/revisao/[workOrderId]`      | Conferência da execução e evidências    | `OWNER`, `ADMIN`               |
+| `/app/faturamento`                | Fila pronta para faturar                | `OWNER`, `ADMIN`               |
+| `/app/configuracoes`              | Configurações básicas                   | `OWNER`, `ADMIN` conforme ação |
 
 ### Área do técnico
 
-| Rota | Finalidade | Perfil |
-| --- | --- | --- |
-| `/field` | Resumo das ordens atribuídas | `TECHNICIAN` |
-| `/field/ordens` | Lista das próprias ordens | `TECHNICIAN` |
-| `/field/ordens/[workOrderId]` | Detalhes do atendimento | `TECHNICIAN` atribuído |
+| Rota                                   | Finalidade                       | Perfil                 |
+| -------------------------------------- | -------------------------------- | ---------------------- |
+| `/field`                               | Resumo das ordens atribuídas     | `TECHNICIAN`           |
+| `/field/ordens`                        | Lista das próprias ordens        | `TECHNICIAN`           |
+| `/field/ordens/[workOrderId]`          | Detalhes do atendimento          | `TECHNICIAN` atribuído |
 | `/field/ordens/[workOrderId]/executar` | Execução, checklist e evidências | `TECHNICIAN` atribuído |
 
 Os nomes internos de pastas, componentes e tipos devem permanecer em inglês. Segmentos públicos da URL e conteúdo visível podem permanecer em português por serem parte da experiência do usuário brasileiro.
@@ -237,6 +240,10 @@ Os nomes internos de pastas, componentes e tipos devem permanecer em inglês. Se
 Não criar uma segunda aplicação para a experiência de campo. `/field` utiliza o mesmo Next.js, autenticação, design system e contratos da API, com layout e navegação próprios.
 
 ## Estrutura de diretórios sugerida
+
+O scaffold atual mantém `app`, `components`, `config`, `lib` e `tests` na raiz
+do repositório. A árvore abaixo descreve a direção de crescimento e não exige
+uma migração mecânica para `src`.
 
 ```text
 src/
@@ -362,22 +369,22 @@ Manter o boundary client-side o mais baixo possível. Não transformar layouts o
 
 Todas as operações de negócio devem utilizar a `ciclera-api`. O frontend não acessa o banco diretamente.
 
-Centralizar a comunicação HTTP em `src/lib/api`:
+Centralizar a comunicação HTTP em `lib/api`. A fundação atual contém apenas
+configuração da URL base, tipos de erro e parsing seguro; chamadas de negócio
+serão adicionadas no checkpoint de cada fluxo.
 
 ```text
-src/lib/api/
-├── client.ts
-├── server.ts
+lib/api/
+├── config.ts
 ├── errors.ts
-├── request.ts
+├── response.ts
 └── types.ts
 ```
 
-Responsabilidades esperadas:
+Responsabilidades atuais:
 
-- `client.ts`: chamadas iniciadas em Client Components.
-- `server.ts`: chamadas iniciadas em Server Components e Route Handlers.
-- `request.ts`: comportamento compartilhado de request, parsing e timeouts.
+- `config.ts`: URL pública versionada da API e composição segura de caminhos.
+- `response.ts`: parsing de JSON e validação explícita da resposta.
 - `errors.ts`: normalização dos erros da API.
 - `types.ts`: tipos de infraestrutura, sem duplicar todo o domínio.
 
@@ -407,14 +414,14 @@ Regras:
 
 Utilizar a ferramenta mais simples para cada categoria:
 
-| Estado | Estratégia |
-| --- | --- |
-| Dados remotos e cache interativo | TanStack Query |
-| Filtros, paginação e ordenação compartilháveis | URL search params |
-| Formulários | React Hook Form + Zod |
-| Estado visual local | `useState` ou `useReducer` |
-| Sessão autenticada | Fonte definida pela autenticação e API |
-| Preferências persistidas simples | Cookie ou storage apenas quando não sensível e necessário |
+| Estado                                         | Estratégia                                                |
+| ---------------------------------------------- | --------------------------------------------------------- |
+| Dados remotos e cache interativo               | TanStack Query                                            |
+| Filtros, paginação e ordenação compartilháveis | URL search params                                         |
+| Formulários                                    | React Hook Form + Zod                                     |
+| Estado visual local                            | `useState` ou `useReducer`                                |
+| Sessão autenticada                             | Fonte definida pela autenticação e API                    |
+| Preferências persistidas simples               | Cookie ou storage apenas quando não sensível e necessário |
 
 Não introduzir Redux, Zustand ou Context global para dados que pertencem à URL, a uma query remota ou a um formulário.
 
@@ -486,16 +493,16 @@ Itens de menu devem ser definidos em configuração tipada e filtrados por perfi
 
 Manter uma única configuração tipada para label, descrição curta e apresentação visual dos estados:
 
-| Status interno | Label em pt-BR |
-| --- | --- |
-| `DRAFT` | Rascunho |
-| `SCHEDULED` | Agendada |
-| `IN_PROGRESS` | Em execução |
-| `AWAITING_REVIEW` | Aguardando revisão |
-| `PENDING_CORRECTION` | Com pendência |
-| `READY_TO_BILL` | Pronta para faturar |
-| `BILLED` | Faturada |
-| `CANCELED` | Cancelada |
+| Status interno       | Label em pt-BR      |
+| -------------------- | ------------------- |
+| `DRAFT`              | Rascunho            |
+| `SCHEDULED`          | Agendada            |
+| `IN_PROGRESS`        | Em execução         |
+| `AWAITING_REVIEW`    | Aguardando revisão  |
+| `PENDING_CORRECTION` | Com pendência       |
+| `READY_TO_BILL`      | Pronta para faturar |
+| `BILLED`             | Faturada            |
+| `CANCELED`           | Cancelada           |
 
 Regras:
 
@@ -605,17 +612,17 @@ Regras:
 
 ### Cores
 
-| Token | Valor | Uso principal |
-| --- | --- | --- |
-| Deep Petrol | `#092E2E` | Marca, textos fortes e superfícies escuras |
-| Ciclera Teal | `#087F6B` | Ações primárias e identidade |
+| Token        | Valor     | Uso principal                                 |
+| ------------ | --------- | --------------------------------------------- |
+| Deep Petrol  | `#092E2E` | Marca, textos fortes e superfícies escuras    |
+| Ciclera Teal | `#087F6B` | Ações primárias e identidade                  |
 | Active Green | `#15B88A` | Estados ativos e feedback positivo controlado |
-| Cycle Lime | `#C8F169` | Acentos pequenos e valores importantes |
-| Soft White | `#F6F9F7` | Background geral |
-| Surface | `#FFFFFF` | Cards, modais e painéis |
-| Graphite | `#182321` | Texto principal |
-| Slate | `#64716D` | Texto secundário |
-| Mist | `#DDE7E3` | Bordas e divisores |
+| Cycle Lime   | `#C8F169` | Acentos pequenos e valores importantes        |
+| Soft White   | `#F6F9F7` | Background geral                              |
+| Surface      | `#FFFFFF` | Cards, modais e painéis                       |
+| Graphite     | `#182321` | Texto principal                               |
+| Slate        | `#64716D` | Texto secundário                              |
+| Mist         | `#DDE7E3` | Bordas e divisores                            |
 
 Cores semânticas devem possuir tokens próprios para sucesso, aviso, erro e informação. Não usar o nome de uma cor diretamente como significado de negócio.
 
@@ -647,6 +654,10 @@ Construir ou adotar primitives acessíveis para:
 - Empty State.
 - Alert.
 - Breadcrumb.
+
+Na fundação atual estão disponíveis `Button`, `Input`, `Textarea`, `Label`,
+`Alert`, `Badge`, `Card`, `Skeleton` e `EmptyState`. Os demais componentes
+serão criados somente quando um fluxo real justificar sua existência.
 
 Componentes de `components/ui` não devem conhecer conceitos como `WorkOrder`, `Customer` ou `Billing`.
 

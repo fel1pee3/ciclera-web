@@ -1,27 +1,457 @@
-import { ArrowRight, Check, ChevronDown, CircleDollarSign, Globe2, Monitor, Smartphone } from 'lucide-react'
-import { benefits, faqs, features, flow, problems, segments, steps } from './content'
+import {
+  ArrowRight,
+  Check,
+  ChevronDown,
+  CircleDollarSign,
+  Globe2,
+  Monitor,
+  Smartphone,
+} from 'lucide-react'
+import {
+  benefits,
+  faqs,
+  features,
+  flow,
+  problems,
+  segments,
+  steps,
+} from './content'
 import { ProductDemo } from './product-demo'
 
-const Eyebrow = ({ children, dark = false }: { children: React.ReactNode; dark?: boolean }) => <p className={dark ? 'eyebrow text-active' : 'eyebrow'}>{children}</p>
-const Title = ({ children, dark = false }: { children: React.ReactNode; dark?: boolean }) => <h2 className={dark ? 'section-title text-primary-foreground' : 'section-title'}>{children}</h2>
+const Eyebrow = ({
+  children,
+  dark = false,
+}: {
+  children: React.ReactNode
+  dark?: boolean
+}) => <p className={dark ? 'eyebrow text-active' : 'eyebrow'}>{children}</p>
+const Title = ({
+  children,
+  dark = false,
+}: {
+  children: React.ReactNode
+  dark?: boolean
+}) => (
+  <h2
+    className={dark ? 'section-title text-primary-foreground' : 'section-title'}
+  >
+    {children}
+  </h2>
+)
 
-export function PositioningStrip() { return <section className="border-y border-border bg-card py-8"><div className="mx-auto max-w-7xl px-5 lg:px-8"><p className="text-center font-heading text-lg font-semibold">Do chamado ao caixa, cada etapa sob controle.</p><div className="mt-5 flex overflow-x-auto pb-2"><div className="mx-auto flex min-w-max items-center">{flow.map((x,i)=><div key={x} className="flex items-center"><span className="rounded-full bg-muted px-4 py-2 text-sm font-medium">{x}</span>{i<flow.length-1&&<ArrowRight className="mx-2 size-4 text-muted-foreground"/>}</div>)}</div></div></div></section> }
+export function PositioningStrip() {
+  return (
+    <section className="border-y border-border bg-card py-8">
+      <div className="mx-auto max-w-7xl px-5 lg:px-8">
+        <p className="text-center font-heading text-lg font-semibold">
+          Do chamado ao caixa, cada etapa sob controle.
+        </p>
+        <div className="mt-5 flex overflow-x-auto pb-2">
+          <div className="mx-auto flex min-w-max items-center">
+            {flow.map((x, i) => (
+              <div key={x} className="flex items-center">
+                <span className="rounded-full bg-muted px-4 py-2 text-sm font-medium">
+                  {x}
+                </span>
+                {i < flow.length - 1 && (
+                  <ArrowRight className="mx-2 size-4 text-muted-foreground" />
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
 
-export function ProblemSection() { return <section id="problema" className="section bg-background"><div className="container-page"><div className="max-w-3xl"><Eyebrow>Onde a receita se perde</Eyebrow><Title>Serviço realizado não deveria virar receita esquecida.</Title><p className="section-copy">Quando campo e escritório trabalham em ferramentas diferentes, informações somem, a revisão atrasa e o faturamento depende de conferências manuais.</p></div><div className="mt-12 grid gap-4 md:grid-cols-2 lg:grid-cols-4">{problems.map(({title,text,icon:Icon})=><article key={title} className="rounded-2xl border border-border bg-card p-6"><span className="flex size-10 items-center justify-center rounded-xl bg-muted text-primary"><Icon className="size-5"/></span><h3 className="mt-6 font-heading text-lg font-semibold">{title}</h3><p className="mt-3 text-sm leading-relaxed text-muted-foreground">{text}</p></article>)}</div></div></section> }
+export function ProblemSection() {
+  return (
+    <section id="problema" className="section bg-background">
+      <div className="container-page">
+        <div className="max-w-3xl">
+          <Eyebrow>Onde a receita se perde</Eyebrow>
+          <Title>Serviço realizado não deveria virar receita esquecida.</Title>
+          <p className="section-copy">
+            Quando campo e escritório trabalham em ferramentas diferentes,
+            informações somem, a revisão atrasa e o faturamento depende de
+            conferências manuais.
+          </p>
+        </div>
+        <div className="mt-12 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {problems.map(({ title, text, icon: Icon }) => (
+            <article
+              key={title}
+              className="rounded-2xl border border-border bg-card p-6"
+            >
+              <span className="flex size-10 items-center justify-center rounded-xl bg-muted text-primary">
+                <Icon className="size-5" />
+              </span>
+              <h3 className="mt-6 font-heading text-lg font-semibold">
+                {title}
+              </h3>
+              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                {text}
+              </p>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
 
-export function WorkflowSection() { return <section id="como-funciona" className="section bg-card"><div className="container-page"><div className="max-w-3xl"><Eyebrow>Um ciclo, não ferramentas isoladas</Eyebrow><Title>Acompanhe cada serviço até ele estar pronto para faturar.</Title></div><ol className="mt-12 grid gap-4 lg:grid-cols-5">{steps.map(([title,text],i)=><li key={title} className="relative rounded-2xl border border-border bg-background p-6"><span className="font-heading text-sm font-bold text-primary">0{i+1}</span><h3 className="mt-8 font-heading text-lg font-semibold">{title}</h3><p className="mt-3 text-sm leading-relaxed text-muted-foreground">{text}</p></li>)}</ol></div></section> }
+export function WorkflowSection() {
+  return (
+    <section id="como-funciona" className="section bg-card">
+      <div className="container-page">
+        <div className="max-w-3xl">
+          <Eyebrow>Um ciclo, não ferramentas isoladas</Eyebrow>
+          <Title>
+            Acompanhe cada serviço até ele estar pronto para faturar.
+          </Title>
+        </div>
+        <ol className="mt-12 grid gap-4 lg:grid-cols-5">
+          {steps.map(([title, text], i) => (
+            <li
+              key={title}
+              className="relative rounded-2xl border border-border bg-background p-6"
+            >
+              <span className="font-heading text-sm font-bold text-primary">
+                0{i + 1}
+              </span>
+              <h3 className="mt-8 font-heading text-lg font-semibold">
+                {title}
+              </h3>
+              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                {text}
+              </p>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </section>
+  )
+}
 
-export function DemoSection() { return <section className="section bg-institutional"><div className="container-page"><div className="max-w-3xl"><Eyebrow dark>Visibilidade operacional</Eyebrow><Title dark>Veja o que foi executado, o que está bloqueado e o que já pode virar receita.</Title><p className="mt-5 text-primary-foreground/65">Dados exclusivamente demonstrativos para apresentar o fluxo do produto.</p></div><div className="mt-12"><ProductDemo /></div></div></section> }
+export function DemoSection() {
+  return (
+    <section className="section bg-institutional">
+      <div className="container-page">
+        <div className="max-w-3xl">
+          <Eyebrow dark>Visibilidade operacional</Eyebrow>
+          <Title dark>
+            Veja o que foi executado, o que está bloqueado e o que já pode virar
+            receita.
+          </Title>
+          <p className="mt-5 text-primary-foreground/65">
+            Dados exclusivamente demonstrativos para apresentar o fluxo do
+            produto.
+          </p>
+        </div>
+        <div className="mt-12">
+          <ProductDemo />
+        </div>
+      </div>
+    </section>
+  )
+}
 
-export function FeaturesSection() { return <section id="funcionalidades" className="section bg-background"><div className="container-page"><div className="max-w-3xl"><Eyebrow>O essencial para controlar a operação</Eyebrow><Title>Menos recursos dispersos. Mais controle sobre o ciclo completo.</Title></div><div className="mt-12 grid gap-px overflow-hidden rounded-2xl border border-border bg-border md:grid-cols-2 lg:grid-cols-3">{features.map(({title,text,icon:Icon})=><article key={title} className="bg-card p-6"><Icon className="size-5 text-primary"/><h3 className="mt-5 font-heading font-semibold">{title}</h3><p className="mt-2 text-sm leading-relaxed text-muted-foreground">{text}</p></article>)}</div></div></section> }
+export function FeaturesSection() {
+  return (
+    <section id="funcionalidades" className="section bg-background">
+      <div className="container-page">
+        <div className="max-w-3xl">
+          <Eyebrow>O essencial para controlar a operação</Eyebrow>
+          <Title>
+            Menos recursos dispersos. Mais controle sobre o ciclo completo.
+          </Title>
+        </div>
+        <div className="mt-12 grid gap-px overflow-hidden rounded-2xl border border-border bg-border md:grid-cols-2 lg:grid-cols-3">
+          {features.map(({ title, text, icon: Icon }) => (
+            <article key={title} className="bg-card p-6">
+              <Icon className="size-5 text-primary" />
+              <h3 className="mt-5 font-heading font-semibold">{title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                {text}
+              </p>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
 
-export function FieldSection() { return <section className="section overflow-hidden bg-card"><div className="container-page grid items-center gap-14 lg:grid-cols-2"><div><Eyebrow>Acesso web para o técnico</Eyebrow><Title>Simples para quem executa. Completo para quem administra.</Title><p className="section-copy">O técnico acessa a Ciclera pelo navegador e registra o atendimento sem precisar instalar um aplicativo. No escritório, a equipe acompanha as etapas, revisa evidências e libera o serviço para faturamento.</p><div className="mt-8 flex flex-wrap gap-3 text-sm"><span className="chip"><Globe2 className="size-4"/>Acesso pelo navegador</span><span className="chip"><Monitor className="size-4"/>Computador, tablet ou celular</span></div></div><FieldMockups /></div></section> }
-function FieldMockups(){const tasks=['Checklist','Adicionar fotos','Serviço adicional','Coletar assinatura'];return <div className="relative mx-auto flex w-full max-w-xl items-end justify-center gap-4"><div className="w-56 rounded-3xl border-4 border-institutional bg-background p-2 shadow-xl"><div className="rounded-2xl border border-border bg-card"><div className="flex items-center gap-2 border-b border-border px-3 py-2 text-xs"><Smartphone className="size-3"/>ciclera.com.br</div><div className="p-4"><p className="text-xs text-muted-foreground">OS #1842</p><p className="mt-1 font-heading font-semibold">Unidade condensadora</p><button className="mt-4 w-full rounded-lg bg-primary py-2 text-xs font-semibold text-primary-foreground">Iniciar atendimento</button><div className="mt-4 flex flex-col gap-2">{tasks.map(t=><span key={t} className="rounded-lg bg-muted px-3 py-2 text-xs">{t}</span>)}</div></div></div></div><div className="hidden w-80 rounded-2xl border border-border bg-background p-4 shadow-xl sm:block"><div className="flex items-center justify-between"><strong className="font-heading">Agenda operacional</strong><span className="text-xs text-muted-foreground">Hoje</span></div><div className="mt-4 grid grid-cols-2 gap-3">{[['Em execução','8'],['Pendências','3'],['Revisão','6'],['Prontas','R$ 14.850']].map(x=><div key={x[0]} className="rounded-xl border border-border bg-card p-3"><p className="text-xs text-muted-foreground">{x[0]}</p><strong className="mt-1 block">{x[1]}</strong></div>)}</div></div></div>}
+export function FieldSection() {
+  return (
+    <section className="section overflow-hidden bg-card">
+      <div className="container-page grid items-center gap-14 lg:grid-cols-2">
+        <div>
+          <Eyebrow>Acesso web para o técnico</Eyebrow>
+          <Title>
+            Simples para quem executa. Completo para quem administra.
+          </Title>
+          <p className="section-copy">
+            O técnico acessa a Ciclera pelo navegador e registra o atendimento
+            sem precisar instalar um aplicativo. No escritório, a equipe
+            acompanha as etapas, revisa evidências e libera o serviço para
+            faturamento.
+          </p>
+          <div className="mt-8 flex flex-wrap gap-3 text-sm">
+            <span className="chip">
+              <Globe2 className="size-4" />
+              Acesso pelo navegador
+            </span>
+            <span className="chip">
+              <Monitor className="size-4" />
+              Computador, tablet ou celular
+            </span>
+          </div>
+        </div>
+        <FieldMockups />
+      </div>
+    </section>
+  )
+}
+function FieldMockups() {
+  const tasks = [
+    'Checklist',
+    'Adicionar fotos',
+    'Serviço adicional',
+    'Coletar assinatura',
+  ]
+  return (
+    <div className="relative mx-auto flex w-full max-w-xl items-end justify-center gap-4">
+      <div className="w-56 rounded-3xl border-4 border-institutional bg-background p-2 shadow-xl">
+        <div className="rounded-2xl border border-border bg-card">
+          <div className="flex items-center gap-2 border-b border-border px-3 py-2 text-xs">
+            <Smartphone className="size-3" />
+            ciclera.com.br
+          </div>
+          <div className="p-4">
+            <p className="text-xs text-muted-foreground">OS #1842</p>
+            <p className="mt-1 font-heading font-semibold">
+              Unidade condensadora
+            </p>
+            <button className="mt-4 w-full rounded-lg bg-primary py-2 text-xs font-semibold text-primary-foreground">
+              Iniciar atendimento
+            </button>
+            <div className="mt-4 flex flex-col gap-2">
+              {tasks.map((t) => (
+                <span key={t} className="rounded-lg bg-muted px-3 py-2 text-xs">
+                  {t}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="hidden w-80 rounded-2xl border border-border bg-background p-4 shadow-xl sm:block">
+        <div className="flex items-center justify-between">
+          <strong className="font-heading">Agenda operacional</strong>
+          <span className="text-xs text-muted-foreground">Hoje</span>
+        </div>
+        <div className="mt-4 grid grid-cols-2 gap-3">
+          {[
+            ['Em execução', '8'],
+            ['Pendências', '3'],
+            ['Revisão', '6'],
+            ['Prontas', 'R$ 14.850'],
+          ].map((x) => (
+            <div
+              key={x[0]}
+              className="rounded-xl border border-border bg-card p-3"
+            >
+              <p className="text-xs text-muted-foreground">{x[0]}</p>
+              <strong className="mt-1 block">{x[1]}</strong>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
 
-export function AudienceSection() { const qualifiers=['Possui entre 5 e 30 técnicos externos.','Executa dezenas ou centenas de ordens por mês.','Usa WhatsApp, papel ou planilhas durante a operação.','Tem dificuldade para acompanhar serviços concluídos.','Demora para revisar evidências e liberar faturamento.','Perde informações sobre serviços ou materiais adicionais.'];return <section id="para-quem" className="section bg-background"><div className="container-page"><div className="max-w-3xl"><Eyebrow>Construída para operações reais</Eyebrow><Title>Para empresas que dependem do trabalho realizado fora do escritório.</Title><p className="section-copy">A Ciclera foi pensada para operações B2B com equipes externas, equipamentos atendidos e ordens que precisam chegar completas ao administrativo.</p></div><div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{segments.map(({title,icon:Icon})=><div key={title} className="flex items-center gap-4 rounded-2xl border border-border bg-card p-5"><Icon className="size-5 text-primary"/><span className="font-semibold">{title}</span></div>)}</div><div className="mt-12 grid gap-8 rounded-2xl bg-institutional p-7 text-primary-foreground lg:grid-cols-2 lg:p-10"><div><p className="font-heading text-2xl font-semibold">A Ciclera faz sentido se sua empresa:</p><a href="#contato" className="mt-8 inline-flex rounded-xl bg-active px-5 py-3 font-semibold text-institutional">Quero avaliar minha operação</a></div><ul className="grid gap-3">{qualifiers.map(q=><li key={q} className="flex gap-3 text-sm text-primary-foreground/80"><Check className="size-5 shrink-0 text-active"/>{q}</li>)}</ul></div></div></section> }
+export function AudienceSection() {
+  const qualifiers = [
+    'Possui entre 5 e 30 técnicos externos.',
+    'Executa dezenas ou centenas de ordens por mês.',
+    'Usa WhatsApp, papel ou planilhas durante a operação.',
+    'Tem dificuldade para acompanhar serviços concluídos.',
+    'Demora para revisar evidências e liberar faturamento.',
+    'Perde informações sobre serviços ou materiais adicionais.',
+  ]
+  return (
+    <section id="para-quem" className="section bg-background">
+      <div className="container-page">
+        <div className="max-w-3xl">
+          <Eyebrow>Construída para operações reais</Eyebrow>
+          <Title>
+            Para empresas que dependem do trabalho realizado fora do escritório.
+          </Title>
+          <p className="section-copy">
+            A Ciclera foi pensada para operações B2B com equipes externas,
+            equipamentos atendidos e ordens que precisam chegar completas ao
+            administrativo.
+          </p>
+        </div>
+        <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {segments.map(({ title, icon: Icon }) => (
+            <div
+              key={title}
+              className="flex items-center gap-4 rounded-2xl border border-border bg-card p-5"
+            >
+              <Icon className="size-5 text-primary" />
+              <span className="font-semibold">{title}</span>
+            </div>
+          ))}
+        </div>
+        <div className="mt-12 grid gap-8 rounded-2xl bg-institutional p-7 text-primary-foreground lg:grid-cols-2 lg:p-10">
+          <div>
+            <p className="font-heading text-2xl font-semibold">
+              A Ciclera faz sentido se sua empresa:
+            </p>
+            <a
+              href="#contato"
+              className="mt-8 inline-flex rounded-xl bg-active px-5 py-3 font-semibold text-institutional"
+            >
+              Quero avaliar minha operação
+            </a>
+          </div>
+          <ul className="grid gap-3">
+            {qualifiers.map((q) => (
+              <li
+                key={q}
+                className="flex gap-3 text-sm text-primary-foreground/80"
+              >
+                <Check className="size-5 shrink-0 text-active" />
+                {q}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </section>
+  )
+}
 
-export function BenefitsSection() { return <section className="section bg-card"><div className="container-page"><Title>O resultado começa com visibilidade.</Title><div className="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-4">{benefits.map(([title,text])=><article key={title}><CircleDollarSign className="size-5 text-primary"/><h3 className="mt-5 font-heading text-lg font-semibold">{title}</h3><p className="mt-3 text-sm leading-relaxed text-muted-foreground">{text}</p></article>)}</div><div className="mt-12 grid gap-px overflow-hidden rounded-2xl border border-border bg-border md:grid-cols-2"><div className="bg-muted p-7"><span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Antes</span><p className="mt-3 font-heading text-lg">WhatsApp + papel + planilha + conferência manual</p></div><div className="bg-active/10 p-7"><span className="text-xs font-bold uppercase tracking-widest text-primary">Depois</span><p className="mt-3 font-heading text-lg">Execução → evidências → revisão → pronta para faturar</p></div></div></div></section> }
+export function BenefitsSection() {
+  return (
+    <section className="section bg-card">
+      <div className="container-page">
+        <Title>O resultado começa com visibilidade.</Title>
+        <div className="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+          {benefits.map(([title, text]) => (
+            <article key={title}>
+              <CircleDollarSign className="size-5 text-primary" />
+              <h3 className="mt-5 font-heading text-lg font-semibold">
+                {title}
+              </h3>
+              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                {text}
+              </p>
+            </article>
+          ))}
+        </div>
+        <div className="mt-12 grid gap-px overflow-hidden rounded-2xl border border-border bg-border md:grid-cols-2">
+          <div className="bg-muted p-7">
+            <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+              Antes
+            </span>
+            <p className="mt-3 font-heading text-lg">
+              WhatsApp + papel + planilha + conferência manual
+            </p>
+          </div>
+          <div className="bg-active/10 p-7">
+            <span className="text-xs font-bold uppercase tracking-widest text-primary">
+              Depois
+            </span>
+            <p className="mt-3 font-heading text-lg">
+              Execução → evidências → revisão → pronta para faturar
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
 
-export function PilotSection() { const items=['Diagnóstico inicial do fluxo de ordens de serviço.','Mapeamento dos pontos em que informações e receita se perdem.','Acompanhamento próximo durante a validação.','Participação na priorização das funcionalidades essenciais.','Condições especiais para as primeiras empresas participantes.'];return <section id="piloto" className="section bg-institutional text-primary-foreground"><div className="container-page grid gap-12 lg:grid-cols-2"><div><Eyebrow dark>Programa piloto Ciclera</Eyebrow><Title dark>Ajude a construir uma operação em que nenhum serviço fica para trás.</Title><p className="mt-5 max-w-xl leading-relaxed text-primary-foreground/70">Estamos selecionando empresas para acompanhar o desenvolvimento inicial da Ciclera, entender o fluxo real e identificar gargalos entre execução e faturamento.</p><a href="#contato" className="mt-8 inline-flex rounded-xl bg-active px-6 py-3.5 font-semibold text-institutional">Quero conversar sobre o piloto</a><p className="mt-3 text-sm text-primary-foreground/55">Sem compromisso. Primeiro queremos entender sua operação.</p></div><ul className="flex flex-col gap-3">{items.map(x=><li key={x} className="flex gap-3 rounded-xl border border-primary-foreground/10 bg-primary-foreground/5 p-4 text-sm text-primary-foreground/80"><Check className="size-5 shrink-0 text-active"/>{x}</li>)}</ul></div></section> }
+export function PilotSection() {
+  const items = [
+    'Diagnóstico inicial do fluxo de ordens de serviço.',
+    'Mapeamento dos pontos em que informações e receita se perdem.',
+    'Acompanhamento próximo durante a validação.',
+    'Participação na priorização das funcionalidades essenciais.',
+    'Condições especiais para as primeiras empresas participantes.',
+  ]
+  return (
+    <section
+      id="piloto"
+      className="section bg-institutional text-primary-foreground"
+    >
+      <div className="container-page grid gap-12 lg:grid-cols-2">
+        <div>
+          <Eyebrow dark>Programa piloto Ciclera</Eyebrow>
+          <Title dark>
+            Ajude a construir uma operação em que nenhum serviço fica para trás.
+          </Title>
+          <p className="mt-5 max-w-xl leading-relaxed text-primary-foreground/70">
+            Estamos selecionando empresas para acompanhar o desenvolvimento
+            inicial da Ciclera, entender o fluxo real e identificar gargalos
+            entre execução e faturamento.
+          </p>
+          <a
+            href="#contato"
+            className="mt-8 inline-flex rounded-xl bg-active px-6 py-3.5 font-semibold text-institutional"
+          >
+            Quero conversar sobre o piloto
+          </a>
+          <p className="mt-3 text-sm text-primary-foreground/55">
+            Sem compromisso. Primeiro queremos entender sua operação.
+          </p>
+        </div>
+        <ul className="flex flex-col gap-3">
+          {items.map((x) => (
+            <li
+              key={x}
+              className="flex gap-3 rounded-xl border border-primary-foreground/10 bg-primary-foreground/5 p-4 text-sm text-primary-foreground/80"
+            >
+              <Check className="size-5 shrink-0 text-active" />
+              {x}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  )
+}
 
-export function FaqSection() { return <section className="section bg-background"><div className="container-page grid gap-12 lg:grid-cols-[.7fr_1.3fr]"><div><Eyebrow>Dúvidas frequentes</Eyebrow><Title>O que você precisa saber antes de conversar.</Title></div><div className="flex flex-col gap-3">{faqs.map(([q,a])=><details key={q} className="group rounded-xl border border-border bg-card p-5"><summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-semibold">{q}<ChevronDown className="size-5 shrink-0 transition-transform group-open:rotate-180"/></summary><p className="mt-4 pr-8 text-sm leading-relaxed text-muted-foreground">{a}</p></details>)}</div></div></section> }
+export function FaqSection() {
+  return (
+    <section className="section bg-background">
+      <div className="container-page grid gap-12 lg:grid-cols-[.7fr_1.3fr]">
+        <div>
+          <Eyebrow>Dúvidas frequentes</Eyebrow>
+          <Title>O que você precisa saber antes de conversar.</Title>
+        </div>
+        <div className="flex flex-col gap-3">
+          {faqs.map(([q, a]) => (
+            <details
+              key={q}
+              className="group rounded-xl border border-border bg-card p-5"
+            >
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-semibold">
+                {q}
+                <ChevronDown className="size-5 shrink-0 transition-transform group-open:rotate-180" />
+              </summary>
+              <p className="mt-4 pr-8 text-sm leading-relaxed text-muted-foreground">
+                {a}
+              </p>
+            </details>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
