@@ -7,9 +7,18 @@ __v0_jsx-dev-runtime.ts
 .vercel/
 
 # Environment variables
-.env*.local
+.env
+.env.*
+!.env.example
 
 # Common ignores
-node_modules
+node_modules/
 .next/
+out/
+coverage/
+*.tsbuildinfo
+next-env.d.ts
+*.log
+npm-debug.log*
 .DS_Store
+Thumbs.db
