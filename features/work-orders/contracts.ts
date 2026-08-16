@@ -103,3 +103,50 @@ export const agendaSchema = z.object({
   to: z.string(),
 })
 export type Agenda = z.infer<typeof agendaSchema>
+
+const historyActorSchema = z.object({ id: z.string().uuid(), name: z.string() })
+const timelineBase = z.object({
+  id: z.string(),
+  occurredAt: z.string().datetime(),
+  actor: historyActorSchema,
+})
+export const operationalTimelineEntrySchema = z.discriminatedUnion('type', [
+  timelineBase.extend({
+    type: z.literal('STATUS'),
+    previousStatus: workOrderStatusSchema.nullable(),
+    newStatus: workOrderStatusSchema,
+    reason: z.string().nullable(),
+  }),
+  timelineBase.extend({
+    type: z.literal('ASSIGNMENT'),
+    technician: historyActorSchema,
+    action: z.enum(['ASSIGNED', 'UNASSIGNED']),
+  }),
+  timelineBase.extend({
+    type: z.literal('REVIEW'),
+    decision: z.enum(['CORRECTION_REQUESTED', 'APPROVED']),
+    reason: z.string().nullable(),
+    description: z.string().nullable(),
+  }),
+  timelineBase.extend({
+    type: z.literal('BILLING'),
+    action: z.literal('BILLED'),
+  }),
+])
+export const operationalHistorySchema = z.object({
+  timeline: z.array(operationalTimelineEntrySchema),
+  audit: z.array(
+    z.object({
+      id: z.string().uuid(),
+      action: z.string(),
+      actor: historyActorSchema,
+      requestId: z.string(),
+      metadata: z.record(z.string(), z.string()).nullable(),
+      occurredAt: z.string().datetime(),
+    }),
+  ),
+})
+export type OperationalHistory = z.infer<typeof operationalHistorySchema>
+export type OperationalTimelineEntry = z.infer<
+  typeof operationalTimelineEntrySchema
+>

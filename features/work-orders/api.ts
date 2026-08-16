@@ -1,6 +1,7 @@
 import { clientApiRequest } from '@/lib/api/client'
 import {
   agendaSchema,
+  operationalHistorySchema,
   workOrderDetailsSchema,
   workOrderPageSchema,
   type WorkOrderPriority,
@@ -49,6 +50,14 @@ export function findWorkOrder(workOrderId: string) {
     {
       retryAfterUnauthorized: true,
     },
+  )
+}
+
+export function findWorkOrderHistory(workOrderId: string) {
+  return clientApiRequest(
+    `work-orders/${workOrderId}/history`,
+    operationalHistorySchema,
+    { retryAfterUnauthorized: true },
   )
 }
 

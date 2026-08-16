@@ -10,8 +10,12 @@ import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
-import { cancelWorkOrder, findWorkOrder } from './api'
-import type { WorkOrderDetails } from './contracts'
+import { cancelWorkOrder, findWorkOrder, findWorkOrderHistory } from './api'
+import type {
+  OperationalHistory,
+  OperationalTimelineEntry,
+  WorkOrderDetails,
+} from './contracts'
 import { getWorkOrderErrorMessage } from './errors'
 import { WorkOrderForm } from './work-order-form'
 import { WorkOrderStatusBadge, workOrderStatusLabel } from './status-badge'
@@ -24,6 +28,8 @@ export function WorkOrderDetail() {
     [searchParams],
   )
   const [workOrder, setWorkOrder] = useState<WorkOrderDetails | null>(null)
+  const [operationalHistory, setOperationalHistory] =
+    useState<OperationalHistory | null>(null)
   const [editing, setEditing] = useState(false)
   const [reason, setReason] = useState('')
   const [canceling, setCanceling] = useState(false)
@@ -32,9 +38,15 @@ export function WorkOrderDetail() {
 
   useEffect(() => {
     let active = true
-    void findWorkOrder(workOrderId)
-      .then((value) => {
-        if (active) setWorkOrder(value)
+    void Promise.all([
+      findWorkOrder(workOrderId),
+      findWorkOrderHistory(workOrderId),
+    ])
+      .then(([order, history]) => {
+        if (active) {
+          setWorkOrder(order)
+          setOperationalHistory(history)
+        }
       })
       .catch((value: unknown) => {
         if (active) setError(getWorkOrderErrorMessage(value))
@@ -196,44 +208,46 @@ export function WorkOrderDetail() {
           </Card>
           <div>
             <h2 className="font-heading text-2xl font-bold">Histórico</h2>
-            {workOrder.assignments.length ? (
+            {operationalHistory ? (
               <ol className="mt-4 space-y-3">
-                {workOrder.assignments.map((assignment) => (
-                  <li
-                    key={assignment.id}
-                    className="rounded-2xl border bg-card p-4"
-                  >
-                    <strong>{assignment.technicianName}</strong>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      Atribuído em {formatDate(assignment.assignedAt)}
-                      {assignment.unassignedAt
-                        ? ` · encerrado em ${formatDate(assignment.unassignedAt)}`
-                        : ' · atribuição atual'}
+                {operationalHistory.timeline.map((entry) => (
+                  <li key={entry.id} className="rounded-2xl border bg-card p-4">
+                    <div className="flex flex-wrap justify-between gap-2">
+                      <strong>{timelineTitle(entry)}</strong>
+                      <time
+                        className="text-sm text-muted-foreground"
+                        dateTime={entry.occurredAt}
+                      >
+                        {formatDate(entry.occurredAt)}
+                      </time>
+                    </div>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      {entry.actor.name} · {timelineDetail(entry)}
                     </p>
                   </li>
                 ))}
               </ol>
+            ) : (
+              <Skeleton
+                className="mt-4 h-40 rounded-2xl"
+                aria-label="Carregando histórico"
+              />
+            )}
+            {operationalHistory?.audit.length ? (
+              <details className="mt-5 rounded-2xl border bg-card p-4">
+                <summary className="cursor-pointer font-semibold">
+                  Auditoria técnica
+                </summary>
+                <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+                  {operationalHistory.audit.map((entry) => (
+                    <li key={entry.id}>
+                      {entry.action} · {entry.actor.name} · request{' '}
+                      {entry.requestId}
+                    </li>
+                  ))}
+                </ul>
+              </details>
             ) : null}
-            <ol className="mt-4 space-y-3">
-              {workOrder.history.map((entry) => (
-                <li key={entry.id} className="rounded-2xl border bg-card p-4">
-                  <div className="flex flex-wrap justify-between gap-2">
-                    <strong>{workOrderStatusLabel(entry.newStatus)}</strong>
-                    <time
-                      className="text-sm text-muted-foreground"
-                      dateTime={entry.createdAt}
-                    >
-                      {formatDate(entry.createdAt)}
-                    </time>
-                  </div>
-                  {entry.reason ? (
-                    <p className="mt-2 text-sm text-muted-foreground">
-                      {historyReason(entry.reason)}
-                    </p>
-                  ) : null}
-                </li>
-              ))}
-            </ol>
           </div>
         </>
       ) : null}
@@ -299,4 +313,29 @@ function historyReason(value: string) {
     WORK_ORDER_RESCHEDULED: 'Ordem reagendada.',
   }
   return labels[value] ?? value
+}
+
+function timelineTitle(entry: OperationalTimelineEntry) {
+  if (entry.type === 'STATUS') return workOrderStatusLabel(entry.newStatus)
+  if (entry.type === 'ASSIGNMENT')
+    return entry.action === 'ASSIGNED'
+      ? 'Técnico atribuído'
+      : 'Atribuição encerrada'
+  if (entry.type === 'REVIEW')
+    return entry.decision === 'APPROVED'
+      ? 'Revisão aprovada'
+      : 'Correção solicitada'
+  return 'Ordem faturada'
+}
+
+function timelineDetail(entry: OperationalTimelineEntry) {
+  if (entry.type === 'STATUS')
+    return entry.reason ? historyReason(entry.reason) : 'Status alterado.'
+  if (entry.type === 'ASSIGNMENT') return `Técnico: ${entry.technician.name}`
+  if (entry.type === 'REVIEW')
+    return (
+      entry.description ??
+      (entry.reason ? historyReason(entry.reason) : 'Revisão registrada.')
+    )
+  return 'Faturamento externo registrado.'
 }
