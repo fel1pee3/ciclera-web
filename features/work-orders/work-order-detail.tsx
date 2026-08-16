@@ -161,6 +161,24 @@ export function WorkOrderDetail() {
           ) : null}
           <div>
             <h2 className="font-heading text-2xl font-bold">Histórico</h2>
+            {workOrder.assignments.length ? (
+              <ol className="mt-4 space-y-3">
+                {workOrder.assignments.map((assignment) => (
+                  <li
+                    key={assignment.id}
+                    className="rounded-2xl border bg-card p-4"
+                  >
+                    <strong>{assignment.technicianName}</strong>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Atribuído em {formatDate(assignment.assignedAt)}
+                      {assignment.unassignedAt
+                        ? ` · encerrado em ${formatDate(assignment.unassignedAt)}`
+                        : ' · atribuição atual'}
+                    </p>
+                  </li>
+                ))}
+              </ol>
+            ) : null}
             <ol className="mt-4 space-y-3">
               {workOrder.history.map((entry) => (
                 <li key={entry.id} className="rounded-2xl border bg-card p-4">
@@ -209,7 +227,9 @@ export function NewWorkOrder() {
 }
 
 export function safeWorkOrderReturn(value: string | null): string {
-  return value?.startsWith('/app/ordens') && !value.startsWith('//')
+  return value &&
+    (value.startsWith('/app/ordens') || value.startsWith('/app/agenda')) &&
+    !value.startsWith('//')
     ? value
     : '/app/ordens'
 }
@@ -230,13 +250,17 @@ function formatDate(value: string | null) {
     : 'Não informado'
 }
 function formatMoney(value: string | null) {
-  return value === null
-    ? 'Não informado'
-    : new Intl.NumberFormat('pt-BR', {
-        style: 'currency',
-        currency: 'BRL',
-      }).format(Number(BigInt(value)) / 100)
+  if (value === null) return 'Não informado'
+  const cents = BigInt(value)
+  const whole = cents / 100n
+  const fraction = (cents % 100n).toString().padStart(2, '0')
+  return `R$ ${whole.toLocaleString('pt-BR')},${fraction}`
 }
 function historyReason(value: string) {
-  return value === 'WORK_ORDER_CREATED' ? 'Ordem criada.' : value
+  const labels: Record<string, string> = {
+    WORK_ORDER_CREATED: 'Ordem criada.',
+    WORK_ORDER_SCHEDULED: 'Ordem agendada.',
+    WORK_ORDER_RESCHEDULED: 'Ordem reagendada.',
+  }
+  return labels[value] ?? value
 }

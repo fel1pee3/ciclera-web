@@ -30,6 +30,7 @@ const response = {
   createdAt: '2026-08-16T00:00:00.000Z',
   updatedAt: '2026-08-16T00:00:00.000Z',
   history: [],
+  assignments: [],
 }
 
 describe('work order API client', () => {

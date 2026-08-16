@@ -53,8 +53,20 @@ export const workOrderHistorySchema = z.object({
   createdAt: z.string().datetime(),
 })
 
+export const workOrderAssignmentSchema = z.object({
+  id: z.string().uuid(),
+  technicianId: z.string().uuid(),
+  technicianName: z.string(),
+  assignedByUserId: z.string().uuid(),
+  assignedAt: z.string().datetime(),
+  unassignedByUserId: z.string().uuid().nullable(),
+  unassignedAt: z.string().datetime().nullable(),
+})
+export type WorkOrderAssignment = z.infer<typeof workOrderAssignmentSchema>
+
 export const workOrderDetailsSchema = workOrderSchema.extend({
   history: z.array(workOrderHistorySchema),
+  assignments: z.array(workOrderAssignmentSchema),
 })
 export type WorkOrderDetails = z.infer<typeof workOrderDetailsSchema>
 
@@ -65,3 +77,16 @@ export const workOrderPageSchema = z.object({
   total: z.number().int().nonnegative(),
 })
 export type WorkOrderPage = z.infer<typeof workOrderPageSchema>
+
+export const agendaItemSchema = workOrderSchema.extend({
+  activeAssignment: workOrderAssignmentSchema,
+})
+export type AgendaItem = z.infer<typeof agendaItemSchema>
+
+export const agendaSchema = z.object({
+  items: z.array(agendaItemSchema),
+  timezone: z.string(),
+  from: z.string(),
+  to: z.string(),
+})
+export type Agenda = z.infer<typeof agendaSchema>

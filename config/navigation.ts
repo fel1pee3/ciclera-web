@@ -1,5 +1,6 @@
 import {
   Building2,
+  CalendarDays,
   ClipboardList,
   Home,
   Users,
@@ -20,6 +21,7 @@ export const officeNavigation: readonly NavigationItem[] = [
   { href: '/app/clientes', icon: Building2, label: 'Clientes' },
   { href: '/app/equipamentos', icon: Wrench, label: 'Equipamentos' },
   { href: '/app/ordens', icon: ClipboardList, label: 'Ordens' },
+  { href: '/app/agenda', icon: CalendarDays, label: 'Agenda' },
   { href: '/app/equipe', icon: Users, label: 'Equipe' },
 ]
 
