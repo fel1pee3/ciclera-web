@@ -1,4 +1,4 @@
-import { Home, Users, Wrench, type LucideIcon } from 'lucide-react'
+import { Building2, Home, Users, Wrench, type LucideIcon } from 'lucide-react'
 
 import type { UserRole } from '@/features/auth/contracts'
 
@@ -10,6 +10,7 @@ export interface NavigationItem {
 
 export const officeNavigation: readonly NavigationItem[] = [
   { href: '/app', icon: Home, label: 'Início' },
+  { href: '/app/clientes', icon: Building2, label: 'Clientes' },
   { href: '/app/equipe', icon: Users, label: 'Equipe' },
 ]
 
