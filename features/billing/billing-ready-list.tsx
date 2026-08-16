@@ -12,7 +12,11 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { listCustomers } from '@/features/customers/api'
 import type { Customer } from '@/features/customers/contracts'
 import { formatMoney } from '@/features/reviews/review-queue'
-import { listReadyForBilling, markWorkOrderBilled } from './api'
+import {
+  downloadBillingCsv,
+  listReadyForBilling,
+  markWorkOrderBilled,
+} from './api'
 import type { BillingReadyPage } from './contracts'
 
 const pageSize = 20
@@ -26,6 +30,7 @@ export function BillingReadyList() {
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [pendingId, setPendingId] = useState<string | null>(null)
+  const [exporting, setExporting] = useState(false)
 
   useEffect(() => {
     let active = true
@@ -95,6 +100,26 @@ export function BillingReadyList() {
       setError('A ordem foi alterada por outra pessoa. Recarregue a fila.')
     } finally {
       setPendingId(null)
+    }
+  }
+
+  async function exportCsv() {
+    setExporting(true)
+    setError(null)
+    try {
+      const blob = await downloadBillingCsv(query)
+      const url = URL.createObjectURL(blob)
+      const anchor = document.createElement('a')
+      anchor.href = url
+      anchor.download = 'faturamento-pronto.csv'
+      anchor.click()
+      URL.revokeObjectURL(url)
+    } catch {
+      setError(
+        'Não foi possível exportar a fila. Refine os filtros e tente novamente.',
+      )
+    } finally {
+      setExporting(false)
     }
   }
 
@@ -172,6 +197,14 @@ export function BillingReadyList() {
               onClick={() => router.push('/app/faturamento')}
             >
               Limpar
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={exporting}
+              onClick={() => void exportCsv()}
+            >
+              {exporting ? 'Exportando…' : 'Exportar CSV'}
             </Button>
           </div>
         </form>

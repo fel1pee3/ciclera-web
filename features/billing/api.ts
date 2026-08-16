@@ -1,4 +1,4 @@
-import { clientApiRequest } from '@/lib/api/client'
+import { clientApiDownload, clientApiRequest } from '@/lib/api/client'
 import { billedResponseSchema, billingReadyPageSchema } from './contracts'
 
 export interface BillingReadyQuery {
@@ -13,6 +13,17 @@ export interface BillingReadyQuery {
 }
 
 export function listReadyForBilling(query: BillingReadyQuery) {
+  const params = readyParams(query)
+  return clientApiRequest(`billing/ready?${params}`, billingReadyPageSchema, {
+    retryAfterUnauthorized: true,
+  })
+}
+
+export function downloadBillingCsv(query: BillingReadyQuery) {
+  return clientApiDownload(`billing/ready/export.csv?${readyParams(query)}`)
+}
+
+function readyParams(query: BillingReadyQuery) {
   const params = new URLSearchParams({
     page: String(query.page),
     pageSize: String(query.pageSize),
@@ -21,9 +32,7 @@ export function listReadyForBilling(query: BillingReadyQuery) {
     if (key === 'page' || key === 'pageSize' || value === undefined) continue
     params.set(key, String(value))
   }
-  return clientApiRequest(`billing/ready?${params}`, billingReadyPageSchema, {
-    retryAfterUnauthorized: true,
-  })
+  return params
 }
 
 export function markWorkOrderBilled(workOrderId: string, version: number) {
