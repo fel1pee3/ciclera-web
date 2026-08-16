@@ -159,6 +159,41 @@ export function WorkOrderDetail() {
               </Button>
             </Card>
           ) : null}
+          <Card className="p-5">
+            <div className="flex items-end justify-between gap-4">
+              <div>
+                <h2 className="font-heading text-lg font-semibold">
+                  Itens adicionais
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  Materiais, serviços e horas registrados em campo.
+                </p>
+              </div>
+              <strong>{formatMoney(workOrder.additionalTotalInCents)}</strong>
+            </div>
+            {workOrder.additionalItems.length ? (
+              <ul className="mt-4 divide-y divide-border">
+                {workOrder.additionalItems.map((item) => (
+                  <li
+                    className="flex justify-between gap-4 py-3 text-sm"
+                    key={item.id}
+                  >
+                    <div>
+                      <p className="font-semibold">{item.description}</p>
+                      <p className="text-muted-foreground">
+                        {item.quantity} × {formatMoney(item.unitAmountInCents)}
+                      </p>
+                    </div>
+                    <strong>{formatMoney(item.totalAmountInCents)}</strong>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-4 text-sm text-muted-foreground">
+                Nenhum item adicional registrado.
+              </p>
+            )}
+          </Card>
           <div>
             <h2 className="font-heading text-2xl font-bold">Histórico</h2>
             {workOrder.assignments.length ? (

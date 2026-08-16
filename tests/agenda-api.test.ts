@@ -31,6 +31,8 @@ const order = {
   updatedAt: '2026-08-16T00:00:00.000Z',
   history: [],
   assignments: [],
+  additionalItems: [],
+  additionalTotalInCents: '0',
 }
 
 describe('agenda API client', () => {

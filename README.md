@@ -229,12 +229,12 @@ As rotas devem usar Route Groups para separar contextos sem adicionar segmentos 
 
 ### Área do técnico
 
-| Rota                                   | Finalidade                       | Perfil                 |
-| -------------------------------------- | -------------------------------- | ---------------------- |
-| `/field`                               | Resumo das ordens atribuídas     | `TECHNICIAN`           |
-| `/field/ordens`                        | Lista das próprias ordens        | `TECHNICIAN`           |
-| `/field/ordens/[workOrderId]`          | Detalhes do atendimento          | `TECHNICIAN` atribuído |
-| `/field/ordens/[workOrderId]/executar` | Execução, checklist e evidências | `TECHNICIAN` atribuído |
+| Rota                                   | Finalidade                                         | Perfil                 |
+| -------------------------------------- | -------------------------------------------------- | ---------------------- |
+| `/field`                               | Resumo das ordens atribuídas                       | `TECHNICIAN`           |
+| `/field/ordens`                        | Lista das próprias ordens                          | `TECHNICIAN`           |
+| `/field/ordens/[workOrderId]`          | Detalhes do atendimento                            | `TECHNICIAN` atribuído |
+| `/field/ordens/[workOrderId]/executar` | Execução, checklist, evidências e itens adicionais | `TECHNICIAN` atribuído |
 
 Os nomes internos de pastas, componentes e tipos devem permanecer em inglês. Segmentos públicos da URL e conteúdo visível podem permanecer em português por serem parte da experiência do usuário brasileiro.
 

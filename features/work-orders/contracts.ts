@@ -64,9 +64,22 @@ export const workOrderAssignmentSchema = z.object({
 })
 export type WorkOrderAssignment = z.infer<typeof workOrderAssignmentSchema>
 
+export const workOrderAdditionalItemSchema = z.object({
+  id: z.string().uuid(),
+  type: z.enum(['MATERIAL', 'SERVICE', 'ADDITIONAL_HOUR']),
+  description: z.string(),
+  quantity: z.string(),
+  unitAmountInCents: z.string(),
+  totalAmountInCents: z.string(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+})
+
 export const workOrderDetailsSchema = workOrderSchema.extend({
   history: z.array(workOrderHistorySchema),
   assignments: z.array(workOrderAssignmentSchema),
+  additionalItems: z.array(workOrderAdditionalItemSchema),
+  additionalTotalInCents: z.string(),
 })
 export type WorkOrderDetails = z.infer<typeof workOrderDetailsSchema>
 

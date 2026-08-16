@@ -49,6 +49,18 @@ export const evidenceSchema = z.object({
 })
 export type Evidence = z.infer<typeof evidenceSchema>
 
+export const additionalItemSchema = z.object({
+  id: z.string().uuid(),
+  type: z.enum(['MATERIAL', 'SERVICE', 'ADDITIONAL_HOUR']),
+  description: z.string(),
+  quantity: z.string(),
+  unitAmountInCents: z.string().regex(/^\d+$/),
+  totalAmountInCents: z.string().regex(/^\d+$/),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+})
+export type AdditionalItem = z.infer<typeof additionalItemSchema>
+
 export const fieldWorkOrderSchema = z.object({
   id: z.string().uuid(),
   number: z.string(),
@@ -90,6 +102,8 @@ export const fieldWorkOrderSchema = z.object({
       updatedAt: z.string().datetime(),
       checklist: executionChecklistSchema.nullable(),
       evidence: z.array(evidenceSchema),
+      additionalItems: z.array(additionalItemSchema),
+      additionalTotalInCents: z.string().regex(/^\d+$/),
     })
     .nullable(),
 })

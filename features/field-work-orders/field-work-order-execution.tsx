@@ -18,6 +18,7 @@ import type { FieldWorkOrder } from './contracts'
 import { getFieldWorkOrderErrorMessage } from './errors'
 import { ExecutionChecklistFields } from './execution-checklist'
 import { ExecutionEvidence } from './execution-evidence'
+import { ExecutionAdditionalItems } from './execution-additional-items'
 
 export function FieldWorkOrderExecution() {
   const { workOrderId } = useParams<{ workOrderId: string }>()
@@ -208,6 +209,10 @@ export function FieldWorkOrderExecution() {
                 </Alert>
               )}
               <ExecutionEvidence order={order} onOrderChange={setOrder} />
+              <ExecutionAdditionalItems
+                order={order}
+                onOrderChange={setOrder}
+              />
             </div>
           ) : null}
 

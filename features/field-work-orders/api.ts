@@ -83,6 +83,53 @@ export function getEvidenceReadUrl(evidenceId: string) {
   )
 }
 
+export interface AdditionalItemInput {
+  version: number
+  type: 'MATERIAL' | 'SERVICE' | 'ADDITIONAL_HOUR'
+  description: string
+  quantity: string
+  unitAmountInCents: string
+}
+
+export function createAdditionalItem(
+  workOrderId: string,
+  input: AdditionalItemInput,
+) {
+  return clientApiRequest(
+    `field/work-orders/${workOrderId}/execution/additional-items`,
+    fieldWorkOrderSchema,
+    { method: 'POST', json: input, retryAfterUnauthorized: true },
+  )
+}
+
+export function updateAdditionalItem(
+  workOrderId: string,
+  itemId: string,
+  input: AdditionalItemInput,
+) {
+  return clientApiRequest(
+    `field/work-orders/${workOrderId}/execution/additional-items/${itemId}`,
+    fieldWorkOrderSchema,
+    { method: 'PATCH', json: input, retryAfterUnauthorized: true },
+  )
+}
+
+export function removeAdditionalItem(
+  workOrderId: string,
+  itemId: string,
+  version: number,
+) {
+  return clientApiRequest(
+    `field/work-orders/${workOrderId}/execution/additional-items/${itemId}`,
+    fieldWorkOrderSchema,
+    {
+      method: 'DELETE',
+      json: { version },
+      retryAfterUnauthorized: true,
+    },
+  )
+}
+
 export function findFieldWorkOrder(workOrderId: string) {
   return clientApiRequest(
     `field/work-orders/${workOrderId}`,

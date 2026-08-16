@@ -9,6 +9,9 @@ import {
   confirmEvidence,
   removeEvidence,
   getEvidenceReadUrl,
+  createAdditionalItem,
+  updateAdditionalItem,
+  removeAdditionalItem,
 } from '@/features/field-work-orders/api'
 
 const order = {
@@ -88,6 +91,8 @@ describe('field work orders API client', () => {
         updatedAt: '2026-08-17T12:00:00.000Z',
         checklist: null,
         evidence: [],
+        additionalItems: [],
+        additionalTotalInCents: '0',
       },
     }
     const fetchMock = vi
@@ -138,6 +143,8 @@ describe('field work orders API client', () => {
         updatedAt: '2026-08-17T12:00:00.000Z',
         checklist: null,
         evidence: [],
+        additionalItems: [],
+        additionalTotalInCents: '0',
       },
     }
     const fetchMock = vi.fn().mockResolvedValue(Response.json(response))
@@ -168,6 +175,8 @@ describe('field work orders API client', () => {
       updatedAt: '2026-08-17T12:00:00.000Z',
       checklist: null,
       evidence: [],
+      additionalItems: [],
+      additionalTotalInCents: '0',
     }
     const current = { ...order, status: 'IN_PROGRESS', execution }
     const fetchMock = vi
@@ -216,5 +225,49 @@ describe('field work orders API client', () => {
       expect.stringContaining('/execution/evidence/'),
       expect.objectContaining({ method: 'DELETE' }),
     )
+  })
+
+  it('writes additional items with the current execution version', async () => {
+    const current = {
+      ...order,
+      status: 'IN_PROGRESS',
+      execution: {
+        id: '70000000-0000-4000-8000-000000000010',
+        technicianId: '70000000-0000-4000-8000-000000000011',
+        notes: null,
+        version: 4,
+        startedAt: '2026-08-17T12:00:00.000Z',
+        updatedAt: '2026-08-17T12:00:00.000Z',
+        checklist: null,
+        evidence: [],
+        additionalItems: [],
+        additionalTotalInCents: '0',
+      },
+    }
+    const fetchMock = vi
+      .fn()
+      .mockImplementation(() => Promise.resolve(Response.json(current)))
+    vi.stubGlobal('fetch', fetchMock)
+    const input = {
+      version: 4,
+      type: 'MATERIAL' as const,
+      description: 'Peça',
+      quantity: '1.5',
+      unitAmountInCents: '1000',
+    }
+    await createAdditionalItem(order.id, input)
+    await updateAdditionalItem(
+      order.id,
+      '70000000-0000-4000-8000-000000000099',
+      input,
+    )
+    await removeAdditionalItem(
+      order.id,
+      '70000000-0000-4000-8000-000000000099',
+      4,
+    )
+    expect(
+      fetchMock.mock.calls.map((call) => (call[1] as RequestInit).method),
+    ).toEqual(['POST', 'PATCH', 'DELETE'])
   })
 })
