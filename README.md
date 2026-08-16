@@ -465,6 +465,21 @@ O `middleware` do Next.js pode melhorar a navegação e impedir acesso visual a 
 - Uma resposta `403` deve mostrar acesso negado, sem simular que o recurso não existe quando isso prejudicar a compreensão.
 - Menus e ações devem refletir o perfil, mas a API continua validando cada operação.
 
+Os layouts protegidos carregam a conta por `/auth/me`, exibem estados explícitos
+de sessão em carregamento, expirada ou indisponível e separam o shell de
+escritório (`/app`) do shell mobile de campo (`/field`). A API permanece como
+autoridade de acesso; a proteção visual apenas evita navegação inadequada.
+
+### Gestão de equipe
+
+`/app/equipe` consome a paginação real de `/users`, mantém busca e filtros na URL
+e cobre loading, vazio, erro e sucesso. Criação, edição, ativação e desativação
+seguem a política da API: `OWNER` gerencia todos os perfis; `ADMIN` visualiza a
+equipe, mas recebe ações apenas sobre `TECHNICIAN`. A senha inicial existe somente
+no formulário e na requisição de criação, sem Web Storage ou logs, e deve ser
+compartilhada por canal seguro. Conflitos de e-mail e proteção do último `OWNER`
+são apresentados com mensagens específicas.
+
 ## Multi-tenancy no frontend
 
 O frontend deve tratar a organização autenticada como contexto fornecido pela sessão, não como um filtro arbitrário escolhido pelo cliente.
