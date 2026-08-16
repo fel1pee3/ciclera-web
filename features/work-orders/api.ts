@@ -1,4 +1,4 @@
-import { clientApiRequest } from '@/lib/api/client'
+import { clientApiDownload, clientApiRequest } from '@/lib/api/client'
 import {
   agendaSchema,
   operationalHistorySchema,
@@ -59,6 +59,10 @@ export function findWorkOrderHistory(workOrderId: string) {
     operationalHistorySchema,
     { retryAfterUnauthorized: true },
   )
+}
+
+export function downloadServiceReport(workOrderId: string) {
+  return clientApiDownload(`work-orders/${workOrderId}/service-report.pdf`)
 }
 
 export function createWorkOrder(input: WorkOrderFormInput) {

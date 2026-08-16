@@ -33,6 +33,16 @@ export async function clientApiRequest<T>(
   return parseApiResponse(response, schema)
 }
 
+export async function clientApiDownload(path: string): Promise<Blob> {
+  let response = await send(path, undefined, { method: 'GET' })
+  if (response.status === 401) {
+    const refresh = await send('auth/refresh', undefined, { method: 'POST' })
+    if (refresh.ok) response = await send(path, undefined, { method: 'GET' })
+  }
+  if (!response.ok) throw new Error('DOWNLOAD_FAILED')
+  return response.blob()
+}
+
 function send(
   path: string,
   json: unknown,

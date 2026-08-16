@@ -10,7 +10,12 @@ import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
-import { cancelWorkOrder, findWorkOrder, findWorkOrderHistory } from './api'
+import {
+  cancelWorkOrder,
+  downloadServiceReport,
+  findWorkOrder,
+  findWorkOrderHistory,
+} from './api'
 import type {
   OperationalHistory,
   OperationalTimelineEntry,
@@ -33,6 +38,7 @@ export function WorkOrderDetail() {
   const [editing, setEditing] = useState(false)
   const [reason, setReason] = useState('')
   const [canceling, setCanceling] = useState(false)
+  const [downloadingReport, setDownloadingReport] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
 
@@ -76,6 +82,25 @@ export function WorkOrderDetail() {
       setError(getWorkOrderErrorMessage(value))
     } finally {
       setCanceling(false)
+    }
+  }
+
+  const downloadReport = async () => {
+    if (!workOrder) return
+    setDownloadingReport(true)
+    setError(null)
+    try {
+      const blob = await downloadServiceReport(workOrder.id)
+      const url = URL.createObjectURL(blob)
+      const anchor = document.createElement('a')
+      anchor.href = url
+      anchor.download = `relatorio-${workOrder.number}.pdf`
+      anchor.click()
+      URL.revokeObjectURL(url)
+    } catch {
+      setError('Não foi possível gerar o relatório de serviço.')
+    } finally {
+      setDownloadingReport(false)
     }
   }
 
@@ -131,6 +156,19 @@ export function WorkOrderDetail() {
                 onClick={() => setEditing(true)}
               >
                 Editar rascunho
+              </Button>
+            ) : null}
+            {workOrder.status === 'READY_TO_BILL' ||
+            workOrder.status === 'BILLED' ? (
+              <Button
+                className="mt-5"
+                variant="outline"
+                disabled={downloadingReport}
+                onClick={() => void downloadReport()}
+              >
+                {downloadingReport
+                  ? 'Gerando relatório…'
+                  : 'Baixar relatório PDF'}
               </Button>
             ) : null}
           </Card>
