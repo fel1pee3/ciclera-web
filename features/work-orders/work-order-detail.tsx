@@ -252,8 +252,9 @@ function formatDate(value: string | null) {
 function formatMoney(value: string | null) {
   if (value === null) return 'Não informado'
   const cents = BigInt(value)
-  const whole = cents / 100n
-  const fraction = (cents % 100n).toString().padStart(2, '0')
+  const hundred = BigInt(100)
+  const whole = cents / hundred
+  const fraction = (cents % hundred).toString().padStart(2, '0')
   return `R$ ${whole.toLocaleString('pt-BR')},${fraction}`
 }
 function historyReason(value: string) {

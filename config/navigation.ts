@@ -26,7 +26,8 @@ export const officeNavigation: readonly NavigationItem[] = [
 ]
 
 export const fieldNavigation: readonly NavigationItem[] = [
-  { href: '/field', icon: Wrench, label: 'Atendimentos' },
+  { href: '/field', icon: Home, label: 'Resumo' },
+  { href: '/field/ordens', icon: ClipboardList, label: 'Ordens' },
 ]
 
 export const officeRoles: readonly UserRole[] = ['OWNER', 'ADMIN']
