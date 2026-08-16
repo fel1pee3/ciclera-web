@@ -13,7 +13,9 @@ import {
   findFieldWorkOrder,
   saveFieldWorkOrderExecution,
   startFieldWorkOrder,
+  submitFieldWorkOrderForReview,
 } from './api'
+import { ApiError } from '@/lib/api/errors'
 import type { FieldWorkOrder } from './contracts'
 import { getFieldWorkOrderErrorMessage } from './errors'
 import { ExecutionChecklistFields } from './execution-checklist'
@@ -28,6 +30,7 @@ export function FieldWorkOrderExecution() {
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
+  const [completionIssues, setCompletionIssues] = useState<string[]>([])
   const [reloadKey, setReloadKey] = useState(0)
 
   useEffect(() => {
@@ -98,6 +101,33 @@ export function FieldWorkOrderExecution() {
       setConfirmedNotes(persistedNotes)
       setNotice('Observações salvas no servidor.')
     } catch (reason: unknown) {
+      setError(getFieldWorkOrderErrorMessage(reason))
+    } finally {
+      setPending(false)
+    }
+  }
+
+  async function submitForReview() {
+    if (!order?.execution || dirty) return
+    setPending(true)
+    setError(null)
+    setNotice(null)
+    setCompletionIssues([])
+    try {
+      const updated = await submitFieldWorkOrderForReview(
+        order.id,
+        order.execution.version,
+      )
+      setOrder(updated)
+      setNotice('Execução enviada para revisão do escritório.')
+    } catch (reason: unknown) {
+      if (reason instanceof ApiError) {
+        const issues = reason.problem?.fieldErrors?.completion
+        if (issues?.length) {
+          setCompletionIssues(issues)
+          return
+        }
+      }
       setError(getFieldWorkOrderErrorMessage(reason))
     } finally {
       setPending(false)
@@ -213,6 +243,36 @@ export function FieldWorkOrderExecution() {
                 order={order}
                 onOrderChange={setOrder}
               />
+              {completionIssues.length ? (
+                <Alert variant="destructive">
+                  <p className="font-semibold">Pendências da execução:</p>
+                  <ul className="mt-2 list-disc space-y-1 pl-5">
+                    {completionIssues.map((issue) => (
+                      <li key={issue}>{issue}</li>
+                    ))}
+                  </ul>
+                </Alert>
+              ) : null}
+              <div className="rounded-2xl border border-border bg-muted/40 p-4">
+                <p className="font-semibold">Finalizar atendimento</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Depois do envio, os dados ficam bloqueados até uma eventual
+                  solicitação de correção.
+                </p>
+                <Button
+                  className="mt-4 w-full"
+                  size="lg"
+                  disabled={pending || dirty}
+                  onClick={() => void submitForReview()}
+                >
+                  {pending ? 'Enviando…' : 'Enviar para revisão'}
+                </Button>
+                {dirty ? (
+                  <p className="mt-2 text-sm text-amber-700">
+                    Salve as observações antes de enviar.
+                  </p>
+                ) : null}
+              </div>
             </div>
           ) : null}
 

@@ -32,6 +32,8 @@ export const executionChecklistSchema = z.object({
     name: z.string(),
     version: z.number().int().positive(),
     fields: z.array(checklistFieldSchema),
+    requirePhoto: z.boolean().default(false),
+    requireSignature: z.boolean().default(false),
   }),
   responses: z.array(checklistAnswerSchema),
   missingRequiredFieldIds: z.array(z.string()),

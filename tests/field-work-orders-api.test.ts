@@ -12,6 +12,7 @@ import {
   createAdditionalItem,
   updateAdditionalItem,
   removeAdditionalItem,
+  submitFieldWorkOrderForReview,
 } from '@/features/field-work-orders/api'
 
 const order = {
@@ -269,5 +270,19 @@ describe('field work orders API client', () => {
     expect(
       fetchMock.mock.calls.map((call) => (call[1] as RequestInit).method),
     ).toEqual(['POST', 'PATCH', 'DELETE'])
+  })
+
+  it('submits the current execution version for review', async () => {
+    const submitted = { ...order, status: 'AWAITING_REVIEW' as const }
+    const fetchMock = vi.fn().mockResolvedValue(Response.json(submitted))
+    vi.stubGlobal('fetch', fetchMock)
+    await submitFieldWorkOrderForReview(order.id, 7)
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining('/submit-for-review'),
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ version: 7 }),
+      }),
+    )
   })
 })

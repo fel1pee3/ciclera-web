@@ -184,3 +184,18 @@ export function saveFieldWorkOrderChecklist(
     },
   )
 }
+
+export function submitFieldWorkOrderForReview(
+  workOrderId: string,
+  version: number,
+) {
+  return clientApiRequest(
+    `field/work-orders/${workOrderId}/submit-for-review`,
+    fieldWorkOrderSchema,
+    {
+      method: 'POST',
+      json: { version },
+      retryAfterUnauthorized: true,
+    },
+  )
+}
