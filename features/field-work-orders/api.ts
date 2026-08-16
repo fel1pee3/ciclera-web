@@ -33,3 +33,30 @@ export function findFieldWorkOrder(workOrderId: string) {
     },
   )
 }
+
+export function startFieldWorkOrder(workOrderId: string, version: number) {
+  return clientApiRequest(
+    `field/work-orders/${workOrderId}/start`,
+    fieldWorkOrderSchema,
+    {
+      method: 'POST',
+      json: { version },
+      retryAfterUnauthorized: true,
+    },
+  )
+}
+
+export function saveFieldWorkOrderExecution(
+  workOrderId: string,
+  input: { version: number; notes: string | null },
+) {
+  return clientApiRequest(
+    `field/work-orders/${workOrderId}/execution`,
+    fieldWorkOrderSchema,
+    {
+      method: 'PATCH',
+      json: input,
+      retryAfterUnauthorized: true,
+    },
+  )
+}

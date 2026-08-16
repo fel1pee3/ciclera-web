@@ -4,12 +4,14 @@ import Link from 'next/link'
 import { useParams, useSearchParams } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
 import { Alert } from '@/components/ui/alert'
+import { buttonVariants } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { WorkOrderStatusBadge } from '@/features/work-orders/status-badge'
 import { findFieldWorkOrder } from './api'
 import type { FieldWorkOrder } from './contracts'
 import { getFieldWorkOrderErrorMessage } from './errors'
+import { cn } from '@/lib/utils'
 
 export function FieldWorkOrderDetail() {
   const { workOrderId } = useParams<{ workOrderId: string }>()
@@ -77,6 +79,16 @@ export function FieldWorkOrderDetail() {
             />
             <Data label="Serviço" value={order.serviceType} />
           </dl>
+          {order.status === 'SCHEDULED' || order.status === 'IN_PROGRESS' ? (
+            <Link
+              className={cn(buttonVariants({ size: 'lg' }), 'mt-6 w-full')}
+              href={`/field/ordens/${order.id}/executar`}
+            >
+              {order.status === 'SCHEDULED'
+                ? 'Iniciar atendimento'
+                : 'Continuar atendimento'}
+            </Link>
+          ) : null}
         </Card>
       ) : null}
     </section>

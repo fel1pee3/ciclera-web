@@ -44,6 +44,16 @@ export const fieldWorkOrderSchema = z.object({
   actualStartAt: z.string().datetime().nullable(),
   actualEndAt: z.string().datetime().nullable(),
   version: z.number().int().positive(),
+  execution: z
+    .object({
+      id: z.string().uuid(),
+      technicianId: z.string().uuid(),
+      notes: z.string().nullable(),
+      version: z.number().int().positive(),
+      startedAt: z.string().datetime(),
+      updatedAt: z.string().datetime(),
+    })
+    .nullable(),
 })
 export type FieldWorkOrder = z.infer<typeof fieldWorkOrderSchema>
 

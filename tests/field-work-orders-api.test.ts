@@ -2,6 +2,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   findFieldWorkOrder,
   listFieldWorkOrders,
+  saveFieldWorkOrderExecution,
+  startFieldWorkOrder,
 } from '@/features/field-work-orders/api'
 
 const order = {
@@ -32,6 +34,7 @@ const order = {
   actualStartAt: null,
   actualEndAt: null,
   version: 2,
+  execution: null,
 }
 
 describe('field work orders API client', () => {
@@ -64,5 +67,54 @@ describe('field work orders API client', () => {
       customer: { name: 'Cliente' },
     })
     expect(result).not.toHaveProperty('expectedAmountInCents')
+  })
+
+  it('starts and persists execution using server versions', async () => {
+    const started = {
+      ...order,
+      status: 'IN_PROGRESS',
+      version: 3,
+      execution: {
+        id: '70000000-0000-4000-8000-000000000010',
+        technicianId: '70000000-0000-4000-8000-000000000011',
+        notes: null,
+        version: 1,
+        startedAt: '2026-08-17T12:00:00.000Z',
+        updatedAt: '2026-08-17T12:00:00.000Z',
+      },
+    }
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(Response.json(started))
+      .mockResolvedValueOnce(
+        Response.json({
+          ...started,
+          execution: { ...started.execution, notes: 'Confirmado', version: 2 },
+        }),
+      )
+    vi.stubGlobal('fetch', fetchMock)
+
+    await startFieldWorkOrder(order.id, 2)
+    await saveFieldWorkOrderExecution(order.id, {
+      version: 1,
+      notes: 'Confirmado',
+    })
+
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      expect.stringContaining(`/field/work-orders/${order.id}/start`),
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ version: 2 }),
+      }),
+    )
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      expect.stringContaining(`/field/work-orders/${order.id}/execution`),
+      expect.objectContaining({
+        method: 'PATCH',
+        body: JSON.stringify({ version: 1, notes: 'Confirmado' }),
+      }),
+    )
   })
 })
