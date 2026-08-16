@@ -5,6 +5,7 @@ import {
   Home,
   Users,
   Wrench,
+  ClipboardCheck,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -22,6 +23,7 @@ export const officeNavigation: readonly NavigationItem[] = [
   { href: '/app/equipamentos', icon: Wrench, label: 'Equipamentos' },
   { href: '/app/ordens', icon: ClipboardList, label: 'Ordens' },
   { href: '/app/agenda', icon: CalendarDays, label: 'Agenda' },
+  { href: '/app/revisao', icon: ClipboardCheck, label: 'Revisão' },
   { href: '/app/equipe', icon: Users, label: 'Equipe' },
 ]
 
