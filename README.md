@@ -429,6 +429,20 @@ Não introduzir Redux, Zustand ou Context global para dados que pertencem à URL
 
 A autenticação deve seguir o contrato da `ciclera-api`.
 
+O CP-10 centraliza chamadas browser em `lib/api/client.ts` e chamadas de Server
+Components em `lib/api/server.ts`. O cliente browser usa a URL pública da API,
+`credentials: include`, respostas sem cache e uma única tentativa de refresh
+após `401`; uma falha de refresh encerra o fluxo sem loop. O cliente server-side
+encaminha somente os cookies de autenticação conhecidos e nunca os expõe ao
+JavaScript do navegador.
+
+As rotas `/login`, `/recuperar-senha` e `/redefinir-senha` consomem os contratos
+reais da API. O token de redefinição é lido exclusivamente do fragmento
+`#token=`, mantido apenas em memória durante o formulário e removido da barra de
+endereço após a leitura. Nenhum access token ou refresh token é persistido pela
+web. Retornos após login aceitam somente caminhos internos compatíveis com o
+perfil autenticado.
+
 Regras obrigatórias:
 
 - Não armazenar access token ou refresh token em `localStorage` ou `sessionStorage`.
