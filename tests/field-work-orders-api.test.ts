@@ -3,6 +3,7 @@ import {
   findFieldWorkOrder,
   listFieldWorkOrders,
   saveFieldWorkOrderExecution,
+  saveFieldWorkOrderChecklist,
   startFieldWorkOrder,
 } from '@/features/field-work-orders/api'
 
@@ -81,6 +82,7 @@ describe('field work orders API client', () => {
         version: 1,
         startedAt: '2026-08-17T12:00:00.000Z',
         updatedAt: '2026-08-17T12:00:00.000Z',
+        checklist: null,
       },
     }
     const fetchMock = vi
@@ -114,6 +116,38 @@ describe('field work orders API client', () => {
       expect.objectContaining({
         method: 'PATCH',
         body: JSON.stringify({ version: 1, notes: 'Confirmado' }),
+      }),
+    )
+  })
+
+  it('sends typed partial checklist answers with the execution version', async () => {
+    const response = {
+      ...order,
+      status: 'IN_PROGRESS',
+      execution: {
+        id: '70000000-0000-4000-8000-000000000010',
+        technicianId: '70000000-0000-4000-8000-000000000011',
+        notes: null,
+        version: 2,
+        startedAt: '2026-08-17T12:00:00.000Z',
+        updatedAt: '2026-08-17T12:00:00.000Z',
+        checklist: null,
+      },
+    }
+    const fetchMock = vi.fn().mockResolvedValue(Response.json(response))
+    vi.stubGlobal('fetch', fetchMock)
+    await saveFieldWorkOrderChecklist(order.id, {
+      version: 1,
+      responses: [{ fieldId: 'operating', value: true }],
+    })
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining('/execution/checklist'),
+      expect.objectContaining({
+        method: 'PATCH',
+        body: JSON.stringify({
+          version: 1,
+          responses: [{ fieldId: 'operating', value: true }],
+        }),
       }),
     )
   })

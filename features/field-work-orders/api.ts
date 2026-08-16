@@ -60,3 +60,21 @@ export function saveFieldWorkOrderExecution(
     },
   )
 }
+
+export function saveFieldWorkOrderChecklist(
+  workOrderId: string,
+  input: {
+    version: number
+    responses: Array<{ fieldId: string; value: string | number | boolean }>
+  },
+) {
+  return clientApiRequest(
+    `field/work-orders/${workOrderId}/execution/checklist`,
+    fieldWorkOrderSchema,
+    {
+      method: 'PATCH',
+      json: input,
+      retryAfterUnauthorized: true,
+    },
+  )
+}

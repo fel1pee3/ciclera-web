@@ -16,6 +16,7 @@ import {
 } from './api'
 import type { FieldWorkOrder } from './contracts'
 import { getFieldWorkOrderErrorMessage } from './errors'
+import { ExecutionChecklistFields } from './execution-checklist'
 
 export function FieldWorkOrderExecution() {
   const { workOrderId } = useParams<{ workOrderId: string }>()
@@ -168,29 +169,43 @@ export function FieldWorkOrderExecution() {
           ) : null}
 
           {canEdit ? (
-            <div className="space-y-3">
-              <Label htmlFor="execution-notes">
-                Observações do atendimento
-              </Label>
-              <Textarea
-                id="execution-notes"
-                value={notes}
-                maxLength={4000}
-                rows={10}
-                placeholder="Registre diagnóstico, atividades realizadas e informações importantes."
-                onChange={(event) => setNotes(event.target.value)}
-              />
-              <p className="text-right text-xs text-muted-foreground">
-                {notes.length}/4000
-              </p>
-              <Button
-                className="w-full"
-                size="lg"
-                disabled={pending || !dirty}
-                onClick={() => void save()}
-              >
-                {pending ? 'Salvando…' : 'Salvar observações'}
-              </Button>
+            <div className="space-y-5">
+              <div className="space-y-3">
+                <Label htmlFor="execution-notes">
+                  Observações do atendimento
+                </Label>
+                <Textarea
+                  id="execution-notes"
+                  value={notes}
+                  maxLength={4000}
+                  rows={10}
+                  placeholder="Registre diagnóstico, atividades realizadas e informações importantes."
+                  onChange={(event) => setNotes(event.target.value)}
+                />
+                <p className="text-right text-xs text-muted-foreground">
+                  {notes.length}/4000
+                </p>
+                <Button
+                  className="w-full"
+                  size="lg"
+                  disabled={pending || !dirty}
+                  onClick={() => void save()}
+                >
+                  {pending ? 'Salvando…' : 'Salvar observações'}
+                </Button>
+              </div>
+              {order.execution?.checklist ? (
+                <ExecutionChecklistFields
+                  key={order.execution.version}
+                  order={order}
+                  checklist={order.execution.checklist}
+                  onSaved={setOrder}
+                />
+              ) : (
+                <Alert>
+                  Nenhum checklist foi configurado para este atendimento.
+                </Alert>
+              )}
             </div>
           ) : null}
 
