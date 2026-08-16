@@ -21,6 +21,9 @@ export function OfficeShell({
 
   return (
     <div className="min-h-dvh overflow-x-hidden bg-background lg:grid lg:grid-cols-[17rem_1fr]">
+      <a href="#conteudo" className="skip-link">
+        Ir para o conteúdo principal
+      </a>
       <aside className="hidden border-r bg-card p-5 lg:flex lg:flex-col">
         <p className="font-heading text-xl font-bold text-institutional">
           Ciclera
@@ -71,7 +74,7 @@ export function OfficeShell({
           </div>
         ) : null}
 
-        <main id="conteudo" className="p-4 sm:p-6 lg:p-8">
+        <main id="conteudo" tabIndex={-1} className="p-4 sm:p-6 lg:p-8">
           {children}
         </main>
       </div>

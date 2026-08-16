@@ -1,4 +1,5 @@
 import { expect, test, type Page, type Route } from '@playwright/test'
+import AxeBuilder from '@axe-core/playwright'
 
 const apiOrigin = 'http://127.0.0.1:3333'
 const appOrigin = 'http://127.0.0.1:3100'
@@ -77,9 +78,19 @@ async function mockApi(
 
     if (url.pathname === '/api/v1/dashboard/summary') {
       await json(route, {
-        today: { scheduled: 0, inProgress: 0, completed: 0 },
-        pendingReview: 0,
-        readyForBilling: { count: 0, totalCents: 0 },
+        timezone: 'America/Sao_Paulo',
+        period: { from: '2026-08-01', to: '2026-08-31' },
+        stages: {
+          IN_PROGRESS: { count: 0, amountInCents: '0' },
+          AWAITING_REVIEW: { count: 0, amountInCents: '0' },
+          PENDING_CORRECTION: { count: 0, amountInCents: '0' },
+          READY_TO_BILL: { count: 0, amountInCents: '0' },
+          BILLED: { count: 0, amountInCents: '0' },
+        },
+        blockedAmountInCents: '0',
+        averageReviewWaitingSeconds: null,
+        oldestBlocked: [],
+        recurringBlockers: [],
       })
       return
     }
@@ -125,6 +136,7 @@ test('administrative profile reaches the operational dashboard', async ({
   await expect(
     page.getByRole('heading', { name: 'Visão operacional' }),
   ).toBeVisible()
+  await expectNoCriticalAccessibilityViolations(page)
 })
 
 test('technician profile reaches a usable field view on mobile', async ({
@@ -148,4 +160,20 @@ test('technician profile reaches a usable field view on mobile', async ({
       document.documentElement.clientWidth,
   )
   expect(hasHorizontalOverflow).toBe(false)
+  await expectNoCriticalAccessibilityViolations(page)
 })
+
+async function expectNoCriticalAccessibilityViolations(page: Page) {
+  const results = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+    .analyze()
+  expect(
+    results.violations.flatMap((violation) =>
+      violation.nodes.map((node) => ({
+        rule: violation.id,
+        target: node.target.join(' '),
+        html: node.html,
+      })),
+    ),
+  ).toEqual([])
+}

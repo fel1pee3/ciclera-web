@@ -62,7 +62,7 @@ function HeroMockup() {
         <div className="rounded-2xl bg-card p-5 sm:p-7">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <span className="rounded-full bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground">
+              <span className="rounded-full bg-muted px-3 py-1 text-xs font-semibold text-foreground">
                 Demonstração
               </span>
               <h2 className="mt-4 font-heading text-xl font-semibold">
@@ -90,7 +90,7 @@ function HeroMockup() {
                   Clima Norte · Unidade condensadora
                 </p>
               </div>
-              <span className="rounded-full bg-active/15 px-3 py-1 text-xs font-semibold text-primary">
+              <span className="rounded-full bg-active/15 px-3 py-1 text-xs font-semibold text-institutional">
                 Revisada
               </span>
             </div>

@@ -356,7 +356,7 @@ export function BenefitsSection() {
         </div>
         <div className="mt-12 grid gap-px overflow-hidden rounded-2xl border border-border bg-border md:grid-cols-2">
           <div className="bg-muted p-7">
-            <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+            <span className="text-xs font-bold uppercase tracking-widest text-foreground">
               Antes
             </span>
             <p className="mt-3 font-heading text-lg">
@@ -364,7 +364,7 @@ export function BenefitsSection() {
             </p>
           </div>
           <div className="bg-active/10 p-7">
-            <span className="text-xs font-bold uppercase tracking-widest text-primary">
+            <span className="text-xs font-bold uppercase tracking-widest text-institutional">
               Depois
             </span>
             <p className="mt-3 font-heading text-lg">

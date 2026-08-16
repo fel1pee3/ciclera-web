@@ -40,7 +40,7 @@
   --ciclera-canvas: #f6f9f7;
   --ciclera-surface: #ffffff;
   --ciclera-muted: #eaf1ee;
-  --ciclera-muted-ink: #64716d;
+  --ciclera-muted-ink: #56635f;
   --ciclera-border: #dde7e3;
   --background: var(--ciclera-canvas);
   --foreground: var(--ciclera-ink);
@@ -57,7 +57,7 @@
   --border: var(--ciclera-border);
   --input: var(--ciclera-border);
   --ring: var(--ciclera-petrol);
-  --destructive: #dc4c4c;
+  --destructive: #a92f2f;
   --warning: #f59e0b;
   --active: var(--ciclera-green);
   --institutional: var(--ciclera-deep-petrol);

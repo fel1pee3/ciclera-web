@@ -22,7 +22,7 @@ export default function Page() {
         Ir para o conteúdo principal
       </a>
       <Header />
-      <main id="conteudo">
+      <main id="conteudo" tabIndex={-1}>
         <Hero />
         <PositioningStrip />
         <ProblemSection />

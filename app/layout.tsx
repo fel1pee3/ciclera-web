@@ -51,6 +51,7 @@ export default function RootLayout({
   return (
     <html
       lang="pt-BR"
+      data-scroll-behavior="smooth"
       className={`bg-background ${inter.variable} ${sora.variable}`}
     >
       <body className="font-sans antialiased">
