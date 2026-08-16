@@ -197,8 +197,8 @@ export function LeadForm() {
                 variant="destructive"
                 className="sm:col-span-2"
               >
-                Não foi possível enviar agora. Tente novamente ou fale conosco
-                pelo WhatsApp.
+                Não foi possível enviar agora. Seus dados não foram confirmados;
+                tente novamente mais tarde.
               </Alert>
             )}
           </div>
