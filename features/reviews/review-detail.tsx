@@ -7,9 +7,15 @@ import { Alert } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import { buildApiUrl } from '@/lib/api/config'
-import { findReview, getReviewEvidenceReadUrl } from './api'
-import type { ReviewDetails } from './contracts'
+import { findReview, getReviewEvidenceReadUrl, requestCorrection } from './api'
+import {
+  reviewReasons,
+  type ReviewDetails,
+  type ReviewReason,
+} from './contracts'
 import { formatMoney } from './review-queue'
 
 export function ReviewDetail() {
@@ -17,6 +23,10 @@ export function ReviewDetail() {
   const [review, setReview] = useState<ReviewDetails | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [evidenceUrls, setEvidenceUrls] = useState<Record<string, string>>({})
+  const [reason, setReason] = useState<ReviewReason>('REQUIRED_PHOTO_MISSING')
+  const [description, setDescription] = useState('')
+  const [pending, setPending] = useState(false)
+  const [notice, setNotice] = useState<string | null>(null)
 
   useEffect(() => {
     let active = true
@@ -46,6 +56,27 @@ export function ReviewDetail() {
     }
   }
 
+  async function sendCorrection() {
+    if (!review || description.trim().length < 3) return
+    setPending(true)
+    setError(null)
+    try {
+      await requestCorrection(review.id, {
+        version: review.version,
+        reason,
+        description: description.trim(),
+      })
+      setNotice('Pendência enviada ao técnico com histórico preservado.')
+      setReview(null)
+    } catch {
+      setError(
+        'A ordem foi alterada ou revisada por outra pessoa. Atualize a fila.',
+      )
+    } finally {
+      setPending(false)
+    }
+  }
+
   if (!review && !error) {
     return (
       <Skeleton
@@ -60,6 +91,7 @@ export function ReviewDetail() {
         ← Voltar para revisão
       </Link>
       {error ? <Alert variant="destructive">{error}</Alert> : null}
+      {notice ? <Alert variant="success">{notice}</Alert> : null}
       {review ? (
         <>
           <Card className="p-6">
@@ -157,6 +189,69 @@ export function ReviewDetail() {
               ))}
             </ul>
           </Card>
+          {review.reviews.length ? (
+            <Card className="p-5">
+              <h2 className="font-heading text-xl font-bold">
+                Histórico de revisões
+              </h2>
+              <ol className="mt-4 space-y-3">
+                {review.reviews.map((item) => (
+                  <li className="rounded-xl border p-3" key={item.id}>
+                    <p className="font-semibold">
+                      {item.decision === 'APPROVED'
+                        ? 'Aprovada'
+                        : 'Correção solicitada'}
+                    </p>
+                    {item.description ? (
+                      <p className="mt-1 text-sm">{item.description}</p>
+                    ) : null}
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {item.actorName} · {formatDate(item.createdAt)}
+                    </p>
+                  </li>
+                ))}
+              </ol>
+            </Card>
+          ) : null}
+          <Card className="p-5">
+            <h2 className="font-heading text-xl font-bold">
+              Solicitar correção
+            </h2>
+            <div className="mt-4 grid gap-4">
+              <Label className="grid gap-2">
+                <span>Motivo</span>
+                <select
+                  className="input"
+                  value={reason}
+                  onChange={(event) =>
+                    setReason(event.target.value as ReviewReason)
+                  }
+                >
+                  {reviewReasons.map((value) => (
+                    <option value={value} key={value}>
+                      {reasonLabels[value]}
+                    </option>
+                  ))}
+                </select>
+              </Label>
+              <Label className="grid gap-2">
+                <span>Orientação acionável para o técnico</span>
+                <Textarea
+                  value={description}
+                  rows={5}
+                  maxLength={2000}
+                  onChange={(event) => setDescription(event.target.value)}
+                />
+              </Label>
+              <Button
+                variant="destructive"
+                disabled={pending || description.trim().length < 3}
+                onClick={() => void sendCorrection()}
+              >
+                {pending ? 'Enviando…' : 'Solicitar correção'}
+              </Button>
+            </div>
+          </Card>
         </>
       ) : null}
     </section>
@@ -170,4 +265,22 @@ function Data({ label, value }: { label: string; value: string }) {
       <dd>{value}</dd>
     </div>
   )
+}
+
+const reasonLabels: Record<ReviewReason, string> = {
+  REQUIRED_PHOTO_MISSING: 'Foto obrigatória ausente',
+  SIGNATURE_MISSING: 'Assinatura ausente',
+  CHECKLIST_INCOMPLETE: 'Checklist incompleto',
+  MATERIAL_WITHOUT_VALUE: 'Material sem valor',
+  ADDITIONAL_SERVICE_UNAPPROVED: 'Serviço adicional sem aprovação',
+  EQUIPMENT_DATA_INCORRECT: 'Dados do equipamento incorretos',
+  INCONSISTENT_SCHEDULE: 'Horário inconsistente',
+  OTHER: 'Outro',
+}
+
+function formatDate(value: string) {
+  return new Intl.DateTimeFormat('pt-BR', {
+    dateStyle: 'short',
+    timeStyle: 'short',
+  }).format(new Date(value))
 }

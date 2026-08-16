@@ -50,10 +50,37 @@ export const reviewDetailsSchema = reviewQueueItemSchema.extend({
       additionalItemSchema.omit({ createdAt: true, updatedAt: true }),
     ),
   }),
+  reviews: z.array(
+    z.object({
+      id: z.string().uuid(),
+      decision: z.enum(['CORRECTION_REQUESTED', 'APPROVED']),
+      reason: z.string().nullable(),
+      description: z.string().nullable(),
+      actorUserId: z.string().uuid(),
+      actorName: z.string(),
+      createdAt: z.string().datetime(),
+    }),
+  ),
 })
 export type ReviewDetails = z.infer<typeof reviewDetailsSchema>
 
 export const evidenceReadUrlSchema = z.object({
   url: z.string(),
   expiresAt: z.string().datetime(),
+})
+
+export const reviewReasons = [
+  'REQUIRED_PHOTO_MISSING',
+  'SIGNATURE_MISSING',
+  'CHECKLIST_INCOMPLETE',
+  'MATERIAL_WITHOUT_VALUE',
+  'ADDITIONAL_SERVICE_UNAPPROVED',
+  'EQUIPMENT_DATA_INCORRECT',
+  'INCONSISTENT_SCHEDULE',
+  'OTHER',
+] as const
+export type ReviewReason = (typeof reviewReasons)[number]
+
+export const correctionResponseSchema = z.object({
+  status: z.literal('PENDING_CORRECTION'),
 })

@@ -3,6 +3,8 @@ import {
   evidenceReadUrlSchema,
   reviewDetailsSchema,
   reviewQueueSchema,
+  correctionResponseSchema,
+  type ReviewReason,
 } from './contracts'
 
 export function listReviews(input: {
@@ -35,5 +37,16 @@ export function getReviewEvidenceReadUrl(evidenceId: string) {
     `reviews/evidence/${evidenceId}/read-url`,
     evidenceReadUrlSchema,
     { retryAfterUnauthorized: true },
+  )
+}
+
+export function requestCorrection(
+  workOrderId: string,
+  input: { version: number; reason: ReviewReason; description: string },
+) {
+  return clientApiRequest(
+    `reviews/work-orders/${workOrderId}/request-correction`,
+    correctionResponseSchema,
+    { method: 'POST', json: input, retryAfterUnauthorized: true },
   )
 }

@@ -13,6 +13,7 @@ import {
   updateAdditionalItem,
   removeAdditionalItem,
   submitFieldWorkOrderForReview,
+  resumeFieldWorkOrderCorrection,
 } from '@/features/field-work-orders/api'
 
 const order = {
@@ -282,6 +283,20 @@ describe('field work orders API client', () => {
       expect.objectContaining({
         method: 'POST',
         body: JSON.stringify({ version: 7 }),
+      }),
+    )
+  })
+
+  it('resumes a pending correction with the work order version', async () => {
+    const resumed = { ...order, status: 'IN_PROGRESS' as const }
+    const fetchMock = vi.fn().mockResolvedValue(Response.json(resumed))
+    vi.stubGlobal('fetch', fetchMock)
+    await resumeFieldWorkOrderCorrection(order.id, 8)
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining('/resume-correction'),
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ version: 8 }),
       }),
     )
   })

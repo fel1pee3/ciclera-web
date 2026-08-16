@@ -79,14 +79,24 @@ export function FieldWorkOrderDetail() {
             />
             <Data label="Serviço" value={order.serviceType} />
           </dl>
-          {order.status === 'SCHEDULED' || order.status === 'IN_PROGRESS' ? (
+          {order.currentCorrection ? (
+            <Alert variant="destructive" className="mt-5">
+              <p className="font-semibold">Correção solicitada</p>
+              <p className="mt-1">{order.currentCorrection.description}</p>
+            </Alert>
+          ) : null}
+          {order.status === 'SCHEDULED' ||
+          order.status === 'IN_PROGRESS' ||
+          order.status === 'PENDING_CORRECTION' ? (
             <Link
               className={cn(buttonVariants({ size: 'lg' }), 'mt-6 w-full')}
               href={`/field/ordens/${order.id}/executar`}
             >
               {order.status === 'SCHEDULED'
                 ? 'Iniciar atendimento'
-                : 'Continuar atendimento'}
+                : order.status === 'PENDING_CORRECTION'
+                  ? 'Corrigir atendimento'
+                  : 'Continuar atendimento'}
             </Link>
           ) : null}
         </Card>

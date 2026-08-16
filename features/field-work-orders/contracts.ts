@@ -94,6 +94,15 @@ export const fieldWorkOrderSchema = z.object({
   actualStartAt: z.string().datetime().nullable(),
   actualEndAt: z.string().datetime().nullable(),
   version: z.number().int().positive(),
+  currentCorrection: z
+    .object({
+      id: z.string().uuid(),
+      reason: z.string(),
+      description: z.string(),
+      requestedAt: z.string().datetime(),
+    })
+    .nullish()
+    .default(null),
   execution: z
     .object({
       id: z.string().uuid(),

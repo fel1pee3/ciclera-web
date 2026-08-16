@@ -14,6 +14,7 @@ import {
   saveFieldWorkOrderExecution,
   startFieldWorkOrder,
   submitFieldWorkOrderForReview,
+  resumeFieldWorkOrderCorrection,
 } from './api'
 import { ApiError } from '@/lib/api/errors'
 import type { FieldWorkOrder } from './contracts'
@@ -62,6 +63,7 @@ export function FieldWorkOrderExecution() {
 
   const canStart = order?.status === 'SCHEDULED' && !order.execution
   const canEdit = order?.status === 'IN_PROGRESS' && order.execution
+  const canResume = order?.status === 'PENDING_CORRECTION' && order.execution
   const summary = useMemo(() => {
     if (!order) return null
     return `${order.number} · ${order.customer.name} · ${order.location.name}`
@@ -134,6 +136,24 @@ export function FieldWorkOrderExecution() {
     }
   }
 
+  async function resumeCorrection() {
+    if (!order) return
+    setPending(true)
+    setError(null)
+    try {
+      const updated = await resumeFieldWorkOrderCorrection(
+        order.id,
+        order.version,
+      )
+      setOrder(updated)
+      setNotice('Correção iniciada. Os campos estão liberados novamente.')
+    } catch (reason: unknown) {
+      setError(getFieldWorkOrderErrorMessage(reason))
+    } finally {
+      setPending(false)
+    }
+  }
+
   if (!order && !error) {
     return (
       <Skeleton
@@ -198,6 +218,20 @@ export function FieldWorkOrderExecution() {
             >
               {pending ? 'Iniciando…' : 'Iniciar atendimento'}
             </Button>
+          ) : null}
+
+          {canResume && order.currentCorrection ? (
+            <Alert variant="destructive">
+              <p className="font-semibold">Correção solicitada</p>
+              <p className="mt-2">{order.currentCorrection.description}</p>
+              <Button
+                className="mt-4 w-full"
+                disabled={pending}
+                onClick={() => void resumeCorrection()}
+              >
+                {pending ? 'Liberando…' : 'Iniciar correção'}
+              </Button>
+            </Alert>
           ) : null}
 
           {canEdit ? (
@@ -276,7 +310,7 @@ export function FieldWorkOrderExecution() {
             </div>
           ) : null}
 
-          {!canStart && !canEdit ? (
+          {!canStart && !canEdit && !canResume ? (
             <Alert>
               Esta ordem não está em um estado editável para execução.
             </Alert>

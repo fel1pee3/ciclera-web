@@ -3,6 +3,7 @@ import {
   findReview,
   getReviewEvidenceReadUrl,
   listReviews,
+  requestCorrection,
 } from '@/features/reviews/api'
 
 const item = {
@@ -69,6 +70,7 @@ describe('review API client', () => {
         ],
         additionalItems: [],
       },
+      reviews: [],
     }
     const fetchMock = vi
       .fn()
@@ -84,5 +86,28 @@ describe('review API client', () => {
     expect(result.execution.evidence[0]).not.toHaveProperty('url')
     await getReviewEvidenceReadUrl(detail.execution.evidence[0].id)
     expect(String(fetchMock.mock.calls[1]?.[0])).toContain('/read-url')
+  })
+
+  it('requests an actionable correction with optimistic version', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(Response.json({ status: 'PENDING_CORRECTION' }))
+    vi.stubGlobal('fetch', fetchMock)
+    await requestCorrection(item.id, {
+      version: 4,
+      reason: 'CHECKLIST_INCOMPLETE',
+      description: 'Preencha a pressão medida.',
+    })
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining('/request-correction'),
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({
+          version: 4,
+          reason: 'CHECKLIST_INCOMPLETE',
+          description: 'Preencha a pressão medida.',
+        }),
+      }),
+    )
   })
 })

@@ -199,3 +199,18 @@ export function submitFieldWorkOrderForReview(
     },
   )
 }
+
+export function resumeFieldWorkOrderCorrection(
+  workOrderId: string,
+  version: number,
+) {
+  return clientApiRequest(
+    `field/work-orders/${workOrderId}/resume-correction`,
+    fieldWorkOrderSchema,
+    {
+      method: 'POST',
+      json: { version },
+      retryAfterUnauthorized: true,
+    },
+  )
+}
