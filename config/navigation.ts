@@ -6,6 +6,7 @@ import {
   Users,
   Wrench,
   ClipboardCheck,
+  CircleDollarSign,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -24,6 +25,7 @@ export const officeNavigation: readonly NavigationItem[] = [
   { href: '/app/ordens', icon: ClipboardList, label: 'Ordens' },
   { href: '/app/agenda', icon: CalendarDays, label: 'Agenda' },
   { href: '/app/revisao', icon: ClipboardCheck, label: 'Revisão' },
+  { href: '/app/faturamento', icon: CircleDollarSign, label: 'Faturamento' },
   { href: '/app/equipe', icon: Users, label: 'Equipe' },
 ]
 
