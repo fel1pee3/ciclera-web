@@ -38,6 +38,17 @@ export const executionChecklistSchema = z.object({
 })
 export type ExecutionChecklist = z.infer<typeof executionChecklistSchema>
 
+export const evidenceSchema = z.object({
+  id: z.string().uuid(),
+  kind: z.enum(['PHOTO', 'SIGNATURE']),
+  fileName: z.string(),
+  contentType: z.string(),
+  sizeBytes: z.string().regex(/^\d+$/),
+  confirmedAt: z.string().datetime(),
+  createdAt: z.string().datetime(),
+})
+export type Evidence = z.infer<typeof evidenceSchema>
+
 export const fieldWorkOrderSchema = z.object({
   id: z.string().uuid(),
   number: z.string(),
@@ -78,6 +89,7 @@ export const fieldWorkOrderSchema = z.object({
       startedAt: z.string().datetime(),
       updatedAt: z.string().datetime(),
       checklist: executionChecklistSchema.nullable(),
+      evidence: z.array(evidenceSchema),
     })
     .nullable(),
 })
@@ -91,3 +103,19 @@ export const fieldWorkOrderPageSchema = z.object({
   timezone: z.string(),
 })
 export type FieldWorkOrderPage = z.infer<typeof fieldWorkOrderPageSchema>
+
+export const evidenceIntentResponseSchema = z.object({
+  workOrder: fieldWorkOrderSchema,
+  intent: z.object({
+    evidenceId: z.string().uuid(),
+    uploadUrl: z.string(),
+    expiresAt: z.string().datetime(),
+    method: z.literal('PUT'),
+    contentType: z.string(),
+  }),
+})
+
+export const evidenceReadUrlSchema = z.object({
+  url: z.string(),
+  expiresAt: z.string().datetime(),
+})

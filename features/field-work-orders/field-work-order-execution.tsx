@@ -17,6 +17,7 @@ import {
 import type { FieldWorkOrder } from './contracts'
 import { getFieldWorkOrderErrorMessage } from './errors'
 import { ExecutionChecklistFields } from './execution-checklist'
+import { ExecutionEvidence } from './execution-evidence'
 
 export function FieldWorkOrderExecution() {
   const { workOrderId } = useParams<{ workOrderId: string }>()
@@ -206,6 +207,7 @@ export function FieldWorkOrderExecution() {
                   Nenhum checklist foi configurado para este atendimento.
                 </Alert>
               )}
+              <ExecutionEvidence order={order} onOrderChange={setOrder} />
             </div>
           ) : null}
 

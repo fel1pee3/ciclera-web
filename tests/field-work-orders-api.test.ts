@@ -5,6 +5,10 @@ import {
   saveFieldWorkOrderExecution,
   saveFieldWorkOrderChecklist,
   startFieldWorkOrder,
+  createEvidenceIntent,
+  confirmEvidence,
+  removeEvidence,
+  getEvidenceReadUrl,
 } from '@/features/field-work-orders/api'
 
 const order = {
@@ -83,6 +87,7 @@ describe('field work orders API client', () => {
         startedAt: '2026-08-17T12:00:00.000Z',
         updatedAt: '2026-08-17T12:00:00.000Z',
         checklist: null,
+        evidence: [],
       },
     }
     const fetchMock = vi
@@ -132,6 +137,7 @@ describe('field work orders API client', () => {
         startedAt: '2026-08-17T12:00:00.000Z',
         updatedAt: '2026-08-17T12:00:00.000Z',
         checklist: null,
+        evidence: [],
       },
     }
     const fetchMock = vi.fn().mockResolvedValue(Response.json(response))
@@ -149,6 +155,66 @@ describe('field work orders API client', () => {
           responses: [{ fieldId: 'operating', value: true }],
         }),
       }),
+    )
+  })
+
+  it('uses the private intent, confirmation, read and removal contracts', async () => {
+    const execution = {
+      id: '70000000-0000-4000-8000-000000000010',
+      technicianId: '70000000-0000-4000-8000-000000000011',
+      notes: null,
+      version: 2,
+      startedAt: '2026-08-17T12:00:00.000Z',
+      updatedAt: '2026-08-17T12:00:00.000Z',
+      checklist: null,
+      evidence: [],
+    }
+    const current = { ...order, status: 'IN_PROGRESS', execution }
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        Response.json({
+          workOrder: current,
+          intent: {
+            evidenceId: '70000000-0000-4000-8000-000000000099',
+            uploadUrl: 'field/evidence/id/upload?token=temporary',
+            expiresAt: '2026-08-17T12:05:00.000Z',
+            method: 'PUT',
+            contentType: 'image/jpeg',
+          },
+        }),
+      )
+      .mockResolvedValueOnce(Response.json(current))
+      .mockResolvedValueOnce(
+        Response.json({
+          url: 'field/evidence/id/content?token=temporary',
+          expiresAt: '2026-08-17T12:05:00.000Z',
+        }),
+      )
+      .mockResolvedValueOnce(Response.json(current))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await createEvidenceIntent(order.id, {
+      version: 1,
+      kind: 'PHOTO',
+      fileName: 'foto.jpg',
+      contentType: 'image/jpeg',
+      sizeBytes: 10,
+    })
+    await confirmEvidence(order.id, '70000000-0000-4000-8000-000000000099', 2)
+    await getEvidenceReadUrl('70000000-0000-4000-8000-000000000099')
+    await removeEvidence(order.id, '70000000-0000-4000-8000-000000000099', 3)
+
+    expect(fetchMock.mock.calls.map((call) => String(call[0]))).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining('/evidence/intents'),
+        expect.stringContaining('/confirm'),
+        expect.stringContaining('/read-url'),
+      ]),
+    )
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      expect.stringContaining('/execution/evidence/'),
+      expect.objectContaining({ method: 'DELETE' }),
     )
   })
 })
