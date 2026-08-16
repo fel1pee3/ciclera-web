@@ -225,6 +225,7 @@ As rotas devem usar Route Groups para separar contextos sem adicionar segmentos 
 | `/app/revisao`                    | Fila aguardando revisão ou correção     | `OWNER`, `ADMIN`               |
 | `/app/revisao/[workOrderId]`      | Conferência da execução e evidências    | `OWNER`, `ADMIN`               |
 | `/app/faturamento`                | Fila pronta para faturar                | `OWNER`, `ADMIN`               |
+| `/app/importacao`                 | Importação inicial assistida por CSV    | `OWNER`                        |
 | `/app/configuracoes`              | Configurações básicas                   | `OWNER`, `ADMIN` conforme ação |
 
 ### Área do técnico

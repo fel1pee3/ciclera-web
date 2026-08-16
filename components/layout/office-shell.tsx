@@ -26,7 +26,11 @@ export function OfficeShell({
           Ciclera
         </p>
         <div className="mt-8 flex-1">
-          <ShellNavigation items={officeNavigation} />
+          <ShellNavigation
+            items={officeNavigation.filter(
+              (item) => !item.roles || item.roles.includes(account.user.role),
+            )}
+          />
         </div>
         <div className="border-t pt-4">
           <AccountSummary account={account} />
@@ -58,7 +62,9 @@ export function OfficeShell({
         {menuOpen ? (
           <div id="menu-escritorio" className="border-b bg-card p-4 lg:hidden">
             <ShellNavigation
-              items={officeNavigation}
+              items={officeNavigation.filter(
+                (item) => !item.roles || item.roles.includes(account.user.role),
+              )}
               onNavigate={() => setMenuOpen(false)}
             />
             <LogoutButton className="mt-3 w-full" />

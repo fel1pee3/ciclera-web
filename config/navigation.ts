@@ -7,6 +7,7 @@ import {
   Wrench,
   ClipboardCheck,
   CircleDollarSign,
+  FileUp,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -16,6 +17,7 @@ export interface NavigationItem {
   href: string
   icon: LucideIcon
   label: string
+  roles?: readonly UserRole[]
 }
 
 export const officeNavigation: readonly NavigationItem[] = [
@@ -27,6 +29,12 @@ export const officeNavigation: readonly NavigationItem[] = [
   { href: '/app/revisao', icon: ClipboardCheck, label: 'Revisão' },
   { href: '/app/faturamento', icon: CircleDollarSign, label: 'Faturamento' },
   { href: '/app/equipe', icon: Users, label: 'Equipe' },
+  {
+    href: '/app/importacao',
+    icon: FileUp,
+    label: 'Importação',
+    roles: ['OWNER'],
+  },
 ]
 
 export const fieldNavigation: readonly NavigationItem[] = [
