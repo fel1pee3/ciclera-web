@@ -29,6 +29,10 @@ describe('client environment boundary', () => {
       expect(source).not.toContain('LEAD_WEBHOOK_URL')
       expect(source).not.toContain('config/server-env')
       expect(source).not.toContain('process.env')
+      expect(source).not.toMatch(/(?:localStorage|sessionStorage)/)
+      expect(source).not.toMatch(
+        /LEAD_WEBHOOK_URL|JWT_ACCESS_SECRET|DATABASE_URL/,
+      )
     }
   })
 })

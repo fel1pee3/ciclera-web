@@ -1,9 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
-import {
-  parsePublicEnvironment,
-  parseServerEnvironment,
-} from '@/config/env-schema'
+import { parsePublicEnvironment } from '@/config/env-schema'
+import { parseServerEnvironment } from '@/config/server-env-schema'
 
 describe('environment configuration', () => {
   it('parses and normalizes public values', () => {

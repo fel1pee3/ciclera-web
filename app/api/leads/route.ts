@@ -5,6 +5,8 @@ import { leadSchema } from '@/lib/lead-schema'
 const attempts = new Map<string, { count: number; resetAt: number }>()
 const WINDOW = 60_000
 const LIMIT = 4
+const MAX_TRACKED_ADDRESSES = 10_000
+const MAX_BODY_BYTES = 16 * 1024
 
 export async function POST(request: Request) {
   const ip =
@@ -16,6 +18,16 @@ export async function POST(request: Request) {
       { error: 'Muitas tentativas. Aguarde e tente novamente.' },
       { status: 429 },
     )
+  if (!entry && attempts.size >= MAX_TRACKED_ADDRESSES) {
+    for (const [address, attempt] of attempts) {
+      if (attempt.resetAt <= now) attempts.delete(address)
+    }
+    if (attempts.size >= MAX_TRACKED_ADDRESSES)
+      return NextResponse.json(
+        { error: 'Muitas tentativas. Aguarde e tente novamente.' },
+        { status: 429 },
+      )
+  }
   attempts.set(
     ip,
     !entry || entry.resetAt <= now
@@ -23,7 +35,18 @@ export async function POST(request: Request) {
       : { ...entry, count: entry.count + 1 },
   )
 
-  const parsed = leadSchema.safeParse(await request.json().catch(() => null))
+  const payload = await readJsonBody(request)
+  if (payload.status !== 'ok')
+    return NextResponse.json(
+      {
+        error:
+          payload.status === 'too-large'
+            ? 'Payload muito grande.'
+            : 'Dados inválidos.',
+      },
+      { status: payload.status === 'too-large' ? 413 : 400 },
+    )
+  const parsed = leadSchema.safeParse(payload.value)
   if (!parsed.success)
     return NextResponse.json(
       { error: 'Dados inválidos.', details: parsed.error.flatten() },
@@ -55,4 +78,32 @@ export async function POST(request: Request) {
       { status: 502 },
     )
   return NextResponse.json({ ok: true })
+}
+
+async function readJsonBody(
+  request: Request,
+): Promise<
+  { status: 'ok'; value: unknown } | { status: 'invalid' | 'too-large' }
+> {
+  if (
+    !request.headers
+      .get('content-type')
+      ?.toLowerCase()
+      .startsWith('application/json')
+  ) {
+    return { status: 'invalid' }
+  }
+  const declaredLength = Number(request.headers.get('content-length'))
+  if (Number.isFinite(declaredLength) && declaredLength > MAX_BODY_BYTES) {
+    return { status: 'too-large' }
+  }
+  const text = await request.text()
+  if (new TextEncoder().encode(text).byteLength > MAX_BODY_BYTES) {
+    return { status: 'too-large' }
+  }
+  try {
+    return { status: 'ok', value: JSON.parse(text) as unknown }
+  } catch {
+    return { status: 'invalid' }
+  }
 }

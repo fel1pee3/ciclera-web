@@ -78,6 +78,27 @@ describe('lead route', () => {
     }
     expect((await POST(request(validLead, address))).status).toBe(429)
   })
+
+  it('rejects oversized or non-JSON bodies before delivery', async () => {
+    const delivery = vi.spyOn(globalThis, 'fetch')
+    const oversized = await POST(
+      request({ ...validLead, challenge: 'x'.repeat(17_000) }, '198.51.100.6'),
+    )
+    const wrongType = await POST(
+      new Request('http://localhost/api/leads', {
+        method: 'POST',
+        headers: {
+          'content-type': 'text/plain',
+          'x-forwarded-for': '198.51.100.7',
+        },
+        body: JSON.stringify(validLead),
+      }),
+    )
+
+    expect(oversized.status).toBe(413)
+    expect(wrongType.status).toBe(400)
+    expect(delivery).not.toHaveBeenCalled()
+  })
 })
 
 function request(body: unknown, address: string) {
