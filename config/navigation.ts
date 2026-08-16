@@ -11,6 +11,7 @@ export interface NavigationItem {
 export const officeNavigation: readonly NavigationItem[] = [
   { href: '/app', icon: Home, label: 'Início' },
   { href: '/app/clientes', icon: Building2, label: 'Clientes' },
+  { href: '/app/equipamentos', icon: Wrench, label: 'Equipamentos' },
   { href: '/app/equipe', icon: Users, label: 'Equipe' },
 ]
 

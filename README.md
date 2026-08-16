@@ -215,6 +215,7 @@ As rotas devem usar Route Groups para separar contextos sem adicionar segmentos 
 | `/app/clientes/novo`              | Cadastro de cliente                     | `OWNER`, `ADMIN`               |
 | `/app/clientes/[customerId]`      | Detalhes do cliente, locais e histórico | `OWNER`, `ADMIN`               |
 | `/app/equipamentos`               | Busca e lista de equipamentos           | `OWNER`, `ADMIN`               |
+| `/app/equipamentos/novo`          | Cadastro de equipamento vinculado       | `OWNER`, `ADMIN`               |
 | `/app/equipamentos/[equipmentId]` | Detalhes e histórico do equipamento     | `OWNER`, `ADMIN`               |
 | `/app/equipe`                     | Gerenciamento básico de usuários        | `OWNER`, `ADMIN`               |
 | `/app/agenda`                     | Agenda operacional                      | `OWNER`, `ADMIN`               |

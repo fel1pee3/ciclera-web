@@ -93,6 +93,12 @@ export function createLocation(customerId: string, input: LocationFormInput) {
   )
 }
 
+export function findLocation(locationId: string) {
+  return clientApiRequest(`locations/${locationId}`, serviceLocationSchema, {
+    retryAfterUnauthorized: true,
+  })
+}
+
 export function updateLocation(locationId: string, input: LocationFormInput) {
   return clientApiRequest(`locations/${locationId}`, serviceLocationSchema, {
     method: 'PATCH',
