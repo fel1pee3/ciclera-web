@@ -84,3 +84,8 @@ export type ReviewReason = (typeof reviewReasons)[number]
 export const correctionResponseSchema = z.object({
   status: z.literal('PENDING_CORRECTION'),
 })
+
+export const approvalResponseSchema = z.object({
+  status: z.literal('READY_TO_BILL'),
+  finalAmountInCents: z.string(),
+})

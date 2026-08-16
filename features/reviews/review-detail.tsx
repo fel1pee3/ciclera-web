@@ -10,7 +10,12 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { buildApiUrl } from '@/lib/api/config'
-import { findReview, getReviewEvidenceReadUrl, requestCorrection } from './api'
+import {
+  approveReview,
+  findReview,
+  getReviewEvidenceReadUrl,
+  requestCorrection,
+} from './api'
 import {
   reviewReasons,
   type ReviewDetails,
@@ -71,6 +76,32 @@ export function ReviewDetail() {
     } catch {
       setError(
         'A ordem foi alterada ou revisada por outra pessoa. Atualize a fila.',
+      )
+    } finally {
+      setPending(false)
+    }
+  }
+
+  async function approve() {
+    if (!review) return
+    if (
+      !window.confirm(
+        'Confirma a aprovação e a liberação desta ordem para faturamento?',
+      )
+    ) {
+      return
+    }
+    setPending(true)
+    setError(null)
+    try {
+      const result = await approveReview(review.id, review.version)
+      setNotice(
+        `Ordem aprovada e liberada para faturamento por ${formatMoney(result.finalAmountInCents)}.`,
+      )
+      setReview(null)
+    } catch {
+      setError(
+        'A ordem está incompleta ou foi revisada por outra pessoa. Atualize a fila.',
       )
     } finally {
       setPending(false)
@@ -213,6 +244,20 @@ export function ReviewDetail() {
               </ol>
             </Card>
           ) : null}
+          <Card className="p-5">
+            <h2 className="font-heading text-xl font-bold">Aprovar execução</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              O valor final será congelado com o valor previsto e os itens
+              adicionais apresentados acima.
+            </p>
+            <Button
+              className="mt-4 w-full"
+              disabled={pending}
+              onClick={() => void approve()}
+            >
+              {pending ? 'Aprovando…' : 'Aprovar e liberar para faturamento'}
+            </Button>
+          </Card>
           <Card className="p-5">
             <h2 className="font-heading text-xl font-bold">
               Solicitar correção

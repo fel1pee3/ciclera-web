@@ -4,6 +4,7 @@ import {
   reviewDetailsSchema,
   reviewQueueSchema,
   correctionResponseSchema,
+  approvalResponseSchema,
   type ReviewReason,
 } from './contracts'
 
@@ -48,5 +49,17 @@ export function requestCorrection(
     `reviews/work-orders/${workOrderId}/request-correction`,
     correctionResponseSchema,
     { method: 'POST', json: input, retryAfterUnauthorized: true },
+  )
+}
+
+export function approveReview(workOrderId: string, version: number) {
+  return clientApiRequest(
+    `work-orders/${workOrderId}/approve`,
+    approvalResponseSchema,
+    {
+      method: 'POST',
+      json: { version },
+      retryAfterUnauthorized: true,
+    },
   )
 }

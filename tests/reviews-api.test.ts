@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
+  approveReview,
   findReview,
   getReviewEvidenceReadUrl,
   listReviews,
@@ -108,6 +109,22 @@ describe('review API client', () => {
           description: 'Preencha a pressão medida.',
         }),
       }),
+    )
+  })
+
+  it('approves with optimistic version and parses the official total', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      Response.json({
+        status: 'READY_TO_BILL',
+        finalAmountInCents: '12500',
+      }),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+    const result = await approveReview(item.id, 4)
+    expect(result.finalAmountInCents).toBe('12500')
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining('/approve'),
+      expect.objectContaining({ method: 'POST', body: '{"version":4}' }),
     )
   })
 })
