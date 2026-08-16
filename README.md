@@ -844,6 +844,12 @@ Quando o ambiente de produção estiver definido:
 
 A escolha do provedor deve ser documentada após decisão real; não acoplar o código preventivamente.
 
+### Vercel Analytics
+
+O Vercel Analytics é habilitado automaticamente apenas nos deployments da Vercel, quando a variável de sistema `VERCEL` possui o valor `1`. Ele permanece desabilitado nas execuções locais com `npm run dev` e `npm start`.
+
+`VERCEL` é fornecida pela própria plataforma e não deve ser adicionada ao `.env.local`.
+
 ## Padrão de implementação por feature
 
 Cada feature deve entregar um fluxo vertical e verificável:

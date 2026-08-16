@@ -1,6 +1,6 @@
-import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import { logoUrl } from '@/components/landing/brand'
+import { VercelAnalytics } from '@/components/vercel-analytics'
 import { getAppUrl } from '@/lib/app-url'
 import { inter, sora } from './fonts'
 import './globals.css'
@@ -59,7 +59,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
         {children}
-        {process.env.NODE_ENV === 'production' && <Analytics />}
+        <VercelAnalytics />
       </body>
     </html>
   )
