@@ -1,5 +1,6 @@
 'use client'
 
+import { UserPlus } from 'lucide-react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
@@ -7,9 +8,11 @@ import { useEffect, useMemo, useState } from 'react'
 import { Alert } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Modal } from '@/components/ui/modal'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useSession } from '@/features/auth/session-provider'
 import { listUsers, setUserStatus, type ListUsersQuery } from './api'
@@ -28,6 +31,8 @@ export function TeamManagement() {
   const [notice, setNotice] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const [pendingUserId, setPendingUserId] = useState<string | null>(null)
+  const [statusTarget, setStatusTarget] = useState<ManagedUser | null>(null)
+  const [creating, setCreating] = useState(false)
   const [editing, setEditing] = useState<ManagedUser | null>(null)
   const [revision, setRevision] = useState(0)
   const query = useMemo(() => readQuery(searchParams), [searchParams])
@@ -54,14 +59,14 @@ export function TeamManagement() {
   const saved = (message: string) => {
     setNotice(message)
     setActionError(null)
+    setCreating(false)
     setEditing(null)
+    setStatusTarget(null)
     setRevision((value) => value + 1)
   }
 
   const changeStatus = async (user: ManagedUser) => {
     const nextStatus = user.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE'
-    const verb = nextStatus === 'ACTIVE' ? 'ativar' : 'desativar'
-    if (!window.confirm(`Deseja ${verb} ${user.name}?`)) return
 
     setPendingUserId(user.id)
     setActionError(null)
@@ -72,6 +77,7 @@ export function TeamManagement() {
       )
     } catch (error) {
       setActionError(getTeamErrorMessage(error))
+      setStatusTarget(null)
     } finally {
       setPendingUserId(null)
     }
@@ -79,12 +85,18 @@ export function TeamManagement() {
 
   return (
     <section className="mx-auto max-w-6xl space-y-6">
-      <div>
-        <p className="eyebrow">Configuração da organização</p>
-        <h1 className="mt-3 font-heading text-3xl font-bold">Equipe</h1>
-        <p className="mt-2 text-muted-foreground">
-          Gerencie quem acessa a Ciclera e o perfil de cada integrante.
-        </p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="eyebrow">Configuração da organização</p>
+          <h1 className="mt-3 font-heading text-3xl font-bold">Equipe</h1>
+          <p className="mt-2 text-muted-foreground">
+            Gerencie quem acessa a Ciclera e o perfil de cada integrante.
+          </p>
+        </div>
+        <Button className="sm:shrink-0" onClick={() => setCreating(true)}>
+          <UserPlus aria-hidden="true" />
+          Adicionar pessoa
+        </Button>
       </div>
 
       {notice ? (
@@ -98,17 +110,61 @@ export function TeamManagement() {
         </Alert>
       ) : null}
 
-      <CreateUserForm actorRole={account.user.role} onSaved={saved} />
+      <Modal
+        open={creating || Boolean(editing)}
+        onClose={() => {
+          setCreating(false)
+          setEditing(null)
+        }}
+        title={editing ? 'Editar integrante' : 'Adicionar pessoa'}
+        description={
+          editing
+            ? 'Atualize os dados de acesso e o perfil desta pessoa.'
+            : 'Crie o acesso e defina o perfil do novo integrante.'
+        }
+      >
+        {editing ? (
+          <EditUserForm
+            key={editing.id}
+            actorRole={account.user.role}
+            user={editing}
+            onCancel={() => setEditing(null)}
+            onSaved={saved}
+          />
+        ) : creating ? (
+          <CreateUserForm
+            actorRole={account.user.role}
+            onCancel={() => setCreating(false)}
+            onSaved={saved}
+          />
+        ) : null}
+      </Modal>
 
-      {editing ? (
-        <EditUserForm
-          key={editing.id}
-          actorRole={account.user.role}
-          user={editing}
-          onCancel={() => setEditing(null)}
-          onSaved={saved}
-        />
-      ) : null}
+      <ConfirmDialog
+        open={Boolean(statusTarget)}
+        title={
+          statusTarget?.status === 'ACTIVE'
+            ? 'Desativar integrante?'
+            : 'Ativar integrante?'
+        }
+        description={
+          statusTarget?.status === 'ACTIVE'
+            ? `${statusTarget.name} perderá o acesso e terá as sessões atuais encerradas.`
+            : `${statusTarget?.name ?? 'Esta pessoa'} poderá acessar novamente a Ciclera.`
+        }
+        confirmLabel={
+          statusTarget?.status === 'ACTIVE' ? 'Desativar' : 'Ativar'
+        }
+        pendingLabel={
+          statusTarget?.status === 'ACTIVE' ? 'Desativando…' : 'Ativando…'
+        }
+        variant={statusTarget?.status === 'ACTIVE' ? 'destructive' : 'default'}
+        pending={pendingUserId === statusTarget?.id}
+        onCancel={() => setStatusTarget(null)}
+        onConfirm={() => {
+          if (statusTarget) void changeStatus(statusTarget)
+        }}
+      />
 
       <form
         action="/app/equipe"
@@ -210,7 +266,7 @@ export function TeamManagement() {
                     <Button
                       variant="ghost"
                       disabled={pendingUserId === user.id}
-                      onClick={() => void changeStatus(user)}
+                      onClick={() => setStatusTarget(user)}
                     >
                       {pendingUserId === user.id
                         ? 'Processando…'

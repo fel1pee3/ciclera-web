@@ -30,6 +30,48 @@ export const resetPasswordSchema = z.object({
 
 export const currentLegalVersion = '2026-08-17'
 
+export const securePasswordRules = [
+  {
+    id: 'length',
+    label: 'Pelo menos 10 caracteres',
+    test: (value: string) => value.length >= 10,
+  },
+  {
+    id: 'uppercase',
+    label: 'Uma letra maiúscula',
+    test: (value: string) => /[A-Z]/.test(value),
+  },
+  {
+    id: 'lowercase',
+    label: 'Uma letra minúscula',
+    test: (value: string) => /[a-z]/.test(value),
+  },
+  {
+    id: 'number',
+    label: 'Um número',
+    test: (value: string) => /\d/.test(value),
+  },
+  {
+    id: 'symbol',
+    label: 'Um símbolo, como !, @ ou #',
+    test: (value: string) => /[^A-Za-z0-9\s]/.test(value),
+  },
+] as const
+
+export const securePasswordSchema = z
+  .string()
+  .max(128, 'A senha deve ter no máximo 128 caracteres.')
+  .superRefine((value, context) => {
+    for (const rule of securePasswordRules) {
+      if (!rule.test(value)) {
+        context.addIssue({
+          code: 'custom',
+          message: `A senha precisa ter ${rule.label.toLowerCase()}.`,
+        })
+      }
+    }
+  })
+
 export const registrationSchema = z
   .object({
     organizationName: z
@@ -54,18 +96,8 @@ export const registrationSchema = z
       .toLowerCase()
       .email('Informe um e-mail v\u00e1lido.')
       .max(320, 'O e-mail deve ter no m\u00e1ximo 320 caracteres.'),
-    password: z
-      .string()
-      .min(8, 'A senha deve ter pelo menos 8 caracteres.')
-      .max(128, 'A senha deve ter no m\u00e1ximo 128 caracteres.'),
+    password: securePasswordSchema,
     confirmPassword: z.string(),
-    timezone: z
-      .string()
-      .min(1, 'Selecione o fuso hor\u00e1rio.')
-      .refine(
-        isIanaTimezone,
-        'Selecione um fuso hor\u00e1rio IANA v\u00e1lido.',
-      ),
     termsAccepted: z.boolean().refine((value) => value, {
       message: 'Aceite os Termos de Uso e a Pol\u00edtica de Privacidade.',
     }),
@@ -74,15 +106,6 @@ export const registrationSchema = z
     message: 'As senhas precisam ser iguais.',
     path: ['confirmPassword'],
   })
-
-function isIanaTimezone(value: string): boolean {
-  try {
-    new Intl.DateTimeFormat('pt-BR', { timeZone: value }).format()
-    return true
-  } catch {
-    return false
-  }
-}
 
 export type LoginInput = z.infer<typeof loginSchema>
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>

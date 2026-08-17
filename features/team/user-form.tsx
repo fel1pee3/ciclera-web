@@ -2,14 +2,16 @@
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 
 import { Alert } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { PasswordInput } from '@/components/ui/password-input'
 import type { UserRole } from '@/features/auth/contracts'
 import { getApiFieldErrors } from '@/features/auth/errors'
+import { PasswordRequirements } from '@/features/auth/password-requirements'
 import { createUser, updateUser } from './api'
 import type { ManagedUser } from './contracts'
 import { getTeamErrorMessage } from './errors'
@@ -29,9 +31,11 @@ const roleLabels: Record<UserRole, string> = {
 
 export function CreateUserForm({
   actorRole,
+  onCancel,
   onSaved,
 }: {
   actorRole: UserRole
+  onCancel?: () => void
   onSaved: (message: string) => void
 }) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -40,17 +44,32 @@ export function CreateUserForm({
     handleSubmit,
     reset,
     setError,
-    formState: { errors, isSubmitting },
+    control,
+    formState: { errors, isSubmitting, isValid },
   } = useForm<CreateUserInput>({
     resolver: zodResolver(createUserSchema),
-    defaultValues: { role: 'TECHNICIAN' },
+    mode: 'onChange',
+    defaultValues: {
+      name: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+      role: 'TECHNICIAN',
+    },
   })
+  const password = useWatch({ control, name: 'password', defaultValue: '' })
 
   const submit = async (input: CreateUserInput) => {
     setErrorMessage(null)
     try {
       const created = await createUser(input)
-      reset({ name: '', email: '', password: '', role: 'TECHNICIAN' })
+      reset({
+        name: '',
+        email: '',
+        password: '',
+        confirmPassword: '',
+        role: 'TECHNICIAN',
+      })
       onSaved(`${created.name} foi adicionado à equipe.`)
     } catch (error) {
       const fieldErrors = getApiFieldErrors(error)
@@ -64,17 +83,10 @@ export function CreateUserForm({
 
   return (
     <form
-      className="grid gap-4 rounded-2xl border bg-card p-5 sm:grid-cols-2"
+      className="grid gap-4 sm:grid-cols-2"
       noValidate
       onSubmit={handleSubmit(submit)}
     >
-      <div className="sm:col-span-2">
-        <h2 className="font-heading text-lg font-semibold">Adicionar pessoa</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Defina uma senha inicial e compartilhe-a por um canal seguro. A pessoa
-          poderá redefini-la pelo fluxo de recuperação.
-        </p>
-      </div>
       {errorMessage ? (
         <Alert className="sm:col-span-2" variant="destructive" role="alert">
           {errorMessage}
@@ -87,12 +99,28 @@ export function CreateUserForm({
         <Input type="email" autoComplete="email" {...register('email')} />
       </FormField>
       <FormField label="Senha inicial" error={errors.password?.message}>
-        <Input
-          type="password"
+        <PasswordInput
+          id="team-password"
           autoComplete="new-password"
+          aria-invalid={Boolean(errors.password)}
+          aria-describedby="password-requirements"
           {...register('password')}
         />
       </FormField>
+      <FormField
+        label="Confirmar senha"
+        error={errors.confirmPassword?.message}
+      >
+        <PasswordInput
+          id="team-confirm-password"
+          autoComplete="new-password"
+          aria-invalid={Boolean(errors.confirmPassword)}
+          {...register('confirmPassword')}
+        />
+      </FormField>
+      <div className="sm:col-span-2">
+        <PasswordRequirements value={password} />
+      </div>
       <FormField label="Perfil" error={errors.role?.message}>
         <select className="input" {...register('role')}>
           {creatableRoles(actorRole).map((role) => (
@@ -102,8 +130,13 @@ export function CreateUserForm({
           ))}
         </select>
       </FormField>
-      <div className="sm:col-span-2">
-        <Button type="submit" disabled={isSubmitting}>
+      <div className="flex flex-wrap justify-end gap-3 border-t pt-5 sm:col-span-2">
+        {onCancel ? (
+          <Button type="button" variant="ghost" onClick={onCancel}>
+            Cancelar
+          </Button>
+        ) : null}
+        <Button type="submit" disabled={isSubmitting || !isValid}>
           {isSubmitting ? 'Adicionando…' : 'Adicionar à equipe'}
         </Button>
       </div>
@@ -127,11 +160,20 @@ export function EditUserForm({
     register,
     handleSubmit,
     setError,
-    formState: { errors, isSubmitting },
+    control,
+    formState: { errors, isSubmitting, isValid },
   } = useForm<UpdateUserInput>({
     resolver: zodResolver(updateUserSchema),
-    defaultValues: { name: user.name, role: user.role },
+    mode: 'onChange',
+    defaultValues: {
+      name: user.name,
+      email: user.email,
+      password: '',
+      confirmPassword: '',
+      role: user.role,
+    },
   })
+  const password = useWatch({ control, name: 'password', defaultValue: '' })
 
   const submit = async (input: UpdateUserInput) => {
     setErrorMessage(null)
@@ -140,7 +182,7 @@ export function EditUserForm({
       onSaved(`${updated.name} foi atualizado.`)
     } catch (error) {
       const fieldErrors = getApiFieldErrors(error)
-      for (const field of ['name', 'role'] as const) {
+      for (const field of ['name', 'email', 'password', 'role'] as const) {
         const message = fieldErrors?.[field]?.[0]
         if (message) setError(field, { message })
       }
@@ -150,21 +192,50 @@ export function EditUserForm({
 
   return (
     <form
-      className="grid gap-4 rounded-2xl border border-primary/30 bg-card p-5 sm:grid-cols-2"
+      className="grid gap-4 sm:grid-cols-2"
       noValidate
       onSubmit={handleSubmit(submit)}
     >
-      <h2 className="font-heading text-lg font-semibold sm:col-span-2">
-        Editar integrante
-      </h2>
       {errorMessage ? (
         <Alert className="sm:col-span-2" variant="destructive" role="alert">
           {errorMessage}
         </Alert>
       ) : null}
       <FormField label="Nome" error={errors.name?.message}>
-        <Input {...register('name')} />
+        <Input autoComplete="name" {...register('name')} />
       </FormField>
+      <FormField label="E-mail" error={errors.email?.message}>
+        <Input type="email" autoComplete="email" {...register('email')} />
+      </FormField>
+      <FormField label="Nova senha (opcional)" error={errors.password?.message}>
+        <PasswordInput
+          id={`edit-password-${user.id}`}
+          autoComplete="new-password"
+          aria-invalid={Boolean(errors.password)}
+          aria-describedby={password ? 'password-requirements' : undefined}
+          {...register('password')}
+        />
+      </FormField>
+      <FormField
+        label="Confirmar nova senha"
+        error={errors.confirmPassword?.message}
+      >
+        <PasswordInput
+          id={`edit-confirm-password-${user.id}`}
+          autoComplete="new-password"
+          aria-invalid={Boolean(errors.confirmPassword)}
+          {...register('confirmPassword')}
+        />
+      </FormField>
+      {password ? (
+        <div className="sm:col-span-2">
+          <PasswordRequirements value={password} />
+        </div>
+      ) : (
+        <p className="text-sm text-muted-foreground sm:col-span-2">
+          Deixe os campos de senha vazios para manter a senha atual.
+        </p>
+      )}
       <FormField label="Perfil" error={errors.role?.message}>
         <select className="input" {...register('role')}>
           {creatableRoles(actorRole).map((role) => (
@@ -174,12 +245,12 @@ export function EditUserForm({
           ))}
         </select>
       </FormField>
-      <div className="flex flex-wrap gap-3 sm:col-span-2">
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Salvando…' : 'Salvar alterações'}
-        </Button>
+      <div className="flex flex-wrap justify-end gap-3 border-t pt-5 sm:col-span-2">
         <Button type="button" variant="ghost" onClick={onCancel}>
           Cancelar
+        </Button>
+        <Button type="submit" disabled={isSubmitting || !isValid}>
+          {isSubmitting ? 'Salvando…' : 'Salvar alterações'}
         </Button>
       </div>
     </form>

@@ -32,7 +32,6 @@ export function registerOrganization(
       ownerName: input.ownerName,
       email: input.email,
       password: input.password,
-      timezone: input.timezone,
       termsAccepted: input.termsAccepted,
       termsVersion: currentLegalVersion,
     },

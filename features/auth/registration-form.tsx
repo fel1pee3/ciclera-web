@@ -4,15 +4,18 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 
 import { Alert } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { PasswordInput } from '@/components/ui/password-input'
 import { ApiError } from '@/lib/api/errors'
 import { getCurrentAccount, registerOrganization } from './api'
+import { BackToLandingLink } from './back-to-landing-link'
 import { getApiFieldErrors, getAuthErrorMessage } from './errors'
+import { PasswordRequirements } from './password-requirements'
 import { roleHome } from './redirects'
 import { registrationSchema, type RegistrationInput } from './schemas'
 
@@ -22,27 +25,17 @@ const labels = {
   email: 'E-mail',
   password: 'Senha',
   confirmPassword: 'Confirmar senha',
-  timezone: 'Fuso hor\u00e1rio',
 } as const
-
-const timezones = [
-  ['America/Sao_Paulo', 'Bras\u00edlia, Sul e Sudeste'],
-  ['America/Manaus', 'Amazonas'],
-  ['America/Belem', 'Par\u00e1'],
-  ['America/Fortaleza', 'Nordeste'],
-  ['America/Cuiaba', 'Mato Grosso'],
-  ['America/Campo_Grande', 'Mato Grosso do Sul'],
-  ['America/Rio_Branco', 'Acre'],
-  ['America/Noronha', 'Fernando de Noronha'],
-] as const
 
 const registrationFields = [
   ['organizationName', 'organization'] as const,
   ['ownerName', 'name'] as const,
-  ['email', 'email'] as const,
-  ['password', 'new-password'] as const,
-  ['confirmPassword', 'new-password'] as const,
 ]
+
+const placeholders = {
+  organizationName: 'Ex.: Vértice Serviços Técnicos',
+  ownerName: 'Ex.: José da Silva',
+} as const
 
 export function RegistrationForm() {
   const router = useRouter()
@@ -52,14 +45,16 @@ export function RegistrationForm() {
     register,
     handleSubmit,
     setError,
-    formState: { errors, isSubmitting },
+    control,
+    formState: { errors, isSubmitting, isValid },
   } = useForm<RegistrationInput>({
     resolver: zodResolver(registrationSchema),
+    mode: 'onChange',
     defaultValues: {
-      timezone: 'America/Sao_Paulo',
       termsAccepted: false,
     },
   })
+  const password = useWatch({ control, name: 'password', defaultValue: '' })
 
   useEffect(() => {
     let active = true
@@ -102,73 +97,116 @@ export function RegistrationForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">
+    <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-6">
+      <BackToLandingLink />
       <div>
-        <p className="eyebrow">Comece agora</p>
-        <h1 className="mt-3 font-heading text-2xl font-semibold">
+        <p className="eyebrow text-xs">Sua operação começa aqui</p>
+        <h1 className="mt-3 text-balance font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
           Crie sua conta Ciclera
         </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Você será o proprietário da nova organização e poderá adicionar sua
-          equipe depois.
+        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+          Você será o proprietário da organização e poderá convidar sua equipe
+          depois.
         </p>
       </div>
+
       {errorMessage ? (
         <Alert variant="destructive" role="alert">
           {errorMessage}
         </Alert>
       ) : null}
-      {registrationFields.map(([field, autoComplete]) => {
-        const isPassword = field === 'password' || field === 'confirmPassword'
-        const error = errors[field]
-        return (
-          <div className="space-y-2" key={field}>
-            <Label htmlFor={field}>{labels[field]}</Label>
-            <Input
-              id={field}
-              type={
-                isPassword ? 'password' : field === 'email' ? 'email' : 'text'
-              }
-              autoComplete={autoComplete}
-              aria-invalid={Boolean(error)}
-              aria-describedby={error ? `${field}-error` : undefined}
-              {...register(field)}
-            />
-            {error ? (
-              <p id={`${field}-error`} className="text-sm text-destructive">
-                {error.message}
-              </p>
-            ) : null}
-          </div>
-        )
-      })}
-      <div className="space-y-2">
-        <Label htmlFor="timezone">{labels.timezone}</Label>
-        <select
-          id="timezone"
-          className="input"
-          aria-invalid={Boolean(errors.timezone)}
-          aria-describedby={errors.timezone ? 'timezone-error' : undefined}
-          {...register('timezone')}
-        >
-          {timezones.map(([value, label]) => (
-            <option value={value} key={value}>
-              {label} ({value})
-            </option>
-          ))}
-        </select>
-        {errors.timezone ? (
-          <p id="timezone-error" className="text-sm text-destructive">
-            {errors.timezone.message}
+
+      <div className="grid gap-5 sm:grid-cols-2">
+        {registrationFields.map(([field, autoComplete]) => {
+          const error = errors[field]
+          return (
+            <div className="space-y-2.5" key={field}>
+              <Label htmlFor={field}>{labels[field]}</Label>
+              <Input
+                id={field}
+                type="text"
+                autoComplete={autoComplete}
+                placeholder={placeholders[field]}
+                aria-invalid={Boolean(error)}
+                aria-describedby={error ? `${field}-error` : undefined}
+                {...register(field)}
+              />
+              {error ? (
+                <p id={`${field}-error`} className="text-sm text-destructive">
+                  {error.message}
+                </p>
+              ) : null}
+            </div>
+          )
+        })}
+      </div>
+
+      <div className="space-y-2.5">
+        <Label htmlFor="email">{labels.email}</Label>
+        <Input
+          id="email"
+          type="email"
+          autoComplete="email"
+          inputMode="email"
+          placeholder="voce@empresa.com.br"
+          aria-invalid={Boolean(errors.email)}
+          aria-describedby={errors.email ? 'email-error' : undefined}
+          {...register('email')}
+        />
+        {errors.email ? (
+          <p id="email-error" className="text-sm text-destructive">
+            {errors.email.message}
           </p>
         ) : null}
       </div>
-      <div>
+
+      <div className="space-y-2.5">
+        <Label htmlFor="password">{labels.password}</Label>
+        <PasswordInput
+          id="password"
+          autoComplete="new-password"
+          placeholder="Crie uma senha segura"
+          aria-invalid={Boolean(errors.password)}
+          aria-describedby={
+            errors.password
+              ? 'password-requirements password-error'
+              : 'password-requirements'
+          }
+          {...register('password')}
+        />
+        <PasswordRequirements value={password} />
+        {errors.password ? (
+          <p id="password-error" className="text-sm text-destructive">
+            A senha ainda não atende a todos os requisitos.
+          </p>
+        ) : null}
+      </div>
+
+      <div className="space-y-2.5">
+        <Label htmlFor="confirmPassword">{labels.confirmPassword}</Label>
+        <PasswordInput
+          id="confirmPassword"
+          autoComplete="new-password"
+          placeholder="Digite a senha novamente"
+          aria-invalid={Boolean(errors.confirmPassword)}
+          aria-describedby={
+            errors.confirmPassword ? 'confirmPassword-error' : undefined
+          }
+          {...register('confirmPassword')}
+        />
+        {errors.confirmPassword ? (
+          <p id="confirmPassword-error" className="text-sm text-destructive">
+            {errors.confirmPassword.message}
+          </p>
+        ) : null}
+      </div>
+
+      <div className="rounded-2xl border border-border bg-muted/45 p-4">
         <div className="flex items-start gap-3">
           <Input
             id="termsAccepted"
             type="checkbox"
-            className="mt-1 size-4 min-h-0 w-4 p-0 accent-primary"
+            className="mt-1 size-4 min-h-0 w-4 shrink-0 p-0 accent-primary"
             aria-invalid={Boolean(errors.termsAccepted)}
             aria-describedby={
               errors.termsAccepted ? 'termsAccepted-error' : undefined
@@ -181,7 +219,7 @@ export function RegistrationForm() {
           >
             Li e aceito os{' '}
             <Link
-              className="font-semibold text-primary"
+              className="font-semibold text-primary hover:underline"
               href="/termos-de-uso"
               target="_blank"
             >
@@ -189,7 +227,7 @@ export function RegistrationForm() {
             </Link>{' '}
             e a{' '}
             <Link
-              className="font-semibold text-primary"
+              className="font-semibold text-primary hover:underline"
               href="/politica-de-privacidade"
               target="_blank"
             >
@@ -199,17 +237,26 @@ export function RegistrationForm() {
           </Label>
         </div>
         {errors.termsAccepted ? (
-          <p id="termsAccepted-error" className="mt-1 text-sm text-destructive">
+          <p id="termsAccepted-error" className="mt-2 text-sm text-destructive">
             {errors.termsAccepted.message}
           </p>
         ) : null}
       </div>
-      <Button className="w-full" type="submit" disabled={isSubmitting}>
+
+      <Button
+        className="w-full shadow-lg shadow-primary/15"
+        size="lg"
+        type="submit"
+        disabled={isSubmitting || !isValid}
+      >
         {isSubmitting ? 'Criando conta...' : 'Criar conta'}
       </Button>
-      <p className="text-center text-sm text-muted-foreground">
+      <p className="border-t border-border pt-6 text-center text-sm text-muted-foreground">
         Já tem uma conta?{' '}
-        <Link className="font-semibold text-primary" href="/login">
+        <Link
+          className="font-semibold text-primary hover:underline"
+          href="/login"
+        >
           Entrar
         </Link>
       </p>

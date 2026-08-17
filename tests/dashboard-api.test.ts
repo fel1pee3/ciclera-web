@@ -10,6 +10,13 @@ describe('dashboard API', () => {
         JSON.stringify({
           timezone: 'America/Sao_Paulo',
           period: { from: '2026-08-01', to: '2026-08-31' },
+          setup: {
+            activeUserCount: 1,
+            customerCount: 0,
+            locationCount: 0,
+            equipmentCount: 0,
+            workOrderCount: 0,
+          },
           stages: Object.fromEntries(
             [
               'IN_PROGRESS',

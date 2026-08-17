@@ -1,5 +1,6 @@
 'use client'
 
+import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
@@ -13,6 +14,7 @@ import { archiveCustomer, findCustomer, listLocations } from './api'
 import type { Customer, LocationPage, ServiceLocation } from './contracts'
 import { CustomerForm } from './customer-form'
 import { getCustomerErrorMessage } from './errors'
+import { displayDocument, displayPhone } from './formatters'
 import { LocationForm } from './location-form'
 
 const locationPageSize = 20
@@ -99,7 +101,8 @@ export function CustomerDetail() {
                   {customer.name}
                 </h1>
                 <p className="mt-2 text-muted-foreground">
-                  {customer.document ?? 'Documento não informado'}
+                  {displayDocument(customer.document) ??
+                    'Documento não informado'}
                 </p>
               </div>
               <Badge variant={customer.archivedAt ? 'outline' : 'secondary'}>
@@ -113,7 +116,7 @@ export function CustomerDetail() {
               </div>
               <div>
                 <dt className="text-muted-foreground">Telefone</dt>
-                <dd>{customer.phone ?? 'Não informado'}</dd>
+                <dd>{displayPhone(customer.phone) ?? 'Não informado'}</dd>
               </div>
             </dl>
             {customer.notes ? (
@@ -240,13 +243,21 @@ export function NewCustomer() {
   const searchParams = useSearchParams()
   const backHref = safeCustomerReturn(searchParams.get('from'))
   return (
-    <section className="mx-auto max-w-4xl space-y-6">
-      <Link className="text-sm font-semibold text-primary" href={backHref}>
-        ← Voltar para clientes
+    <section className="mx-auto max-w-6xl space-y-6">
+      <Link
+        className="inline-flex items-center gap-2 text-sm font-semibold text-primary transition hover:gap-2.5 hover:underline"
+        href={backHref}
+      >
+        <ArrowLeft aria-hidden="true" className="size-4" />
+        Voltar para clientes
       </Link>
-      <div>
+      <div className="max-w-2xl">
         <p className="eyebrow">Cadastros operacionais</p>
         <h1 className="mt-3 font-heading text-3xl font-bold">Novo cliente</h1>
+        <p className="mt-2 text-muted-foreground">
+          Cadastre a empresa ou pessoa atendida antes de adicionar seus locais e
+          equipamentos.
+        </p>
       </div>
       <CustomerForm
         onSaved={(customer) =>

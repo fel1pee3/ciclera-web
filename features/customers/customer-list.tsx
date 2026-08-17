@@ -14,6 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { archiveCustomer, listCustomers, type ListCustomersQuery } from './api'
 import type { CustomerPage } from './contracts'
 import { getCustomerErrorMessage } from './errors'
+import { displayDocument } from './formatters'
 
 const pageSize = 12
 
@@ -182,7 +183,7 @@ export function CustomerList() {
                 <div className="min-w-0">
                   <h2 className="truncate font-semibold">{customer.name}</h2>
                   <p className="mt-1 truncate text-sm text-muted-foreground">
-                    {customer.document ??
+                    {displayDocument(customer.document) ??
                       customer.email ??
                       'Sem documento informado'}
                   </p>

@@ -94,13 +94,13 @@ describe('authenticated API client', () => {
       email: 'maria@example.test',
       password: 'LocalOnly!2026',
       confirmPassword: 'LocalOnly!2026',
-      timezone: 'America/Sao_Paulo',
       termsAccepted: true,
     })
 
     const request = fetchMock.mock.calls[0]?.[1] as RequestInit
     const body = JSON.parse(String(request.body)) as Record<string, unknown>
     expect(body).not.toHaveProperty('confirmPassword')
+    expect(body).not.toHaveProperty('timezone')
     expect(body).toMatchObject({
       termsAccepted: true,
       termsVersion: '2026-08-17',

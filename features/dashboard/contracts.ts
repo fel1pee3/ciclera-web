@@ -16,6 +16,13 @@ export const dashboardStatusSchema = z.enum([
 export const dashboardSummarySchema = z.object({
   timezone: z.string(),
   period: z.object({ from: z.string(), to: z.string() }),
+  setup: z.object({
+    activeUserCount: z.number().int().nonnegative(),
+    customerCount: z.number().int().nonnegative(),
+    locationCount: z.number().int().nonnegative(),
+    equipmentCount: z.number().int().nonnegative(),
+    workOrderCount: z.number().int().nonnegative(),
+  }),
   stages: z.record(dashboardStatusSchema, dashboardStageSchema),
   blockedAmountInCents: z.string().regex(/^\d+$/),
   averageReviewWaitingSeconds: z.number().int().nonnegative().nullable(),

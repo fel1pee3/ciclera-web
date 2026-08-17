@@ -29,17 +29,29 @@ export function listUsers(query: ListUsersQuery) {
 }
 
 export function createUser(input: CreateUserInput) {
+  const request = {
+    name: input.name,
+    email: input.email,
+    password: input.password,
+    role: input.role,
+  }
   return clientApiRequest('users', managedUserSchema, {
     method: 'POST',
-    json: input,
+    json: request,
     retryAfterUnauthorized: true,
   })
 }
 
 export function updateUser(userId: string, input: UpdateUserInput) {
+  const request = {
+    name: input.name,
+    email: input.email,
+    role: input.role,
+    ...(input.password ? { password: input.password } : {}),
+  }
   return clientApiRequest(`users/${userId}`, managedUserSchema, {
     method: 'PATCH',
-    json: input,
+    json: request,
     retryAfterUnauthorized: true,
   })
 }

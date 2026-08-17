@@ -10,7 +10,9 @@ import { Alert } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { PasswordInput } from '@/components/ui/password-input'
 import { login } from './api'
+import { BackToLandingLink } from './back-to-landing-link'
 import { getApiFieldErrors, getAuthErrorMessage } from './errors'
 import { safeReturnPath } from './redirects'
 import { loginSchema, type LoginInput } from './schemas'
@@ -45,14 +47,15 @@ export function LoginForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">
+    <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-6">
+      <BackToLandingLink />
       <div>
-        <p className="eyebrow">Acesso seguro</p>
-        <h1 className="mt-3 font-heading text-2xl font-semibold">
-          Entrar na Ciclera
+        <p className="eyebrow text-xs">Bem-vindo de volta</p>
+        <h1 className="mt-3 text-balance font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
+          Entre na sua conta
         </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Use o e-mail cadastrado pela sua empresa.
+        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+          Acesse sua operação com o e-mail cadastrado na Ciclera.
         </p>
       </div>
       {errorMessage && (
@@ -60,12 +63,13 @@ export function LoginForm() {
           {errorMessage}
         </Alert>
       )}
-      <div className="space-y-2">
+      <div className="space-y-2.5">
         <Label htmlFor="email">E-mail</Label>
         <Input
           id="email"
           autoComplete="email"
           type="email"
+          placeholder="voce@empresa.com.br"
           aria-invalid={!!errors.email}
           aria-describedby={errors.email ? 'email-error' : undefined}
           {...register('email')}
@@ -76,12 +80,20 @@ export function LoginForm() {
           </p>
         )}
       </div>
-      <div className="space-y-2">
-        <Label htmlFor="password">Senha</Label>
-        <Input
+      <div className="space-y-2.5">
+        <div className="flex items-center justify-between gap-4">
+          <Label htmlFor="password">Senha</Label>
+          <Link
+            className="text-xs font-semibold text-primary hover:underline"
+            href="/recuperar-senha"
+          >
+            Esqueci minha senha
+          </Link>
+        </div>
+        <PasswordInput
           id="password"
           autoComplete="current-password"
-          type="password"
+          placeholder="Digite sua senha"
           aria-invalid={!!errors.password}
           aria-describedby={errors.password ? 'password-error' : undefined}
           {...register('password')}
@@ -92,18 +104,20 @@ export function LoginForm() {
           </p>
         )}
       </div>
-      <Button className="w-full" type="submit" disabled={isSubmitting}>
+      <Button
+        className="w-full shadow-lg shadow-primary/15"
+        size="lg"
+        type="submit"
+        disabled={isSubmitting}
+      >
         {isSubmitting ? 'Entrando…' : 'Entrar'}
       </Button>
-      <Link
-        className="block text-center text-sm font-semibold text-primary"
-        href="/recuperar-senha"
-      >
-        Esqueci minha senha
-      </Link>
-      <p className="text-center text-sm text-muted-foreground">
+      <p className="border-t border-border pt-6 text-center text-sm text-muted-foreground">
         Não tem uma conta?{' '}
-        <Link className="font-semibold text-primary" href="/registro">
+        <Link
+          className="font-semibold text-primary hover:underline"
+          href="/registro"
+        >
           Criar conta
         </Link>
       </p>

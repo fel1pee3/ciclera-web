@@ -52,6 +52,7 @@ describe('customers API client', () => {
 
     await createCustomer({
       name: ' Ciclera Cliente ',
+      documentType: 'CNPJ',
       document: '',
       email: '',
       phone: '',
@@ -64,6 +65,42 @@ describe('customers API client', () => {
       email: null,
       phone: null,
       notes: null,
+    })
+  })
+
+  it('sends document and phone with digits only', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      Response.json(
+        {
+          id: '30000000-0000-4000-8000-000000000001',
+          name: 'Cliente CPF',
+          document: '12345678901',
+          email: 'cliente@example.test',
+          phone: '5585933449080',
+          notes: null,
+          archivedAt: null,
+          createdAt: '2026-08-16T00:00:00.000Z',
+          updatedAt: '2026-08-16T00:00:00.000Z',
+        },
+        { status: 201 },
+      ),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+
+    await createCustomer({
+      name: 'Cliente CPF',
+      documentType: 'CPF',
+      document: '123.456.789-01',
+      email: 'cliente@example.test',
+      phone: '+55 (85) 93344-9080',
+      notes: '',
+    })
+
+    expect(
+      JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body)),
+    ).toMatchObject({
+      document: '12345678901',
+      phone: '5585933449080',
     })
   })
 

@@ -80,6 +80,13 @@ async function mockApi(
       await json(route, {
         timezone: 'America/Sao_Paulo',
         period: { from: '2026-08-01', to: '2026-08-31' },
+        setup: {
+          activeUserCount: 1,
+          customerCount: 0,
+          locationCount: 0,
+          equipmentCount: 0,
+          workOrderCount: 0,
+        },
         stages: {
           IN_PROGRESS: { count: 0, amountInCents: '0' },
           AWAITING_REVIEW: { count: 0, amountInCents: '0' },
@@ -122,7 +129,7 @@ async function mockApi(
 async function login(page: Page, email: string) {
   await page.goto('/login')
   await page.getByLabel('E-mail').fill(email)
-  await page.getByLabel('Senha').fill('LocalOnly!2026')
+  await page.getByLabel('Senha', { exact: true }).fill('LocalOnly!2026')
   await page.getByRole('button', { name: 'Entrar' }).click()
 }
 
@@ -179,6 +186,13 @@ async function mockPublicRegistration(page: Page) {
       await json(route, {
         timezone: 'America/Sao_Paulo',
         period: { from: '2026-08-01', to: '2026-08-31' },
+        setup: {
+          activeUserCount: 1,
+          customerCount: 0,
+          locationCount: 0,
+          equipmentCount: 0,
+          workOrderCount: 0,
+        },
         stages: {
           IN_PROGRESS: { count: 0, amountInCents: '0' },
           AWAITING_REVIEW: { count: 0, amountInCents: '0' },
@@ -210,6 +224,58 @@ test('administrative profile reaches the operational dashboard', async ({
   await expect(
     page.getByRole('heading', { name: 'Visão operacional' }),
   ).toBeVisible()
+  await expect(
+    page.getByRole('progressbar', {
+      name: 'Progresso da configuração inicial',
+    }),
+  ).toHaveAttribute('aria-valuenow', '0')
+  await expect(
+    page
+      .getByRole('link', { name: /Monte sua equipe/ })
+      .getByText('Próximo passo'),
+  ).toBeVisible()
+  await expect(page.getByText(accounts.owner.user.name)).toHaveCount(1)
+  await expect(page.getByText(accounts.owner.organization.name)).toHaveCount(1)
+
+  const navigation = page.getByRole('navigation', {
+    name: 'Navegação principal',
+  })
+  await expect(
+    navigation.getByRole('link', { name: 'Início' }),
+  ).toHaveAttribute('aria-current', 'page')
+
+  await navigation.getByRole('link', { name: 'Equipamentos' }).click()
+  await expect(page).toHaveURL(/\/app\/equipamentos$/)
+  await expect(
+    navigation.getByRole('link', { name: 'Equipamentos' }),
+  ).toHaveAttribute('aria-current', 'page')
+  await expect(
+    navigation.getByRole('link', { name: 'Início' }),
+  ).not.toHaveAttribute('aria-current')
+
+  const equipmentIcon = navigation
+    .getByRole('link', { name: 'Equipamentos' })
+    .locator('svg')
+  const expandedIconPosition = await equipmentIcon.boundingBox()
+  await expect(page.locator('aside')).toHaveCSS('position', 'fixed')
+
+  await page.getByRole('button', { name: 'Recolher menu lateral' }).click()
+  await expect(
+    page.getByRole('button', { name: 'Expandir menu lateral' }),
+  ).toBeVisible()
+  await expect(page.locator('aside')).toHaveCSS('width', '88px')
+  const collapsedIconPosition = await equipmentIcon.boundingBox()
+  expect(collapsedIconPosition?.x).toBe(expandedIconPosition?.x)
+
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.getByRole('button', { name: 'Abrir menu' }).click()
+  await expect(page.locator('#menu-escritorio')).toHaveCSS('position', 'fixed')
+  await expect(page.locator('#menu-escritorio')).toHaveCSS('top', '72px')
+  await expect(page.locator('#menu-escritorio')).toHaveCSS('right', '0px')
+  await page
+    .getByRole('button', { name: 'Fechar menu ao tocar fora' })
+    .click({ position: { x: 10, y: 400 } })
+  await expect(page.locator('#menu-escritorio')).not.toBeVisible()
   await expectNoCriticalAccessibilityViolations(page)
 })
 
@@ -246,13 +312,30 @@ test('public visitor creates an organization and starts an authenticated session
   await expect(
     page.getByRole('heading', { name: 'Crie sua conta Ciclera' }),
   ).toBeVisible()
+  await expect(
+    page.getByRole('link', { name: 'Voltar para o site' }),
+  ).toHaveAttribute('href', '/')
+  const createAccountButton = page.getByRole('button', {
+    name: 'Criar conta',
+  })
+  await expect(createAccountButton).toBeDisabled()
+  await expect(page.getByText('Pelo menos 10 caracteres')).toBeVisible()
   await page.getByLabel('Nome da organiza\u00e7\u00e3o').fill('Oficina E2E')
   await page.getByLabel('Seu nome').fill('Admin E2E')
   await page.getByLabel('E-mail').fill('OWNER.E2E@EXAMPLE.TEST')
-  await page.getByLabel('Senha', { exact: true }).fill('LocalOnly!2026')
+  const passwordInput = page.getByLabel('Senha', { exact: true })
+  await passwordInput.fill('senha-fraca')
+  await expect(createAccountButton).toBeDisabled()
+  await page.getByRole('button', { name: 'Mostrar senha' }).first().click()
+  await expect(passwordInput).toHaveAttribute('type', 'text')
+  await page.getByRole('button', { name: 'Ocultar senha' }).first().click()
+  await expect(passwordInput).toHaveAttribute('type', 'password')
+  await passwordInput.fill('LocalOnly!2026')
+  await expect(page.getByText('5/5')).toBeVisible()
   await page.getByLabel('Confirmar senha').fill('LocalOnly!2026')
   await page.getByRole('checkbox').check()
-  await page.getByRole('button', { name: 'Criar conta' }).click()
+  await expect(createAccountButton).toBeEnabled()
+  await createAccountButton.click()
 
   await expect(page).toHaveURL(/\/app$/)
   await expect(
@@ -264,11 +347,11 @@ test('public visitor creates an organization and starts an authenticated session
     organizationName: 'Oficina E2E',
     ownerName: 'Admin E2E',
     email: 'owner.e2e@example.test',
-    timezone: 'America/Sao_Paulo',
     termsAccepted: true,
     termsVersion: '2026-08-17',
   })
   expect(submittedBody()).not.toHaveProperty('confirmPassword')
+  expect(submittedBody()).not.toHaveProperty('timezone')
   expect(submittedBody()).not.toHaveProperty('accessToken')
   expect(
     await page.evaluate(() => ({

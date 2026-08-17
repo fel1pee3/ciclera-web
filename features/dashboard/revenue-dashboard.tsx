@@ -1,5 +1,14 @@
 'use client'
 
+import {
+  ArrowRight,
+  Building2,
+  Check,
+  ClipboardList,
+  Users,
+  Wrench,
+  type LucideIcon,
+} from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { Alert } from '@/components/ui/alert'
@@ -9,6 +18,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatMoney } from '@/features/reviews/review-queue'
+import { cn } from '@/lib/utils'
 import { getDashboardSummary } from './api'
 import type { DashboardStatus, DashboardSummary } from './contracts'
 
@@ -82,7 +92,9 @@ export function RevenueDashboard() {
       ) : null}
       {summary ? (
         <>
-          {isEmptyWorkspace(summary) ? <GettingStarted /> : null}
+          {isSetupComplete(summary.setup) ? null : (
+            <GettingStarted setup={summary.setup} />
+          )}
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
             {(Object.keys(stageLabels) as DashboardStatus[]).map((status) => (
               <Link href={stageHref(status)} key={status}>
@@ -176,61 +188,188 @@ export function RevenueDashboard() {
   )
 }
 
-function GettingStarted() {
-  const steps = [
-    {
-      href: '/app/equipe',
-      title: 'Monte sua equipe',
-      description:
-        'Adicione administradores e t\u00e9cnicos que usar\u00e3o a Ciclera.',
-    },
-    {
-      href: '/app/clientes/novo',
-      title: 'Cadastre o primeiro cliente e local',
-      description:
-        'Registre quem ser\u00e1 atendido e onde o servi\u00e7o acontece.',
-    },
-    {
-      href: '/app/equipamentos/novo',
-      title: 'Vincule os equipamentos',
-      description: 'Organize os ativos de cada cliente e local.',
-    },
-    {
-      href: '/app/ordens/nova',
-      title: 'Crie a primeira ordem',
-      description: 'Planeje o atendimento depois de concluir os cadastros.',
-    },
-  ]
+type SetupProgress = DashboardSummary['setup']
+
+interface SetupStep {
+  href: string
+  title: string
+  description: string
+  icon: LucideIcon
+  isComplete: (setup: SetupProgress) => boolean
+}
+
+const setupSteps: readonly SetupStep[] = [
+  {
+    href: '/app/equipe',
+    title: 'Monte sua equipe',
+    description: 'Adicione quem vai administrar ou executar os atendimentos.',
+    icon: Users,
+    isComplete: (setup) => setup.activeUserCount > 1,
+  },
+  {
+    href: '/app/clientes/novo',
+    title: 'Cadastre cliente e local',
+    description: 'Registre quem será atendido e onde o serviço acontece.',
+    icon: Building2,
+    isComplete: (setup) => setup.customerCount > 0 && setup.locationCount > 0,
+  },
+  {
+    href: '/app/equipamentos/novo',
+    title: 'Vincule um equipamento',
+    description: 'Organize o primeiro ativo no cliente e local corretos.',
+    icon: Wrench,
+    isComplete: (setup) => setup.equipmentCount > 0,
+  },
+  {
+    href: '/app/ordens/nova',
+    title: 'Crie a primeira ordem',
+    description: 'Planeje o primeiro atendimento da sua operação.',
+    icon: ClipboardList,
+    isComplete: (setup) => setup.workOrderCount > 0,
+  },
+]
+
+export function GettingStarted({ setup }: { setup: SetupProgress }) {
+  const steps = setupSteps.map((step) => ({
+    ...step,
+    completed: step.isComplete(setup),
+  }))
+  const completedCount = steps.filter((step) => step.completed).length
+  const currentStep = steps.findIndex((step) => !step.completed)
+  const remainingCount = steps.length - completedCount
+  const progress = (completedCount / steps.length) * 100
 
   return (
-    <Card className="border-primary/30 bg-primary/5 p-5 sm:p-6">
-      <p className="eyebrow text-foreground">Primeiros passos</p>
-      <h2 className="mt-2 font-heading text-xl font-semibold">
-        Sua organização está pronta para ser configurada
-      </h2>
-      <p className="mt-2 text-sm text-muted-foreground">
-        Siga esta ordem para preparar a operação sem criar dados fictícios.
-      </p>
-      <ol className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {steps.map((step, index) => (
-          <li key={step.href}>
-            <Link
-              href={step.href}
-              className="block h-full rounded-xl border border-border bg-card p-4 transition hover:border-primary"
-            >
-              <span className="text-xs font-bold text-primary">
-                PASSO {index + 1}
-              </span>
-              <strong className="mt-2 block">{step.title}</strong>
-              <span className="mt-1 block text-sm text-muted-foreground">
-                {step.description}
-              </span>
-            </Link>
-          </li>
-        ))}
-      </ol>
+    <Card className="relative overflow-hidden border-primary/20 bg-gradient-to-br from-primary/[0.08] via-card to-secondary/[0.08] p-0">
+      <div
+        aria-hidden="true"
+        className="absolute -right-20 -top-24 size-64 rounded-full border border-primary/10 bg-white/25"
+      />
+      <div className="relative p-5 sm:p-6">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="max-w-2xl">
+            <p className="eyebrow text-primary">Configuração inicial</p>
+            <h2 className="mt-2 font-heading text-xl font-semibold sm:text-2xl">
+              {completedCount === 0
+                ? 'Prepare sua operação para o primeiro atendimento'
+                : 'Sua operação está ganhando forma'}
+            </h2>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              {completedCount === 0
+                ? 'Siga as etapas abaixo. O progresso é atualizado automaticamente conforme você cadastra os dados.'
+                : remainingCount === 1
+                  ? 'Falta 1 etapa para concluir a configuração.'
+                  : 'Faltam ' +
+                    remainingCount +
+                    ' etapas para concluir a configuração.'}
+            </p>
+          </div>
+          <div className="rounded-full border border-primary/15 bg-card/80 px-3 py-1.5 text-xs font-semibold text-primary shadow-sm">
+            {completedCount} de {steps.length} concluídos
+          </div>
+        </div>
+
+        <div
+          className="mt-5 h-2 overflow-hidden rounded-full bg-primary/10"
+          role="progressbar"
+          aria-label="Progresso da configuração inicial"
+          aria-valuemin={0}
+          aria-valuemax={steps.length}
+          aria-valuenow={completedCount}
+        >
+          <div
+            className="h-full rounded-full bg-primary transition-[width] duration-500 ease-out"
+            style={{ width: String(progress) + '%' }}
+          />
+        </div>
+
+        <ol className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {steps.map((step, index) => {
+            const Icon = step.icon
+            const current = index === currentStep
+            return (
+              <li key={step.href}>
+                <Link
+                  href={step.href}
+                  className={cn(
+                    'group flex h-full min-h-48 flex-col rounded-2xl border p-4 transition-[border-color,background-color,box-shadow,transform] duration-200 hover:-translate-y-0.5',
+                    step.completed &&
+                      'border-primary/15 bg-primary/[0.06] hover:border-primary/30',
+                    current &&
+                      'border-primary bg-card shadow-[0_14px_35px_-24px_rgba(0,128,110,0.8)]',
+                    !step.completed &&
+                      !current &&
+                      'border-border/80 bg-card/70 hover:border-primary/40',
+                  )}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <span
+                      className={cn(
+                        'grid size-10 place-items-center rounded-xl',
+                        step.completed
+                          ? 'bg-primary text-primary-foreground'
+                          : current
+                            ? 'bg-primary/10 text-primary'
+                            : 'bg-muted text-muted-foreground',
+                      )}
+                    >
+                      {step.completed ? (
+                        <Check aria-hidden="true" className="size-5" />
+                      ) : (
+                        <Icon aria-hidden="true" className="size-5" />
+                      )}
+                    </span>
+                    <span
+                      className={cn(
+                        'text-[0.65rem] font-bold uppercase tracking-[0.12em]',
+                        step.completed || current
+                          ? 'text-primary'
+                          : 'text-muted-foreground',
+                      )}
+                    >
+                      {step.completed
+                        ? 'Concluído'
+                        : current
+                          ? 'Próximo passo'
+                          : 'Etapa ' + (index + 1)}
+                    </span>
+                  </div>
+                  <strong className="mt-4 block font-heading text-base">
+                    {step.title}
+                  </strong>
+                  <span className="mt-1.5 block text-sm leading-relaxed text-muted-foreground">
+                    {step.description}
+                  </span>
+                  <span
+                    className={cn(
+                      'mt-auto flex items-center gap-1.5 pt-4 text-xs font-semibold',
+                      step.completed || current
+                        ? 'text-primary'
+                        : 'text-muted-foreground',
+                    )}
+                  >
+                    {step.completed
+                      ? 'Revisar'
+                      : current
+                        ? 'Começar agora'
+                        : 'Acessar etapa'}
+                    <ArrowRight
+                      aria-hidden="true"
+                      className="size-3.5 transition-transform group-hover:translate-x-1"
+                    />
+                  </span>
+                </Link>
+              </li>
+            )
+          })}
+        </ol>
+      </div>
     </Card>
   )
+}
+
+export function isSetupComplete(setup: SetupProgress): boolean {
+  return setupSteps.every((step) => step.isComplete(setup))
 }
 
 export function isEmptyWorkspace(summary: DashboardSummary): boolean {

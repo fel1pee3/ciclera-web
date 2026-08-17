@@ -60,7 +60,6 @@ describe('public registration', () => {
       email: 'maria@example.test',
       password: 'LocalOnly!2026',
       confirmPassword: 'different',
-      timezone: 'America/Sao_Paulo',
       termsAccepted: false,
     })
     expect(result.success).toBe(false)
@@ -72,7 +71,22 @@ describe('public registration', () => {
 
   it.each([
     ['password policy', { password: 'short', confirmPassword: 'short' }],
-    ['IANA timezone', { timezone: 'Mars/Olympus' }],
+    [
+      'uppercase password rule',
+      { password: 'localonly!2026', confirmPassword: 'localonly!2026' },
+    ],
+    [
+      'lowercase password rule',
+      { password: 'LOCALONLY!2026', confirmPassword: 'LOCALONLY!2026' },
+    ],
+    [
+      'number password rule',
+      { password: 'LocalOnly!Password', confirmPassword: 'LocalOnly!Password' },
+    ],
+    [
+      'symbol password rule',
+      { password: 'LocalOnly2026', confirmPassword: 'LocalOnly2026' },
+    ],
     ['valid e-mail', { email: 'invalid' }],
   ])('validates %s before submission', (_scenario, override) => {
     const result = registrationSchema.safeParse({
@@ -81,7 +95,6 @@ describe('public registration', () => {
       email: 'maria@example.test',
       password: 'LocalOnly!2026',
       confirmPassword: 'LocalOnly!2026',
-      timezone: 'America/Sao_Paulo',
       termsAccepted: true,
       ...override,
     })
@@ -98,6 +111,45 @@ describe('public registration', () => {
     )
     expect(mocks.replace).toHaveBeenCalledWith('/app')
     expect(mocks.refresh).toHaveBeenCalledOnce()
+  })
+
+  it('shows password requirements and lets the user reveal both passwords', async () => {
+    render(<RegistrationForm />)
+    await screen.findByRole('heading', { name: 'Crie sua conta Ciclera' })
+
+    const password = screen.getByLabelText('Senha')
+    expect(screen.getByLabelText('Nome da organização')).toHaveAttribute(
+      'placeholder',
+      'Ex.: Vértice Serviços Técnicos',
+    )
+    expect(screen.getByLabelText('Seu nome')).toHaveAttribute(
+      'placeholder',
+      'Ex.: José da Silva',
+    )
+    expect(screen.getByLabelText('E-mail')).toHaveAttribute(
+      'placeholder',
+      'voce@empresa.com.br',
+    )
+    expect(password).toHaveAttribute('type', 'password')
+    expect(password).toHaveAttribute('placeholder', 'Crie uma senha segura')
+    expect(screen.getByLabelText('Confirmar senha')).toHaveAttribute(
+      'placeholder',
+      'Digite a senha novamente',
+    )
+    expect(screen.getByText('0/5')).toBeInTheDocument()
+
+    fireEvent.change(password, { target: { value: 'LocalOnly!2026' } })
+    expect(await screen.findByText('5/5')).toBeInTheDocument()
+
+    const revealButtons = screen.getAllByRole('button', {
+      name: 'Mostrar senha',
+    })
+    expect(revealButtons).toHaveLength(2)
+    fireEvent.click(revealButtons[0]!)
+    expect(password).toHaveAttribute('type', 'text')
+    expect(
+      screen.getByRole('button', { name: 'Ocultar senha' }),
+    ).toBeInTheDocument()
   })
 
   it('keeps typed values and shows an actionable duplicate e-mail error', async () => {
@@ -193,6 +245,13 @@ describe('public registration', () => {
       isEmptyWorkspace({
         timezone: 'America/Sao_Paulo',
         period: { from: '2026-08-01', to: '2026-08-31' },
+        setup: {
+          activeUserCount: 1,
+          customerCount: 0,
+          locationCount: 0,
+          equipmentCount: 0,
+          workOrderCount: 0,
+        },
         stages: {
           IN_PROGRESS: { count: 0, amountInCents: '0' },
           AWAITING_REVIEW: { count: 0, amountInCents: '0' },
@@ -227,4 +286,7 @@ async function fillForm() {
     target: { value: 'LocalOnly!2026' },
   })
   fireEvent.click(screen.getByRole('checkbox'))
+  await waitFor(() =>
+    expect(screen.getByRole('button', { name: 'Criar conta' })).toBeEnabled(),
+  )
 }

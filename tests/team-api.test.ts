@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { createUser, listUsers } from '@/features/team/api'
+import { createUser, listUsers, updateUser } from '@/features/team/api'
 
 describe('team API client', () => {
   afterEach(() => vi.unstubAllGlobals())
@@ -51,10 +51,40 @@ describe('team API client', () => {
       name: 'Técnica',
       email: 'tech@example.test',
       password: 'LocalOnly!2026',
+      confirmPassword: 'LocalOnly!2026',
       role: 'TECHNICIAN',
     })
 
     expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({ method: 'POST' })
     expect(fetchMock.mock.calls[0]?.[1]?.body).toContain('LocalOnly!2026')
+    expect(fetchMock.mock.calls[0]?.[1]?.body).not.toContain('confirmPassword')
+  })
+
+  it('omits blank password fields while updating member data', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      Response.json({
+        id: '20000000-0000-4000-8000-000000000002',
+        name: 'Técnica atualizada',
+        email: 'updated@example.test',
+        role: 'ADMIN',
+        status: 'ACTIVE',
+        createdAt: '2026-08-16T00:00:00.000Z',
+        updatedAt: '2026-08-17T00:00:00.000Z',
+      }),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+
+    await updateUser('20000000-0000-4000-8000-000000000002', {
+      name: 'Técnica atualizada',
+      email: 'updated@example.test',
+      password: '',
+      confirmPassword: '',
+      role: 'ADMIN',
+    })
+
+    const body = String(fetchMock.mock.calls[0]?.[1]?.body)
+    expect(body).toContain('updated@example.test')
+    expect(body).not.toContain('password')
+    expect(body).not.toContain('confirmPassword')
   })
 })
