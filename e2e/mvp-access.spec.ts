@@ -1,8 +1,8 @@
 import { expect, test, type Page, type Route } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 
-const apiOrigin = 'http://127.0.0.1:3333'
-const appOrigin = 'http://127.0.0.1:3100'
+const apiOrigin = process.env.PLAYWRIGHT_API_URL ?? 'http://127.0.0.1:3333'
+const appOrigin = process.env.PLAYWRIGHT_APP_URL ?? 'http://127.0.0.1:3100'
 
 const accounts = {
   owner: {
@@ -126,6 +126,80 @@ async function login(page: Page, email: string) {
   await page.getByRole('button', { name: 'Entrar' }).click()
 }
 
+async function mockPublicRegistration(page: Page) {
+  let registered = false
+  let submittedBody: Record<string, unknown> | null = null
+
+  await page.route(`${apiOrigin}/api/v1/**`, async (route) => {
+    const request = route.request()
+    const pathname = new URL(request.url()).pathname
+
+    if (request.method() === 'OPTIONS') {
+      await route.fulfill({
+        status: 204,
+        headers: {
+          'access-control-allow-origin': appOrigin,
+          'access-control-allow-credentials': 'true',
+          'access-control-allow-headers': 'content-type',
+          'access-control-allow-methods': 'GET,POST,OPTIONS',
+        },
+      })
+      return
+    }
+
+    if (pathname === '/api/v1/auth/register') {
+      submittedBody = request.postDataJSON() as Record<string, unknown>
+      registered = true
+      await json(route, accounts.owner, 201)
+      return
+    }
+
+    if (pathname === '/api/v1/auth/me') {
+      await json(
+        route,
+        registered
+          ? accounts.owner
+          : {
+              type: 'about:blank',
+              title: 'Unauthorized',
+              status: 401,
+              detail: 'Authentication is required.',
+            },
+        registered ? 200 : 401,
+      )
+      return
+    }
+
+    if (pathname === '/api/v1/auth/refresh') {
+      await json(route, { status: 401, title: 'Unauthorized' }, 401)
+      return
+    }
+
+    if (pathname === '/api/v1/dashboard/summary') {
+      await json(route, {
+        timezone: 'America/Sao_Paulo',
+        period: { from: '2026-08-01', to: '2026-08-31' },
+        stages: {
+          IN_PROGRESS: { count: 0, amountInCents: '0' },
+          AWAITING_REVIEW: { count: 0, amountInCents: '0' },
+          PENDING_CORRECTION: { count: 0, amountInCents: '0' },
+          READY_TO_BILL: { count: 0, amountInCents: '0' },
+          BILLED: { count: 0, amountInCents: '0' },
+        },
+        blockedAmountInCents: '0',
+        averageReviewWaitingSeconds: null,
+        oldestBlocked: [],
+        recurringBlockers: [],
+      })
+      return
+    }
+
+    await json(route, { status: 404, title: 'Not Found' }, 404)
+  })
+
+  return () => submittedBody
+}
+
 test('administrative profile reaches the operational dashboard', async ({
   page,
 }) => {
@@ -160,6 +234,84 @@ test('technician profile reaches a usable field view on mobile', async ({
       document.documentElement.clientWidth,
   )
   expect(hasHorizontalOverflow).toBe(false)
+  await expectNoCriticalAccessibilityViolations(page)
+})
+
+test('public visitor creates an organization and starts an authenticated session', async ({
+  page,
+}) => {
+  const submittedBody = await mockPublicRegistration(page)
+
+  await page.goto('/registro')
+  await expect(
+    page.getByRole('heading', { name: 'Crie sua conta Ciclera' }),
+  ).toBeVisible()
+  await page.getByLabel('Nome da organiza\u00e7\u00e3o').fill('Oficina E2E')
+  await page.getByLabel('Seu nome').fill('Admin E2E')
+  await page.getByLabel('E-mail').fill('OWNER.E2E@EXAMPLE.TEST')
+  await page.getByLabel('Senha', { exact: true }).fill('LocalOnly!2026')
+  await page.getByLabel('Confirmar senha').fill('LocalOnly!2026')
+  await page.getByRole('checkbox').check()
+  await page.getByRole('button', { name: 'Criar conta' }).click()
+
+  await expect(page).toHaveURL(/\/app$/)
+  await expect(
+    page.getByRole('heading', {
+      name: 'Sua organiza\u00e7\u00e3o est\u00e1 pronta para ser configurada',
+    }),
+  ).toBeVisible()
+  expect(submittedBody()).toMatchObject({
+    organizationName: 'Oficina E2E',
+    ownerName: 'Admin E2E',
+    email: 'owner.e2e@example.test',
+    timezone: 'America/Sao_Paulo',
+    termsAccepted: true,
+    termsVersion: '2026-08-17',
+  })
+  expect(submittedBody()).not.toHaveProperty('confirmPassword')
+  expect(submittedBody()).not.toHaveProperty('accessToken')
+  expect(
+    await page.evaluate(() => ({
+      local: window.localStorage.length,
+      session: window.sessionStorage.length,
+    })),
+  ).toEqual({ local: 0, session: 0 })
+
+  await page.goto('/registro')
+  await expect(page).toHaveURL(/\/app$/)
+  await expectNoCriticalAccessibilityViolations(page)
+})
+
+test('landing exposes the current authentication actions on desktop and mobile', async ({
+  page,
+}) => {
+  await page.goto('/')
+  const desktopHeader = page.getByRole('banner')
+  await expect(
+    desktopHeader.getByRole('link', { name: 'Entrar', exact: true }),
+  ).toBeVisible()
+  await expect(
+    desktopHeader.getByRole('link', { name: 'Criar conta', exact: true }),
+  ).toBeVisible()
+  await expect(
+    page
+      .locator('#inicio')
+      .getByRole('link', { name: 'Criar minha conta', exact: true }),
+  ).toHaveAttribute('href', '/registro')
+  await expect(page.locator('body')).not.toContainText(/programa piloto/i)
+  await expect(page.locator('body')).not.toContainText(/solicitar acesso/i)
+
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.getByRole('button', { name: 'Abrir menu' }).click()
+  const mobileNavigation = page.getByRole('navigation', {
+    name: /Navega\u00e7\u00e3o m\u00f3vel/,
+  })
+  await expect(
+    mobileNavigation.getByRole('link', { name: 'Entrar', exact: true }),
+  ).toHaveAttribute('href', '/login')
+  await expect(
+    mobileNavigation.getByRole('link', { name: 'Criar conta', exact: true }),
+  ).toHaveAttribute('href', '/registro')
   await expectNoCriticalAccessibilityViolations(page)
 })
 

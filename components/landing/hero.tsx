@@ -1,4 +1,5 @@
 import { ArrowRight, Check, CircleDot } from 'lucide-react'
+import Link from 'next/link'
 
 export function Hero() {
   return (
@@ -20,22 +21,22 @@ export function Hero() {
             quanto já está pronto para faturar.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <a
-              href="#contato"
+            <Link
+              href="/registro"
               className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-primary px-6 font-semibold text-primary-foreground transition hover:bg-primary/90"
             >
-              Quero participar do piloto
+              Criar minha conta
               <ArrowRight className="size-4" />
-            </a>
+            </Link>
             <a
               href="#como-funciona"
               className="inline-flex min-h-12 items-center justify-center rounded-xl border border-border bg-card px-6 font-semibold transition hover:bg-muted"
             >
-              Ver como funciona
+              Conhecer a plataforma
             </a>
           </div>
           <p className="mt-4 text-sm text-muted-foreground">
-            Programa piloto para empresas com equipes técnicas externas.
+            Comece pelo navegador e configure sua operação no seu ritmo.
           </p>
           <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-3 text-sm">
             {[

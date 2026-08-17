@@ -1,6 +1,7 @@
 import { ApiError } from '@/lib/api/errors'
 
-type AuthOperation = 'login' | 'session' | 'forgot-password' | 'reset-password'
+type AuthOperation =
+  'login' | 'registration' | 'session' | 'forgot-password' | 'reset-password'
 
 export function getAuthErrorMessage(
   error: unknown,
@@ -22,6 +23,21 @@ export function getAuthErrorMessage(
 
   if (error.status === 422) {
     return 'Revise os campos informados.'
+  }
+
+  if (operation === 'registration' && error.status === 409) {
+    return 'Este e-mail j\u00e1 est\u00e1 vinculado a uma conta. Entre ou use outro e-mail.'
+  }
+
+  if (operation === 'registration' && error.status === 429) {
+    return 'Muitas tentativas de cadastro. Aguarde um minuto e tente novamente.'
+  }
+
+  if (
+    operation === 'registration' &&
+    error.problem?.code === 'PUBLIC_REGISTRATION_DISABLED'
+  ) {
+    return 'A cria\u00e7\u00e3o de contas est\u00e1 temporariamente indispon\u00edvel.'
   }
 
   if (error.status === 503) {

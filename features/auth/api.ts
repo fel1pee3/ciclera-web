@@ -6,7 +6,12 @@ import {
   forgotPasswordResponseSchema,
   type AuthenticatedAccount,
 } from './contracts'
-import type { ForgotPasswordInput, LoginInput } from './schemas'
+import {
+  currentLegalVersion,
+  type ForgotPasswordInput,
+  type LoginInput,
+  type RegistrationInput,
+} from './schemas'
 
 const noContentSchema = z.null()
 
@@ -14,6 +19,23 @@ export function login(input: LoginInput): Promise<AuthenticatedAccount> {
   return clientApiRequest('auth/login', authenticatedAccountSchema, {
     method: 'POST',
     json: input,
+  })
+}
+
+export function registerOrganization(
+  input: RegistrationInput,
+): Promise<AuthenticatedAccount> {
+  return clientApiRequest('auth/register', authenticatedAccountSchema, {
+    method: 'POST',
+    json: {
+      organizationName: input.organizationName,
+      ownerName: input.ownerName,
+      email: input.email,
+      password: input.password,
+      timezone: input.timezone,
+      termsAccepted: input.termsAccepted,
+      termsVersion: currentLegalVersion,
+    },
   })
 }
 

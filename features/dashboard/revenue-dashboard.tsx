@@ -82,6 +82,7 @@ export function RevenueDashboard() {
       ) : null}
       {summary ? (
         <>
+          {isEmptyWorkspace(summary) ? <GettingStarted /> : null}
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
             {(Object.keys(stageLabels) as DashboardStatus[]).map((status) => (
               <Link href={stageHref(status)} key={status}>
@@ -173,6 +174,67 @@ export function RevenueDashboard() {
       ) : null}
     </section>
   )
+}
+
+function GettingStarted() {
+  const steps = [
+    {
+      href: '/app/equipe',
+      title: 'Monte sua equipe',
+      description:
+        'Adicione administradores e t\u00e9cnicos que usar\u00e3o a Ciclera.',
+    },
+    {
+      href: '/app/clientes/novo',
+      title: 'Cadastre o primeiro cliente e local',
+      description:
+        'Registre quem ser\u00e1 atendido e onde o servi\u00e7o acontece.',
+    },
+    {
+      href: '/app/equipamentos/novo',
+      title: 'Vincule os equipamentos',
+      description: 'Organize os ativos de cada cliente e local.',
+    },
+    {
+      href: '/app/ordens/nova',
+      title: 'Crie a primeira ordem',
+      description: 'Planeje o atendimento depois de concluir os cadastros.',
+    },
+  ]
+
+  return (
+    <Card className="border-primary/30 bg-primary/5 p-5 sm:p-6">
+      <p className="eyebrow text-foreground">Primeiros passos</p>
+      <h2 className="mt-2 font-heading text-xl font-semibold">
+        Sua organização está pronta para ser configurada
+      </h2>
+      <p className="mt-2 text-sm text-muted-foreground">
+        Siga esta ordem para preparar a operação sem criar dados fictícios.
+      </p>
+      <ol className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {steps.map((step, index) => (
+          <li key={step.href}>
+            <Link
+              href={step.href}
+              className="block h-full rounded-xl border border-border bg-card p-4 transition hover:border-primary"
+            >
+              <span className="text-xs font-bold text-primary">
+                PASSO {index + 1}
+              </span>
+              <strong className="mt-2 block">{step.title}</strong>
+              <span className="mt-1 block text-sm text-muted-foreground">
+                {step.description}
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ol>
+    </Card>
+  )
+}
+
+export function isEmptyWorkspace(summary: DashboardSummary): boolean {
+  return Object.values(summary.stages).every((stage) => stage.count === 0)
 }
 
 function DateFilter({

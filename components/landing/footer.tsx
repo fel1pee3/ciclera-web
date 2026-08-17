@@ -8,7 +8,7 @@ export function Footer() {
   const number = publicEnvironment.NEXT_PUBLIC_WHATSAPP_NUMBER
   const email = publicEnvironment.NEXT_PUBLIC_CONTACT_EMAIL
   const message = encodeURIComponent(
-    'Olá! Conheci a Ciclera e gostaria de conversar sobre o programa piloto para minha empresa.',
+    'Olá! Conheci a Ciclera e gostaria de conversar sobre a plataforma para minha empresa.',
   )
   return (
     <footer className="border-t border-border bg-card py-12 text-foreground">

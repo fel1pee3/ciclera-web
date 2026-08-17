@@ -11,19 +11,20 @@ export default function Page() {
           Política de Privacidade
         </h1>
         <p className="mt-4 text-muted-foreground">
-          Última atualização: 12 de agosto de 2026.
+          Última atualização: 17 de agosto de 2026.
         </p>
         <div className="legal-copy">
           <h2>Dados coletados</h2>
           <p>
-            Ao solicitar contato, podemos coletar nome, empresa, função, e-mail,
-            WhatsApp, localização e informações operacionais fornecidas
-            voluntariamente.
+            Ao criar uma conta ou solicitar contato, podemos coletar nome,
+            organização, função, e-mail, WhatsApp, localização e informações
+            operacionais fornecidas voluntariamente.
           </p>
           <h2>Finalidade</h2>
           <p>
-            Usamos esses dados para analisar a aderência ao programa piloto,
-            responder à solicitação e conduzir conversas sobre a Ciclera.
+            Usamos esses dados para provisionar e proteger a conta, operar a
+            plataforma, responder à solicitação e conduzir conversas sobre a
+            Ciclera.
           </p>
           <h2>Compartilhamento e segurança</h2>
           <p>

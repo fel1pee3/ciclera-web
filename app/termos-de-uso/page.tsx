@@ -9,14 +9,20 @@ export default function Page() {
         </Link>
         <h1 className="mt-10 font-heading text-4xl font-bold">Termos de Uso</h1>
         <p className="mt-4 text-muted-foreground">
-          Última atualização: 12 de agosto de 2026.
+          Última atualização: 17 de agosto de 2026.
         </p>
         <div className="legal-copy">
           <h2>Sobre este site</h2>
           <p>
-            Este site apresenta a proposta da Ciclera e permite solicitar
-            contato sobre seu programa piloto. A plataforma está em fase de
-            validação.
+            Este site apresenta a Ciclera, permite criar uma organização e
+            acessar a plataforma, além de oferecer um canal de contato com a
+            equipe.
+          </p>
+          <h2>Conta e organização</h2>
+          <p>
+            Ao criar uma conta, você declara que possui autorização para
+            representar a organização informada e se torna seu primeiro
+            proprietário na plataforma.
           </p>
           <h2>Conteúdo demonstrativo</h2>
           <p>

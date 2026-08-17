@@ -66,13 +66,13 @@ export function LeadForm() {
     <section id="contato" className="section bg-card">
       <div className="container-page grid gap-12 lg:grid-cols-[.75fr_1.25fr]">
         <div>
-          <p className="eyebrow">Solicite uma conversa</p>
+          <p className="eyebrow">Fale com a equipe</p>
           <h2 className="section-title">
             Vamos entender o caminho entre sua operação e o faturamento.
           </h2>
           <p className="section-copy">
-            Conte um pouco sobre sua equipe. Usaremos essas informações apenas
-            para avaliar a aderência ao programa piloto.
+            Conte um pouco sobre sua equipe. Usaremos essas informações para
+            entender sua operação e responder ao contato.
           </p>
         </div>
 
@@ -161,8 +161,8 @@ export function LeadForm() {
                   className="mt-1 size-4 min-h-0 w-4 p-0 accent-primary"
                 />
                 <Label htmlFor="consent" className="font-normal">
-                  Concordo em receber contato da Ciclera sobre o programa
-                  piloto.
+                  Concordo em receber contato da equipe Ciclera sobre a
+                  plataforma.
                 </Label>
               </div>
               {errors.consent && (
@@ -178,7 +178,7 @@ export function LeadForm() {
               size="lg"
               type="submit"
             >
-              {isSubmitting ? 'Enviando informações...' : 'Solicitar conversa'}
+              {isSubmitting ? 'Enviando informações...' : 'Falar com a equipe'}
             </Button>
 
             {status === 'success' && (

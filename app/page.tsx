@@ -9,7 +9,7 @@ import {
   FieldSection,
   AudienceSection,
   BenefitsSection,
-  PilotSection,
+  GetStartedSection,
   FaqSection,
 } from '@/components/landing/sections'
 import { LeadForm } from '@/components/landing/lead-form'
@@ -32,9 +32,9 @@ export default function Page() {
         <FieldSection />
         <AudienceSection />
         <BenefitsSection />
-        <PilotSection />
         <LeadForm />
         <FaqSection />
+        <GetStartedSection />
       </main>
       <Footer />
     </>

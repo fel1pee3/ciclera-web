@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Menu, X } from 'lucide-react'
+import Link from 'next/link'
 import { Brand } from './brand'
 import { nav } from './content'
 import { cn } from '@/lib/utils'
@@ -25,9 +26,9 @@ export function Header() {
       )}
     >
       <div className="mx-auto flex h-18 max-w-7xl items-center justify-between px-5 lg:px-8">
-        <a href="#inicio" aria-label="Ciclera — início">
+        <Link href="/#inicio" aria-label="Ciclera - início">
           <Brand />
-        </a>
+        </Link>
         <nav
           className="hidden items-center gap-7 lg:flex"
           aria-label="Navegação principal"
@@ -42,12 +43,20 @@ export function Header() {
             </a>
           ))}
         </nav>
-        <a
-          href="#contato"
-          className="hidden rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 lg:inline-flex"
-        >
-          Quero participar do piloto
-        </a>
+        <div className="hidden items-center gap-2 lg:flex">
+          <Link
+            href="/login"
+            className="rounded-xl px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-muted"
+          >
+            Entrar
+          </Link>
+          <Link
+            href="/registro"
+            className="rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
+          >
+            Criar conta
+          </Link>
+        </div>
         <button
           type="button"
           onClick={() => setOpen(!open)}
@@ -74,13 +83,20 @@ export function Header() {
                 {label}
               </a>
             ))}
-            <a
-              href="#contato"
+            <Link
+              href="/login"
               onClick={() => setOpen(false)}
-              className="mt-3 rounded-xl bg-primary px-5 py-3 text-center font-semibold text-primary-foreground"
+              className="mt-3 rounded-xl border border-border px-5 py-3 text-center font-semibold"
             >
-              Quero participar do piloto
-            </a>
+              Entrar
+            </Link>
+            <Link
+              href="/registro"
+              onClick={() => setOpen(false)}
+              className="rounded-xl bg-primary px-5 py-3 text-center font-semibold text-primary-foreground"
+            >
+              Criar conta
+            </Link>
           </div>
         </nav>
       )}

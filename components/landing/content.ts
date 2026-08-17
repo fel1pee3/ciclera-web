@@ -22,7 +22,7 @@ export const nav = [
   ['Como funciona', '#como-funciona'],
   ['Funcionalidades', '#funcionalidades'],
   ['Para quem é', '#para-quem'],
-  ['Piloto', '#piloto'],
+  ['Começar', '#comece'],
 ] as const
 
 export const flow = [
@@ -164,7 +164,7 @@ export const benefits = [
 export const faqs = [
   [
     'A Ciclera já está disponível?',
-    'A Ciclera está em fase de validação e seleção das primeiras empresas participantes. O piloto será conduzido de forma acompanhada para garantir aderência ao fluxo real da operação.',
+    'Sim. Crie sua organização, acesse a plataforma pelo navegador e configure equipe, clientes, locais e equipamentos.',
   ],
   [
     'Preciso instalar um aplicativo?',
@@ -183,11 +183,11 @@ export const faqs = [
     'Para empresas B2B com equipes técnicas externas que instalam, inspecionam, reparam ou fazem manutenção em equipamentos.',
   ],
   [
-    'Como funciona o programa piloto?',
-    'Primeiro entendemos a operação, seus volumes e gargalos. Depois avaliamos a aderência ao piloto e definimos conjuntamente o fluxo acompanhado.',
+    'Como começo a usar?',
+    'Crie sua conta, cadastre a equipe e organize clientes, locais e equipamentos. Depois, registre e acompanhe as ordens de serviço.',
   ],
   [
     'Já existem preços definidos?',
-    'Os valores e as condições do piloto serão apresentados após entendermos o tamanho e as necessidades da operação.',
+    'As condições comerciais serão apresentadas pela equipe conforme o perfil da operação.',
   ],
 ] as const

@@ -46,7 +46,12 @@ export function PositioningStrip() {
         <p className="text-center font-heading text-lg font-semibold">
           Do chamado ao caixa, cada etapa sob controle.
         </p>
-        <div className="mt-5 flex overflow-x-auto pb-2">
+        <div
+          className="mt-5 flex overflow-x-auto pb-2"
+          tabIndex={0}
+          role="region"
+          aria-label="Etapas do fluxo operacional"
+        >
           <div className="mx-auto flex min-w-max items-center">
             {flow.map((x, i) => (
               <div key={x} className="flex items-center">
@@ -313,10 +318,10 @@ export function AudienceSection() {
               A Ciclera faz sentido se sua empresa:
             </p>
             <a
-              href="#contato"
+              href="/registro"
               className="mt-8 inline-flex rounded-xl bg-active px-5 py-3 font-semibold text-institutional"
             >
-              Quero avaliar minha operação
+              Criar minha conta
             </a>
           </div>
           <ul className="grid gap-3">
@@ -377,38 +382,40 @@ export function BenefitsSection() {
   )
 }
 
-export function PilotSection() {
+export function GetStartedSection() {
   const items = [
-    'Diagnóstico inicial do fluxo de ordens de serviço.',
-    'Mapeamento dos pontos em que informações e receita se perdem.',
-    'Acompanhamento próximo durante a validação.',
-    'Participação na priorização das funcionalidades essenciais.',
-    'Condições especiais para as primeiras empresas participantes.',
+    'Cadastre sua organização e acesse imediatamente.',
+    'Adicione equipe, clientes, locais e equipamentos.',
+    'Planeje ordens e acompanhe a execução em campo.',
+    'Revise evidências antes de liberar o faturamento.',
+    'Mantenha histórico, valores e responsáveis rastreáveis.',
   ]
   return (
     <section
-      id="piloto"
+      id="comece"
       className="section bg-institutional text-primary-foreground"
     >
       <div className="container-page grid gap-12 lg:grid-cols-2">
         <div>
-          <Eyebrow dark>Programa piloto Ciclera</Eyebrow>
+          <Eyebrow dark>Comece com sua operação</Eyebrow>
           <Title dark>
-            Ajude a construir uma operação em que nenhum serviço fica para trás.
+            Organize o caminho do chamado ao caixa em um só lugar.
           </Title>
           <p className="mt-5 max-w-xl leading-relaxed text-primary-foreground/70">
-            Estamos selecionando empresas para acompanhar o desenvolvimento
-            inicial da Ciclera, entender o fluxo real e identificar gargalos
-            entre execução e faturamento.
+            Crie a organização, convide sua equipe e configure os cadastros
+            essenciais para iniciar as primeiras ordens de serviço.
           </p>
           <a
-            href="#contato"
+            href="/registro"
             className="mt-8 inline-flex rounded-xl bg-active px-6 py-3.5 font-semibold text-institutional"
           >
-            Quero conversar sobre o piloto
+            Criar minha conta
           </a>
           <p className="mt-3 text-sm text-primary-foreground/55">
-            Sem compromisso. Primeiro queremos entender sua operação.
+            Já possui conta?{' '}
+            <a href="/login" className="underline">
+              Entrar
+            </a>
           </p>
         </div>
         <ul className="flex flex-col gap-3">

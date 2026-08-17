@@ -17,9 +17,10 @@ O objetivo é entregar uma experiência pequena, confiável e utilizável. Não 
 O `ciclera-web` é responsável por:
 
 - Landing page pública da Ciclera.
-- Captação de empresas interessadas no programa piloto.
+- Cadastro público de uma organização e seu primeiro proprietário.
+- Canal comercial para contato com a equipe.
 - Páginas públicas institucionais e jurídicas.
-- Login e recuperação de acesso.
+- Cadastro, login e recuperação de acesso.
 - Painel operacional para `OWNER` e `ADMIN`.
 - Experiência web de execução para `TECHNICIAN`.
 - Formulários e feedback imediato de validação.
@@ -46,7 +47,7 @@ A API é sempre a autoridade final sobre identidade, organização, permissões,
 - Landing page completa.
 - Apresentação do problema, proposta e fluxo do produto.
 - Demonstração visual claramente identificada como demonstrativa.
-- Formulário de interesse no programa piloto.
+- Cadastro self-service e formulário de contato comercial.
 - Contato por WhatsApp e e-mail quando configurados.
 - Política de Privacidade.
 - Termos de Uso.
@@ -202,6 +203,7 @@ As rotas devem usar Route Groups para separar contextos sem adicionar segmentos 
 | `/`                        | Landing page da Ciclera                              |
 | `/politica-de-privacidade` | Política de Privacidade                              |
 | `/termos-de-uso`           | Termos de Uso                                        |
+| `/registro`                | Criação de organização e primeiro `OWNER`            |
 | `/login`                   | Autenticação                                         |
 | `/recuperar-senha`         | Solicitação de recuperação de senha                  |
 | `/redefinir-senha`         | Definição de uma nova senha a partir de token válido |
@@ -604,7 +606,8 @@ Regras da interface:
 
 ## Landing page
 
-A landing page tem como objetivo explicar o problema, demonstrar a proposta e captar empresas qualificadas para o piloto.
+A landing page explica o problema, demonstra o produto e oferece acesso direto ao
+cadastro e ao login, preservando o formulário de leads como canal comercial.
 
 Mensagem central:
 
@@ -612,7 +615,7 @@ Mensagem central:
 
 CTA principal:
 
-> **Quero participar do piloto**
+> **Criar minha conta**
 
 Ela deve conter, de forma equilibrada:
 
@@ -620,11 +623,11 @@ Ela deve conter, de forma equilibrada:
 - Problemas que fazem receita se perder.
 - Fluxo do chamado ao faturamento.
 - Demonstração visual do produto.
-- Funcionalidades planejadas para o MVP.
+- Funcionalidades disponíveis no MVP.
 - Experiência do escritório e do técnico pelo navegador.
 - Segmentos e critérios de qualificação.
 - Benefícios sem números inventados.
-- Programa piloto.
+- Cadastro e entrada no produto.
 - Formulário de captação.
 - FAQ.
 - Contato e páginas jurídicas.
@@ -634,7 +637,7 @@ Regras:
 - Dados de mockup devem ser identificados como demonstração.
 - Não apresentar clientes, depoimentos ou resultados inexistentes.
 - Não prometer aplicativo, offline, emissão fiscal, IA ou integrações.
-- Não exibir botão de login antes de existir uma área autenticada utilizável, salvo decisão explícita.
+- Exibir `Entrar` e `Criar conta` no header desktop e mobile.
 - O formulário deve possuir honeypot e proteção server-side contra abuso.
 - A URL do webhook nunca pode chegar ao client bundle.
 - CTA de WhatsApp deve ser omitido quando o número não estiver configurado.
@@ -827,16 +830,17 @@ Evitar testes que apenas confirmem implementação interna ou snapshots extensos
 
 Fluxos mínimos:
 
-1. Login e redirecionamento conforme o perfil.
-2. Bloqueio de rota administrativa para técnico.
-3. Cadastro de cliente, local e equipamento.
-4. Criação e atribuição de ordem.
-5. Início e conclusão de execução pelo técnico.
-6. Upload de evidência.
-7. Solicitação e correção de pendência.
-8. Aprovação e entrada na fila pronta para faturar.
-9. Marcação como faturada.
-10. Logout e limpeza de sessão.
+1. Cadastro público, sessão automática e redirecionamento do primeiro `OWNER`.
+2. Login e redirecionamento conforme o perfil.
+3. Bloqueio de rota administrativa para técnico.
+4. Cadastro de cliente, local e equipamento.
+5. Criação e atribuição de ordem.
+6. Início e conclusão de execução pelo técnico.
+7. Upload de evidência.
+8. Solicitação e correção de pendência.
+9. Aprovação e entrada na fila pronta para faturar.
+10. Marcação como faturada.
+11. Logout e limpeza de sessão.
 
 Testar desktop e pelo menos um viewport mobile para o fluxo do técnico.
 

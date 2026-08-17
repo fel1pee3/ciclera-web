@@ -28,8 +28,17 @@ describe('public pages', () => {
       }),
     ).toBeVisible()
     expect(
-      screen.getByRole('button', { name: 'Solicitar conversa' }),
+      screen.getByRole('button', { name: 'Falar com a equipe' }),
     ).toBeEnabled()
+    expect(
+      screen.getAllByRole('link', { name: 'Criar conta' })[0],
+    ).toHaveAttribute('href', '/registro')
+    expect(screen.getAllByRole('link', { name: 'Entrar' })[0]).toHaveAttribute(
+      'href',
+      '/login',
+    )
+    expect(document.body).not.toHaveTextContent(/programa piloto/i)
+    expect(document.body).not.toHaveTextContent(/solicitar acesso/i)
   })
 
   it('preserves the published legal pages', () => {
@@ -88,10 +97,10 @@ describe('public pages', () => {
     )
     fireEvent.click(
       screen.getByLabelText(
-        'Concordo em receber contato da Ciclera sobre o programa piloto.',
+        'Concordo em receber contato da equipe Ciclera sobre a plataforma.',
       ),
     )
-    fireEvent.click(screen.getByRole('button', { name: 'Solicitar conversa' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Falar com a equipe' }))
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce())
     expect(await screen.findByRole('status')).toHaveTextContent(

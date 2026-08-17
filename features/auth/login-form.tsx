@@ -101,6 +101,12 @@ export function LoginForm() {
       >
         Esqueci minha senha
       </Link>
+      <p className="text-center text-sm text-muted-foreground">
+        Não tem uma conta?{' '}
+        <Link className="font-semibold text-primary" href="/registro">
+          Criar conta
+        </Link>
+      </p>
     </form>
   )
 }

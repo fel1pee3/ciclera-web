@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { getCurrentAccount } from '@/features/auth/api'
+import { getCurrentAccount, registerOrganization } from '@/features/auth/api'
 
 const account = {
   user: {
@@ -76,6 +76,34 @@ describe('authenticated API client', () => {
     expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({
       credentials: 'include',
       cache: 'no-store',
+    })
+  })
+
+  it('never sends password confirmation and includes the current legal version', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify(account), {
+        status: 201,
+        headers: { 'content-type': 'application/json' },
+      }),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+
+    await registerOrganization({
+      organizationName: 'Empresa Tecnica',
+      ownerName: 'Maria Owner',
+      email: 'maria@example.test',
+      password: 'LocalOnly!2026',
+      confirmPassword: 'LocalOnly!2026',
+      timezone: 'America/Sao_Paulo',
+      termsAccepted: true,
+    })
+
+    const request = fetchMock.mock.calls[0]?.[1] as RequestInit
+    const body = JSON.parse(String(request.body)) as Record<string, unknown>
+    expect(body).not.toHaveProperty('confirmPassword')
+    expect(body).toMatchObject({
+      termsAccepted: true,
+      termsVersion: '2026-08-17',
     })
   })
 })
