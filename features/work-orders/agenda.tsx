@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
+import { CalendarClock, UserRound } from 'lucide-react'
 
 import { Alert } from '@/components/ui/alert'
 import { Button, buttonVariants } from '@/components/ui/button'
@@ -10,6 +11,7 @@ import { Card } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Modal } from '@/components/ui/modal'
 import { Skeleton } from '@/components/ui/skeleton'
 import { listUsers } from '@/features/team/api'
 import type { ManagedUser } from '@/features/team/contracts'
@@ -42,6 +44,7 @@ export function AdministrativeAgenda() {
   const [drafts, setDrafts] = useState<WorkOrder[]>([])
   const [error, setError] = useState<string | null>(null)
   const [revision, setRevision] = useState(0)
+  const [scheduling, setScheduling] = useState(false)
 
   useEffect(() => {
     let active = true
@@ -82,14 +85,36 @@ export function AdministrativeAgenda() {
 
   return (
     <section className="mx-auto max-w-6xl space-y-6">
-      <div>
-        <p className="eyebrow">Planejamento</p>
-        <h1 className="mt-3 font-heading text-3xl font-bold">Agenda</h1>
-        <p className="mt-2 text-muted-foreground">
-          Planejamento simples, sem rastreamento ou otimização de rotas.
-        </p>
-      </div>
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="eyebrow">Planejamento</p>
+          <h1 className="mt-3 font-heading text-3xl font-bold">Agenda</h1>
+          <p className="mt-2 text-muted-foreground">
+            Planejamento simples, sem rastreamento ou otimização de rotas.
+          </p>
+        </div>
+        <Button onClick={() => setScheduling(true)}>Agendar ordem</Button>
+      </header>
       {error ? <Alert variant="destructive">{error}</Alert> : null}
+      <Modal
+        className="sm:max-w-4xl"
+        open={scheduling}
+        onClose={() => setScheduling(false)}
+        title="Agendar rascunho"
+        description="Escolha a ordem, o técnico responsável e o período planejado para o atendimento."
+      >
+        <ScheduleDraftForm
+          drafts={drafts}
+          technicians={technicians}
+          timezone={agenda?.timezone ?? null}
+          onCancel={() => setScheduling(false)}
+          onSaved={() => {
+            setScheduling(false)
+            setRevision((value) => value + 1)
+          }}
+          onError={setError}
+        />
+      </Modal>
       <form
         className="grid gap-3 rounded-2xl border bg-card p-4 sm:grid-cols-2 lg:grid-cols-5"
         onSubmit={(event) => {
@@ -129,13 +154,6 @@ export function AdministrativeAgenda() {
           Aplicar filtros
         </Button>
       </form>
-      <ScheduleDraftForm
-        drafts={drafts}
-        technicians={technicians}
-        timezone={agenda?.timezone ?? null}
-        onSaved={() => setRevision((value) => value + 1)}
-        onError={setError}
-      />
       {!agenda && !error ? (
         <Skeleton className="h-72 rounded-2xl" aria-label="Carregando agenda" />
       ) : null}
@@ -172,12 +190,14 @@ function ScheduleDraftForm({
   drafts,
   technicians,
   timezone,
+  onCancel,
   onSaved,
   onError,
 }: {
   drafts: WorkOrder[]
   technicians: ManagedUser[]
   timezone: string | null
+  onCancel: () => void
   onSaved: () => void
   onError: (message: string) => void
 }) {
@@ -206,9 +226,8 @@ function ScheduleDraftForm({
     }
   }
   return (
-    <Card className="p-5">
-      <h2 className="font-heading text-xl font-semibold">Agendar rascunho</h2>
-      <div className="mt-4 grid gap-3 md:grid-cols-2 lg:grid-cols-5">
+    <div>
+      <div className="grid gap-4 md:grid-cols-2">
         <Field label="Ordem">
           <select
             className="input"
@@ -244,8 +263,12 @@ function ScheduleDraftForm({
             onChange={(event) => setEnd(event.target.value)}
           />
         </Field>
+      </div>
+      <div className="mt-6 flex flex-col-reverse gap-3 border-t pt-5 sm:flex-row sm:justify-end">
+        <Button variant="outline" onClick={onCancel}>
+          Cancelar
+        </Button>
         <Button
-          className="self-end"
           disabled={
             pending ||
             !timezone ||
@@ -259,7 +282,7 @@ function ScheduleDraftForm({
           {pending ? 'Agendando…' : 'Agendar'}
         </Button>
       </div>
-    </Card>
+    </div>
   )
 }
 
@@ -284,6 +307,20 @@ function AgendaCard({
     order.activeAssignment.technicianId,
   )
   const [pending, setPending] = useState(false)
+  const [editing, setEditing] = useState(false)
+  const originalStart = toZonedInput(order.scheduledStartAt, timezone)
+  const originalEnd = toZonedInput(order.scheduledEndAt, timezone)
+  const scheduleChanged = start !== originalStart || end !== originalEnd
+  const scheduleIsValid = Boolean(start && end && end > start)
+  const technicianChanged = technicianId !== order.activeAssignment.technicianId
+
+  const closeEditor = () => {
+    setStart(originalStart)
+    setEnd(originalEnd)
+    setTechnicianId(order.activeAssignment.technicianId)
+    setEditing(false)
+  }
+
   const run = async (action: 'reschedule' | 'reassign') => {
     setPending(true)
     try {
@@ -298,6 +335,7 @@ function AgendaCard({
           version: order.version,
           technicianId,
         })
+      setEditing(false)
       onSaved()
     } catch (reason) {
       onError(getWorkOrderErrorMessage(reason))
@@ -306,69 +344,155 @@ function AgendaCard({
     }
   }
   return (
-    <Card className="p-5">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-sm font-semibold text-primary">{order.number}</p>
-          <h2 className="font-heading text-lg font-bold">{order.title}</h2>
+    <>
+      <Card className="overflow-hidden p-0">
+        <div className="p-5">
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <p className="text-sm font-semibold tracking-wide text-primary">
+                {order.number}
+              </p>
+              <h2 className="mt-1 font-heading text-xl leading-snug font-bold">
+                {order.title}
+              </h2>
+            </div>
+            <WorkOrderStatusBadge status={order.status} />
+          </div>
         </div>
-        <WorkOrderStatusBadge status={order.status} />
-      </div>
-      <p className="mt-3 text-sm">
-        {formatInTimezone(order.scheduledStartAt, timezone)} —{' '}
-        {formatInTimezone(order.scheduledEndAt, timezone)}
-      </p>
-      <p className="mt-1 text-sm text-muted-foreground">
-        {order.activeAssignment.technicianName}
-      </p>
-      {order.status === 'SCHEDULED' ? (
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
-          <Field label="Novo início">
-            <Input
-              type="datetime-local"
-              value={start}
-              onChange={(event) => setStart(event.target.value)}
+
+        <div className="grid gap-4 border-y bg-muted/35 px-5 py-4 sm:grid-cols-2">
+          <div className="flex min-w-0 items-start gap-3">
+            <CalendarClock
+              aria-hidden="true"
+              className="mt-0.5 size-5 shrink-0 text-primary"
             />
-          </Field>
-          <Field label="Novo término">
-            <Input
-              type="datetime-local"
-              value={end}
-              onChange={(event) => setEnd(event.target.value)}
+            <div className="min-w-0">
+              <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                Horário atual
+              </p>
+              <p className="mt-1 text-sm leading-relaxed font-medium">
+                {formatInTimezone(order.scheduledStartAt, timezone)}
+                <span className="mx-1 text-muted-foreground">—</span>
+                {formatInTimezone(order.scheduledEndAt, timezone)}
+              </p>
+            </div>
+          </div>
+          <div className="flex min-w-0 items-start gap-3">
+            <UserRound
+              aria-hidden="true"
+              className="mt-0.5 size-5 shrink-0 text-primary"
             />
-          </Field>
-          <Button
-            variant="outline"
-            disabled={pending}
-            onClick={() => void run('reschedule')}
+            <div className="min-w-0">
+              <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                Técnico responsável
+              </p>
+              <p className="mt-1 truncate text-sm font-medium">
+                {order.activeAssignment.technicianName}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2 px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <Link
+            className={buttonVariants({ variant: 'ghost' })}
+            href={`/app/ordens/${order.id}?from=${encodeURIComponent('/app/agenda')}`}
           >
-            Reagendar
-          </Button>
-          <div className="grid gap-2">
-            <TechnicianSelect
-              technicians={technicians}
-              value={technicianId}
-              onChange={setTechnicianId}
-            />
-            <Button
-              variant="outline"
-              disabled={
-                pending || technicianId === order.activeAssignment.technicianId
-              }
-              onClick={() => void run('reassign')}
+            Ver detalhes da ordem
+          </Link>
+          {order.status === 'SCHEDULED' ? (
+            <Button variant="outline" onClick={() => setEditing(true)}>
+              Editar agendamento
+            </Button>
+          ) : null}
+        </div>
+      </Card>
+
+      <Modal
+        className="sm:max-w-3xl"
+        open={editing && order.status === 'SCHEDULED'}
+        onClose={closeEditor}
+        title="Editar agendamento"
+        description={`${order.number} · ${order.title}`}
+      >
+        <div className="space-y-6">
+          <section aria-labelledby={`reschedule-${order.id}`}>
+            <h3
+              id={`reschedule-${order.id}`}
+              className="font-heading text-base font-semibold"
             >
-              Reatribuir
+              Reagendar atendimento
+            </h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Altere o início ou o término para liberar o reagendamento.
+            </p>
+            <div className="mt-3 grid items-end gap-3 sm:grid-cols-2">
+              <Field label="Novo início">
+                <Input
+                  type="datetime-local"
+                  value={start}
+                  onChange={(event) => setStart(event.target.value)}
+                />
+              </Field>
+              <Field label="Novo término">
+                <Input
+                  type="datetime-local"
+                  value={end}
+                  onChange={(event) => setEnd(event.target.value)}
+                />
+              </Field>
+            </div>
+            <div className="mt-3 flex justify-end">
+              <Button
+                className="w-full sm:w-auto"
+                variant="outline"
+                disabled={pending || !scheduleChanged || !scheduleIsValid}
+                onClick={() => void run('reschedule')}
+              >
+                {pending ? 'Salvando…' : 'Reagendar'}
+              </Button>
+            </div>
+          </section>
+
+          <section
+            className="border-t pt-5"
+            aria-labelledby={`reassign-${order.id}`}
+          >
+            <h3
+              id={`reassign-${order.id}`}
+              className="font-heading text-base font-semibold"
+            >
+              Alterar responsável
+            </h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Selecione outro técnico para reatribuir esta ordem.
+            </p>
+            <div className="mt-3 grid items-end gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
+              <Field label="Técnico">
+                <TechnicianSelect
+                  technicians={technicians}
+                  value={technicianId}
+                  onChange={setTechnicianId}
+                />
+              </Field>
+              <Button
+                className="w-full sm:w-auto"
+                variant="outline"
+                disabled={pending || !technicianId || !technicianChanged}
+                onClick={() => void run('reassign')}
+              >
+                {pending ? 'Salvando…' : 'Reatribuir'}
+              </Button>
+            </div>
+          </section>
+          <div className="flex justify-end border-t pt-5">
+            <Button variant="outline" onClick={closeEditor}>
+              Fechar
             </Button>
           </div>
         </div>
-      ) : null}
-      <Link
-        className={`${buttonVariants({ variant: 'ghost' })} mt-4`}
-        href={`/app/ordens/${order.id}?from=${encodeURIComponent('/app/agenda')}`}
-      >
-        Ver ordem
-      </Link>
-    </Card>
+      </Modal>
+    </>
   )
 }
 

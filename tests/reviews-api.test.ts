@@ -58,7 +58,6 @@ describe('review API client', () => {
         notes: 'Concluído',
         startedAt: '2026-08-16T11:00:00.000Z',
         updatedAt: '2026-08-16T12:00:00.000Z',
-        checklist: null,
         evidence: [
           {
             id: '71000000-0000-4000-8000-000000000005',
@@ -96,8 +95,8 @@ describe('review API client', () => {
     vi.stubGlobal('fetch', fetchMock)
     await requestCorrection(item.id, {
       version: 4,
-      reason: 'CHECKLIST_INCOMPLETE',
-      description: 'Preencha a pressão medida.',
+      reason: 'EQUIPMENT_DATA_INCORRECT',
+      description: 'Confirme o número de série.',
     })
     expect(fetchMock).toHaveBeenCalledWith(
       expect.stringContaining('/request-correction'),
@@ -105,8 +104,8 @@ describe('review API client', () => {
         method: 'POST',
         body: JSON.stringify({
           version: 4,
-          reason: 'CHECKLIST_INCOMPLETE',
-          description: 'Preencha a pressão medida.',
+          reason: 'EQUIPMENT_DATA_INCORRECT',
+          description: 'Confirme o número de série.',
         }),
       }),
     )

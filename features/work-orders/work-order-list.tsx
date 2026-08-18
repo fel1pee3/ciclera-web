@@ -5,10 +5,11 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
 
 import { Alert } from '@/components/ui/alert'
-import { buttonVariants } from '@/components/ui/button'
+import { Button, buttonVariants } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Modal } from '@/components/ui/modal'
 import { Skeleton } from '@/components/ui/skeleton'
 import { listWorkOrders, type ListWorkOrdersQuery } from './api'
 import {
@@ -18,6 +19,7 @@ import {
 } from './contracts'
 import { getWorkOrderErrorMessage } from './errors'
 import { WorkOrderStatusBadge, workOrderStatusLabel } from './status-badge'
+import { WorkOrderForm } from './work-order-form'
 
 const pageSize = 12
 const priorityLabels = {
@@ -35,6 +37,9 @@ export function WorkOrderList() {
   const [search, setSearch] = useState(query.search ?? '')
   const [result, setResult] = useState<WorkOrderPage | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
+  const [creating, setCreating] = useState(false)
+  const [revision, setRevision] = useState(0)
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -63,7 +68,7 @@ export function WorkOrderList() {
     return () => {
       active = false
     }
-  }, [query])
+  }, [query, revision])
 
   const changeFilter = (key: string, value: string) => {
     const next = new URLSearchParams(searchParams)
@@ -82,10 +87,26 @@ export function WorkOrderList() {
             Ordens de serviço
           </h1>
         </div>
-        <Link className={buttonVariants()} href="/app/ordens/nova">
-          Nova ordem
-        </Link>
+        <Button onClick={() => setCreating(true)}>Nova ordem</Button>
       </header>
+      {notice ? <Alert variant="success">{notice}</Alert> : null}
+      <Modal
+        className="sm:max-w-4xl"
+        open={creating}
+        onClose={() => setCreating(false)}
+        title="Nova ordem de serviço"
+        description="Defina o atendimento, o planejamento e o valor previsto da ordem."
+      >
+        <WorkOrderForm
+          embedded
+          onCancel={() => setCreating(false)}
+          onSaved={(order) => {
+            setCreating(false)
+            setNotice(`${order.number} foi criada.`)
+            setRevision((value) => value + 1)
+          }}
+        />
+      </Modal>
       <div className="grid gap-3 rounded-2xl border bg-card p-4 md:grid-cols-3">
         <Label className="grid gap-2">
           <span>Buscar</span>
@@ -138,6 +159,13 @@ export function WorkOrderList() {
               : 'Nenhuma ordem cadastrada'
           }
           description="Crie uma ordem ou ajuste os filtros atuais."
+          action={
+            !query.search && !query.status && !query.priority ? (
+              <Button onClick={() => setCreating(true)}>
+                Criar primeira ordem
+              </Button>
+            ) : undefined
+          }
         />
       ) : null}
       {result?.items.length ? (

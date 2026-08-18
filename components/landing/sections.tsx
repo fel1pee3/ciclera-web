@@ -221,7 +221,7 @@ export function FieldSection() {
 }
 function FieldMockups() {
   const tasks = [
-    'Checklist',
+    'Registrar observações',
     'Adicionar fotos',
     'Serviço adicional',
     'Coletar assinatura',

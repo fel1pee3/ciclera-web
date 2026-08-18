@@ -7,12 +7,20 @@ import { useEffect, useMemo, useState } from 'react'
 import { Alert } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button, buttonVariants } from '@/components/ui/button'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Modal } from '@/components/ui/modal'
 import { Skeleton } from '@/components/ui/skeleton'
-import { archiveEquipment, listEquipment, type ListEquipmentQuery } from './api'
-import type { EquipmentPage } from './contracts'
+import {
+  archiveEquipment,
+  listEquipment,
+  reactivateEquipment,
+  type ListEquipmentQuery,
+} from './api'
+import type { Equipment, EquipmentPage } from './contracts'
+import { EquipmentForm } from './equipment-form'
 import { getEquipmentErrorMessage } from './errors'
 
 const pageSize = 12
@@ -27,6 +35,11 @@ export function EquipmentList() {
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [pendingId, setPendingId] = useState<string | null>(null)
+  const [archiveTarget, setArchiveTarget] = useState<Equipment | null>(null)
+  const [reactivateTarget, setReactivateTarget] = useState<Equipment | null>(
+    null,
+  )
+  const [creating, setCreating] = useState(false)
   const [revision, setRevision] = useState(0)
 
   useEffect(() => {
@@ -58,14 +71,28 @@ export function EquipmentList() {
     }
   }, [query, revision])
 
-  const archive = async (equipmentId: string, name: string) => {
-    if (!window.confirm(`Arquivar ${name}? O histórico será preservado.`))
-      return
-    setPendingId(equipmentId)
+  const archive = async (equipment: Equipment) => {
+    setPendingId(equipment.id)
     setError(null)
     try {
-      await archiveEquipment(equipmentId)
-      setNotice(`${name} foi arquivado.`)
+      await archiveEquipment(equipment.id)
+      setNotice(`${equipment.name} foi arquivado.`)
+      setArchiveTarget(null)
+      setRevision((value) => value + 1)
+    } catch (reason) {
+      setError(getEquipmentErrorMessage(reason))
+    } finally {
+      setPendingId(null)
+    }
+  }
+
+  const reactivate = async (equipment: Equipment) => {
+    setPendingId(equipment.id)
+    setError(null)
+    try {
+      await reactivateEquipment(equipment.id)
+      setNotice(`${equipment.name} foi reativado.`)
+      setReactivateTarget(null)
       setRevision((value) => value + 1)
     } catch (reason) {
       setError(getEquipmentErrorMessage(reason))
@@ -86,16 +113,56 @@ export function EquipmentList() {
             Consulte identificação, serial e vínculo de cada ativo.
           </p>
         </div>
-        <Link
-          href={`/app/equipamentos/novo?from=${encodeURIComponent(currentUrl)}`}
-          className={buttonVariants()}
-        >
-          Novo equipamento
-        </Link>
+        <Button onClick={() => setCreating(true)}>Novo equipamento</Button>
       </div>
 
       {notice ? <Alert variant="success">{notice}</Alert> : null}
       {error ? <Alert variant="destructive">{error}</Alert> : null}
+
+      <Modal
+        className="sm:max-w-4xl"
+        open={creating}
+        onClose={() => setCreating(false)}
+        title="Novo equipamento"
+        description="Vincule o ativo a um cliente e local e registre sua identificação técnica."
+      >
+        <EquipmentForm
+          embedded
+          onCancel={() => setCreating(false)}
+          onSaved={(equipment) => {
+            setCreating(false)
+            setNotice(`${equipment.name} foi cadastrado.`)
+            setRevision((value) => value + 1)
+          }}
+        />
+      </Modal>
+
+      <ConfirmDialog
+        open={Boolean(archiveTarget)}
+        title="Arquivar equipamento?"
+        description={`${archiveTarget?.name ?? 'Este equipamento'} deixará de aparecer entre os equipamentos ativos. O cadastro e todo o histórico técnico serão preservados; nenhum dado será excluído.`}
+        confirmLabel="Arquivar equipamento"
+        pendingLabel="Arquivando…"
+        variant="destructive"
+        pending={pendingId === archiveTarget?.id}
+        onCancel={() => setArchiveTarget(null)}
+        onConfirm={() => {
+          if (archiveTarget) void archive(archiveTarget)
+        }}
+      />
+
+      <ConfirmDialog
+        open={Boolean(reactivateTarget)}
+        title="Reativar equipamento?"
+        description={`${reactivateTarget?.name ?? 'Este equipamento'} voltará para os equipamentos ativos e poderá ser utilizado em novas ordens.`}
+        confirmLabel="Reativar equipamento"
+        pendingLabel="Reativando…"
+        pending={pendingId === reactivateTarget?.id}
+        onCancel={() => setReactivateTarget(null)}
+        onConfirm={() => {
+          if (reactivateTarget) void reactivate(reactivateTarget)
+        }}
+      />
 
       <div className="grid gap-3 rounded-2xl border bg-card p-4 sm:grid-cols-[1fr_14rem_auto]">
         <Label className="grid gap-2">
@@ -155,9 +222,9 @@ export function EquipmentList() {
           }
           action={
             !query.search && query.archive === 'ACTIVE' ? (
-              <Link className={buttonVariants()} href="/app/equipamentos/novo">
+              <Button onClick={() => setCreating(true)}>
                 Cadastrar equipamento
-              </Link>
+              </Button>
             ) : undefined
           }
         />
@@ -195,11 +262,18 @@ export function EquipmentList() {
                   <Button
                     variant="ghost"
                     disabled={pendingId === equipment.id}
-                    onClick={() => void archive(equipment.id, equipment.name)}
+                    onClick={() => setArchiveTarget(equipment)}
                   >
                     {pendingId === equipment.id ? 'Arquivando…' : 'Arquivar'}
                   </Button>
-                ) : null}
+                ) : (
+                  <Button
+                    disabled={pendingId === equipment.id}
+                    onClick={() => setReactivateTarget(equipment)}
+                  >
+                    {pendingId === equipment.id ? 'Reativando…' : 'Reativar'}
+                  </Button>
+                )}
               </div>
             </article>
           ))}

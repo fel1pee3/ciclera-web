@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { getApiFieldErrors } from '@/features/auth/errors'
+import { cn } from '@/lib/utils'
 import { createCustomer, updateCustomer } from './api'
 import type { Customer } from './contracts'
 import { getCustomerErrorMessage } from './errors'
@@ -18,14 +19,17 @@ import {
   formatDocument,
   inferDocumentType,
 } from './formatters'
+import { MaskedInput } from './masked-input'
 import { customerFormSchema, type CustomerFormInput } from './schemas'
 
 export function CustomerForm({
   customer,
+  embedded = false,
   onCancel,
   onSaved,
 }: {
   customer?: Customer
+  embedded?: boolean
   onCancel?: () => void
   onSaved: (customer: Customer) => void
 }) {
@@ -82,20 +86,26 @@ export function CustomerForm({
 
   return (
     <form
-      className="overflow-hidden rounded-3xl border bg-card shadow-sm"
+      className={cn(
+        !embedded && 'overflow-hidden rounded-3xl border bg-card shadow-sm',
+      )}
       noValidate
       onSubmit={handleSubmit(submit)}
     >
-      <div className="border-b px-5 py-5 sm:px-6">
-        <h2 className="font-heading text-xl font-semibold">
-          {customer ? 'Editar cliente' : 'Dados do cliente'}
-        </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Informe os dados de identificação e contato usados na operação.
-        </p>
-      </div>
+      {!embedded ? (
+        <div className="border-b px-5 py-5 sm:px-6">
+          <h2 className="font-heading text-xl font-semibold">
+            {customer ? 'Editar cliente' : 'Dados do cliente'}
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Informe os dados de identificação e contato usados na operação.
+          </p>
+        </div>
+      ) : null}
 
-      <div className="grid gap-5 p-5 sm:grid-cols-2 sm:p-6">
+      <div
+        className={cn('grid gap-5 sm:grid-cols-2', !embedded && 'p-5 sm:p-6')}
+      >
         {errorMessage ? (
           <Alert className="sm:col-span-2" variant="destructive" role="alert">
             {errorMessage}
@@ -143,8 +153,13 @@ export function CustomerForm({
             control={control}
             name="document"
             render={({ field }) => (
-              <Input
-                {...field}
+              <MaskedInput
+                name={field.name}
+                value={field.value}
+                inputRef={field.ref}
+                onBlur={field.onBlur}
+                onValueChange={field.onChange}
+                format={(value) => formatDocument(value, documentType)}
                 inputMode="numeric"
                 maxLength={documentType === 'CPF' ? 14 : 18}
                 aria-label={`Número do ${documentType}`}
@@ -154,11 +169,6 @@ export function CustomerForm({
                     : '00.000.000/0000-00'
                 }
                 aria-invalid={Boolean(errors.document)}
-                onChange={(event) =>
-                  field.onChange(
-                    formatDocument(event.target.value, documentType),
-                  )
-                }
               />
             )}
           />
@@ -177,8 +187,13 @@ export function CustomerForm({
             control={control}
             name="phone"
             render={({ field }) => (
-              <Input
-                {...field}
+              <MaskedInput
+                name={field.name}
+                value={field.value}
+                inputRef={field.ref}
+                onBlur={field.onBlur}
+                onValueChange={field.onChange}
+                format={formatBrazilPhone}
                 type="tel"
                 inputMode="tel"
                 autoComplete="tel"
@@ -186,9 +201,6 @@ export function CustomerForm({
                 aria-label="Telefone"
                 placeholder="+55 (85) 93344-9080"
                 aria-invalid={Boolean(errors.phone)}
-                onChange={(event) =>
-                  field.onChange(formatBrazilPhone(event.target.value))
-                }
               />
             )}
           />
@@ -225,7 +237,12 @@ export function CustomerForm({
         </FormField>
       </div>
 
-      <div className="flex flex-wrap justify-end gap-3 border-t bg-muted/20 px-5 py-4 sm:px-6">
+      <div
+        className={cn(
+          'flex flex-wrap justify-end gap-3 border-t',
+          embedded ? 'mt-5 pt-5' : 'bg-muted/20 px-5 py-4 sm:px-6',
+        )}
+      >
         {onCancel ? (
           <Button type="button" variant="ghost" onClick={onCancel}>
             Cancelar

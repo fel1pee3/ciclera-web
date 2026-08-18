@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Alert } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { centsToMoney, moneyToCents } from '@/features/work-orders/schemas'
@@ -97,7 +98,7 @@ export function ExecutionAdditionalItems({
   }
 
   return (
-    <div className="space-y-5 border-t border-border pt-5">
+    <Card className="space-y-5 p-5 sm:p-6">
       <div className="flex items-end justify-between gap-3">
         <div>
           <h2 className="font-heading text-xl font-bold">
@@ -194,7 +195,7 @@ export function ExecutionAdditionalItems({
           </Button>
         </div>
       </div>
-    </div>
+    </Card>
   )
 }
 

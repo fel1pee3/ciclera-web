@@ -42,7 +42,7 @@ export function RemoteCustomerSelector({
     <div className="grid gap-2">
       <Input
         aria-label="Buscar cliente"
-        placeholder="Buscar cliente"
+        placeholder="Digite o nome do cliente"
         value={search}
         onChange={(event) => {
           setSearch(event.target.value)
@@ -55,7 +55,7 @@ export function RemoteCustomerSelector({
         value={value}
         onChange={(event) => onChange(event.target.value)}
       >
-        <option value="">Selecione o cliente</option>
+        <option value="">Escolha um cliente</option>
         {value && !result?.items.some((item) => item.id === value) ? (
           <option value={value}>Cliente selecionado</option>
         ) : null}
@@ -108,7 +108,9 @@ export function RemoteLocationSelector({
         aria-label="Buscar local"
         disabled={!customerId}
         placeholder={
-          customerId ? 'Buscar local' : 'Selecione primeiro o cliente'
+          customerId
+            ? 'Digite o nome da unidade'
+            : 'Escolha um cliente primeiro'
         }
         value={search}
         onChange={(event) => {
@@ -123,7 +125,7 @@ export function RemoteLocationSelector({
         value={value}
         onChange={(event) => onChange(event.target.value)}
       >
-        <option value="">Selecione o local</option>
+        <option value="">Escolha um local</option>
         {value && !result?.items.some((item) => item.id === value) ? (
           <option value={value}>Local selecionado</option>
         ) : null}

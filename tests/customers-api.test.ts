@@ -4,7 +4,12 @@ import {
   createCustomer,
   listCustomers,
   listLocations,
+  reactivateCustomer,
 } from '@/features/customers/api'
+import {
+  locationFormSchema,
+  toLocationPayload,
+} from '@/features/customers/schemas'
 
 describe('customers API client', () => {
   afterEach(() => vi.unstubAllGlobals())
@@ -122,5 +127,60 @@ describe('customers API client', () => {
     expect(String(fetchMock.mock.calls[0]?.[0])).toContain(
       'customers/30000000-0000-4000-8000-000000000001/locations?page=1&pageSize=20&search=matriz&status=ACTIVE',
     )
+  })
+
+  it('reactivates a customer through the dedicated endpoint', async () => {
+    const customerId = '30000000-0000-4000-8000-000000000001'
+    const fetchMock = vi.fn().mockResolvedValue(
+      Response.json({
+        id: customerId,
+        name: 'Cliente reativado',
+        document: null,
+        email: null,
+        phone: null,
+        notes: null,
+        archivedAt: null,
+        createdAt: '2026-08-16T00:00:00.000Z',
+        updatedAt: '2026-08-17T00:00:00.000Z',
+      }),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+
+    await reactivateCustomer(customerId)
+
+    expect(String(fetchMock.mock.calls[0]?.[0])).toContain(
+      `customers/${customerId}/reactivate`,
+    )
+    expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({ method: 'POST' })
+  })
+
+  it('validates and normalizes the location CEP and phone', () => {
+    const input = {
+      name: 'Unidade Centro',
+      postalCode: '01310-100',
+      street: 'Avenida Paulista',
+      number: '1578',
+      complement: '',
+      neighborhood: 'Bela Vista',
+      city: 'São Paulo',
+      state: 'SP',
+      country: 'BR',
+      contactName: 'Marcos Oliveira',
+      contactPhone: '+55 (11) 3456-7890',
+      accessInstructions: '',
+      status: 'ACTIVE' as const,
+    }
+
+    expect(toLocationPayload(input)).toMatchObject({
+      postalCode: '01310100',
+      contactPhone: '551134567890',
+    })
+    expect(
+      locationFormSchema.safeParse({
+        ...input,
+        postalCode: '01310',
+        contactPhone: '+55 (11) 3456',
+      }).success,
+    ).toBe(false)
   })
 })

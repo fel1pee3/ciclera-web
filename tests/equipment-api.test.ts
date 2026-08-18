@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { createEquipment, listEquipment } from '@/features/equipment/api'
+import {
+  createEquipment,
+  listEquipment,
+  reactivateEquipment,
+} from '@/features/equipment/api'
 
 describe('equipment API client', () => {
   afterEach(() => vi.unstubAllGlobals())
@@ -60,5 +64,34 @@ describe('equipment API client', () => {
     const body = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body))
     expect(body).not.toHaveProperty('organizationId')
     expect(body).toMatchObject({ brand: null, serialNumber: null })
+  })
+
+  it('reactivates equipment through the dedicated endpoint', async () => {
+    const equipmentId = '50000000-0000-4000-8000-000000000001'
+    const fetchMock = vi.fn().mockResolvedValue(
+      Response.json({
+        id: equipmentId,
+        customerId: '50000000-0000-4000-8000-000000000002',
+        locationId: '50000000-0000-4000-8000-000000000003',
+        name: 'Equipamento reativado',
+        identifier: 'EQ-01',
+        category: 'Teste',
+        brand: null,
+        model: null,
+        serialNumber: null,
+        notes: null,
+        archivedAt: null,
+        createdAt: '2026-08-16T00:00:00.000Z',
+        updatedAt: '2026-08-17T00:00:00.000Z',
+      }),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+
+    await reactivateEquipment(equipmentId)
+
+    expect(String(fetchMock.mock.calls[0]?.[0])).toContain(
+      `equipment/${equipmentId}/reactivate`,
+    )
+    expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({ method: 'POST' })
   })
 })

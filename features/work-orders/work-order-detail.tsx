@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Modal } from '@/components/ui/modal'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   cancelWorkOrder,
@@ -172,8 +173,15 @@ export function WorkOrderDetail() {
               </Button>
             ) : null}
           </Card>
-          {editing && workOrder.status === 'DRAFT' ? (
+          <Modal
+            className="sm:max-w-4xl"
+            open={editing && workOrder.status === 'DRAFT'}
+            onClose={() => setEditing(false)}
+            title="Editar ordem de serviço"
+            description={`Atualize o rascunho ${workOrder.number}. O versionamento otimista continuará protegendo alterações concorrentes.`}
+          >
             <WorkOrderForm
+              embedded
               workOrder={workOrder}
               onCancel={() => setEditing(false)}
               onSaved={(value) => {
@@ -182,7 +190,7 @@ export function WorkOrderDetail() {
                 setNotice('Ordem atualizada.')
               }}
             />
-          ) : null}
+          </Modal>
           {workOrder.status === 'DRAFT' ? (
             <Card className="p-5">
               <h2 className="font-heading text-lg font-semibold">

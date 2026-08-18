@@ -33,7 +33,6 @@ const stageLabels: Record<DashboardStatus, string> = {
 const reasonLabels: Record<string, string> = {
   REQUIRED_PHOTO_MISSING: 'Foto obrigatória ausente',
   SIGNATURE_MISSING: 'Assinatura ausente',
-  CHECKLIST_INCOMPLETE: 'Checklist incompleto',
   MATERIAL_WITHOUT_VALUE: 'Material sem valor',
   ADDITIONAL_SERVICE_UNAPPROVED: 'Serviço adicional não aprovado',
   EQUIPMENT_DATA_INCORRECT: 'Dados do equipamento incorretos',

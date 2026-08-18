@@ -3,6 +3,13 @@
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
+import {
+  ArrowRight,
+  Building2,
+  CalendarClock,
+  MapPin,
+  SlidersHorizontal,
+} from 'lucide-react'
 import { Alert } from '@/components/ui/alert'
 import { buttonVariants } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
@@ -22,6 +29,12 @@ const labels: Record<FieldView, string> = {
   IN_PROGRESS: 'Em execução',
   PENDING: 'Pendentes',
 }
+const priorityLabels = {
+  LOW: 'Baixa',
+  NORMAL: 'Normal',
+  HIGH: 'Alta',
+  URGENT: 'Urgente',
+} as const
 const pageSize = 10
 
 export function FieldWorkOrderList() {
@@ -55,15 +68,24 @@ export function FieldWorkOrderList() {
   }
 
   return (
-    <section className="space-y-5">
-      <div>
+    <section className="space-y-6">
+      <header>
         <p className="eyebrow">Atendimentos</p>
-        <h1 className="mt-3 font-heading text-2xl font-bold">Minhas ordens</h1>
-      </div>
+        <h1 className="mt-2 font-heading text-2xl font-bold sm:text-3xl">
+          Minhas ordens
+        </h1>
+        <p className="mt-2 text-sm text-muted-foreground sm:text-base">
+          Consulte os serviços atribuídos a você e acesse rapidamente cada
+          atendimento.
+        </p>
+      </header>
       <div
-        className="flex gap-2 overflow-x-auto pb-1"
+        className="flex gap-1 overflow-x-auto rounded-2xl border bg-card p-1.5 shadow-sm"
         aria-label="Filtros de atendimentos"
       >
+        <span className="hidden size-11 shrink-0 place-items-center text-muted-foreground sm:grid">
+          <SlidersHorizontal aria-hidden="true" className="size-4" />
+        </span>
         <button
           className={buttonVariants({
             variant: query.view ? 'ghost' : 'default',
@@ -86,9 +108,9 @@ export function FieldWorkOrderList() {
       </div>
       {error ? <Alert variant="destructive">{error}</Alert> : null}
       {!result && !error ? (
-        <div className="space-y-3">
-          <Skeleton className="h-40 rounded-2xl" />
-          <Skeleton className="h-40 rounded-2xl" />
+        <div className="grid gap-4 md:grid-cols-2">
+          <Skeleton className="h-72 rounded-2xl" />
+          <Skeleton className="h-72 rounded-2xl" />
         </div>
       ) : null}
       {result?.total === 0 ? (
@@ -98,34 +120,69 @@ export function FieldWorkOrderList() {
         />
       ) : null}
       {result?.items.length ? (
-        <div className="space-y-3">
+        <div className="grid gap-4 md:grid-cols-2">
           {result.items.map((order) => (
             <article
               key={order.id}
-              className="min-w-0 rounded-2xl border bg-card p-4"
+              className="flex min-w-0 flex-col overflow-hidden rounded-2xl border bg-card shadow-sm transition hover:border-primary/25 hover:shadow-md"
             >
-              <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start justify-between gap-3 p-5 pb-4">
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold text-primary">
-                    {order.number}
-                  </p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="text-sm font-semibold tracking-wide text-primary">
+                      {order.number}
+                    </p>
+                    <span className="text-xs text-muted-foreground">
+                      Prioridade {priorityLabels[order.priority].toLowerCase()}
+                    </span>
+                  </div>
                   <h2 className="mt-1 break-words font-heading text-lg font-bold">
                     {order.title}
                   </h2>
                 </div>
                 <WorkOrderStatusBadge status={order.status} />
               </div>
-              <p className="mt-3 text-sm font-medium">{order.customer.name}</p>
-              <p className="mt-1 break-words text-sm text-muted-foreground">
-                {order.location.name} ·{' '}
-                {formatDate(order.scheduledStartAt, result.timezone)}
-              </p>
-              <Link
-                className={`${buttonVariants()} mt-4 w-full`}
-                href={`/field/ordens/${order.id}?from=${encodeURIComponent(fieldListUrl(query))}`}
-              >
-                Ver atendimento
-              </Link>
+              <div className="flex-1 space-y-3 border-y bg-muted/25 px-5 py-4 text-sm">
+                <div className="flex items-start gap-3">
+                  <Building2
+                    aria-hidden="true"
+                    className="mt-0.5 size-4 shrink-0 text-primary"
+                  />
+                  <span className="min-w-0 break-words font-medium">
+                    {order.customer.name}
+                  </span>
+                </div>
+                <div className="flex items-start gap-3 text-muted-foreground">
+                  <MapPin
+                    aria-hidden="true"
+                    className="mt-0.5 size-4 shrink-0"
+                  />
+                  <span className="min-w-0 break-words">
+                    {order.location.name}
+                  </span>
+                </div>
+                <div className="flex items-start gap-3 text-muted-foreground">
+                  <CalendarClock
+                    aria-hidden="true"
+                    className="mt-0.5 size-4 shrink-0"
+                  />
+                  <span>
+                    {formatDate(order.scheduledStartAt, result.timezone)}
+                  </span>
+                </div>
+              </div>
+              <div className="p-4">
+                <Link
+                  className={`${buttonVariants()} group w-full`}
+                  href={`/field/ordens/${order.id}?from=${encodeURIComponent(fieldListUrl(query))}`}
+                >
+                  Ver atendimento
+                  <ArrowRight
+                    aria-hidden="true"
+                    className="transition-transform group-hover:translate-x-1"
+                  />
+                </Link>
+              </div>
             </article>
           ))}
         </div>

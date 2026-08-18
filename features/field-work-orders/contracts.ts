@@ -13,33 +13,6 @@ export const fieldViews = [
 export const fieldViewSchema = z.enum(fieldViews)
 export type FieldView = z.infer<typeof fieldViewSchema>
 
-export const checklistFieldSchema = z.object({
-  id: z.string(),
-  label: z.string(),
-  type: z.enum(['SHORT_TEXT', 'LONG_TEXT', 'NUMBER', 'BOOLEAN', 'SELECT']),
-  required: z.boolean(),
-  options: z.array(z.string()).optional(),
-})
-
-export const checklistAnswerSchema = z.object({
-  fieldId: z.string(),
-  value: z.union([z.string(), z.number(), z.boolean()]),
-})
-
-export const executionChecklistSchema = z.object({
-  snapshot: z.object({
-    templateId: z.string().uuid(),
-    name: z.string(),
-    version: z.number().int().positive(),
-    fields: z.array(checklistFieldSchema),
-    requirePhoto: z.boolean().default(false),
-    requireSignature: z.boolean().default(false),
-  }),
-  responses: z.array(checklistAnswerSchema),
-  missingRequiredFieldIds: z.array(z.string()),
-})
-export type ExecutionChecklist = z.infer<typeof executionChecklistSchema>
-
 export const evidenceSchema = z.object({
   id: z.string().uuid(),
   kind: z.enum(['PHOTO', 'SIGNATURE']),
@@ -111,7 +84,6 @@ export const fieldWorkOrderSchema = z.object({
       version: z.number().int().positive(),
       startedAt: z.string().datetime(),
       updatedAt: z.string().datetime(),
-      checklist: executionChecklistSchema.nullable(),
       evidence: z.array(evidenceSchema),
       additionalItems: z.array(additionalItemSchema),
       additionalTotalInCents: z.string().regex(/^\d+$/),

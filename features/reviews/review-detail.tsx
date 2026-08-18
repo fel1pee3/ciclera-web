@@ -153,29 +153,6 @@ export function ReviewDetail() {
             </p>
           </Card>
           <Card className="p-5">
-            <h2 className="font-heading text-xl font-bold">Checklist</h2>
-            {review.execution.checklist ? (
-              <dl className="mt-4 space-y-3">
-                {review.execution.checklist.snapshot.fields.map((field) => {
-                  const answer = review.execution.checklist?.responses.find(
-                    (item) => item.fieldId === field.id,
-                  )
-                  return (
-                    <Data
-                      key={field.id}
-                      label={field.label}
-                      value={answer ? String(answer.value) : 'Não respondido'}
-                    />
-                  )
-                })}
-              </dl>
-            ) : (
-              <p className="mt-3 text-sm text-muted-foreground">
-                Sem checklist.
-              </p>
-            )}
-          </Card>
-          <Card className="p-5">
             <h2 className="font-heading text-xl font-bold">Evidências</h2>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               {review.execution.evidence.map((item) => (
@@ -315,7 +292,6 @@ function Data({ label, value }: { label: string; value: string }) {
 const reasonLabels: Record<ReviewReason, string> = {
   REQUIRED_PHOTO_MISSING: 'Foto obrigatória ausente',
   SIGNATURE_MISSING: 'Assinatura ausente',
-  CHECKLIST_INCOMPLETE: 'Checklist incompleto',
   MATERIAL_WITHOUT_VALUE: 'Material sem valor',
   ADDITIONAL_SERVICE_UNAPPROVED: 'Serviço adicional sem aprovação',
   EQUIPMENT_DATA_INCORRECT: 'Dados do equipamento incorretos',

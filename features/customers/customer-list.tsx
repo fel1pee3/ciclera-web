@@ -7,12 +7,20 @@ import { useEffect, useMemo, useState } from 'react'
 import { Alert } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button, buttonVariants } from '@/components/ui/button'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Modal } from '@/components/ui/modal'
 import { Skeleton } from '@/components/ui/skeleton'
-import { archiveCustomer, listCustomers, type ListCustomersQuery } from './api'
-import type { CustomerPage } from './contracts'
+import {
+  archiveCustomer,
+  listCustomers,
+  reactivateCustomer,
+  type ListCustomersQuery,
+} from './api'
+import type { Customer, CustomerPage } from './contracts'
+import { CustomerForm } from './customer-form'
 import { getCustomerErrorMessage } from './errors'
 import { displayDocument } from './formatters'
 
@@ -28,6 +36,11 @@ export function CustomerList() {
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [pendingId, setPendingId] = useState<string | null>(null)
+  const [archiveTarget, setArchiveTarget] = useState<Customer | null>(null)
+  const [reactivateTarget, setReactivateTarget] = useState<Customer | null>(
+    null,
+  )
+  const [creating, setCreating] = useState(false)
   const [revision, setRevision] = useState(0)
 
   useEffect(() => {
@@ -59,14 +72,28 @@ export function CustomerList() {
     }
   }, [query, revision])
 
-  const archive = async (customerId: string, name: string) => {
-    if (!window.confirm(`Arquivar ${name}? O histórico será preservado.`))
-      return
-    setPendingId(customerId)
+  const archive = async (customer: Customer) => {
+    setPendingId(customer.id)
     setError(null)
     try {
-      await archiveCustomer(customerId)
-      setNotice(`${name} foi arquivado.`)
+      await archiveCustomer(customer.id)
+      setNotice(`${customer.name} foi arquivado.`)
+      setArchiveTarget(null)
+      setRevision((value) => value + 1)
+    } catch (reason) {
+      setError(getCustomerErrorMessage(reason))
+    } finally {
+      setPendingId(null)
+    }
+  }
+
+  const reactivate = async (customer: Customer) => {
+    setPendingId(customer.id)
+    setError(null)
+    try {
+      await reactivateCustomer(customer.id)
+      setNotice(`${customer.name} foi reativado.`)
+      setReactivateTarget(null)
       setRevision((value) => value + 1)
     } catch (reason) {
       setError(getCustomerErrorMessage(reason))
@@ -87,12 +114,7 @@ export function CustomerList() {
             Localize empresas atendidas e organize suas unidades.
           </p>
         </div>
-        <Link
-          href={`/app/clientes/novo?from=${encodeURIComponent(currentUrl)}`}
-          className={buttonVariants()}
-        >
-          Novo cliente
-        </Link>
+        <Button onClick={() => setCreating(true)}>Novo cliente</Button>
       </div>
 
       {notice ? (
@@ -105,6 +127,50 @@ export function CustomerList() {
           {error}
         </Alert>
       ) : null}
+
+      <Modal
+        open={creating}
+        onClose={() => setCreating(false)}
+        title="Novo cliente"
+        description="Cadastre a empresa ou pessoa que receberá os atendimentos."
+      >
+        <CustomerForm
+          embedded
+          onCancel={() => setCreating(false)}
+          onSaved={(customer) => {
+            setCreating(false)
+            setNotice(`${customer.name} foi cadastrado.`)
+            setRevision((value) => value + 1)
+          }}
+        />
+      </Modal>
+
+      <ConfirmDialog
+        open={Boolean(archiveTarget)}
+        title="Arquivar cliente?"
+        description={`${archiveTarget?.name ?? 'Este cliente'} deixará de aparecer entre os clientes ativos. O cadastro, os locais e o histórico serão preservados; nenhum dado será excluído.`}
+        confirmLabel="Arquivar cliente"
+        pendingLabel="Arquivando…"
+        variant="destructive"
+        pending={pendingId === archiveTarget?.id}
+        onCancel={() => setArchiveTarget(null)}
+        onConfirm={() => {
+          if (archiveTarget) void archive(archiveTarget)
+        }}
+      />
+
+      <ConfirmDialog
+        open={Boolean(reactivateTarget)}
+        title="Reativar cliente?"
+        description={`${reactivateTarget?.name ?? 'Este cliente'} voltará para os clientes ativos e poderá receber novos locais e operações.`}
+        confirmLabel="Reativar cliente"
+        pendingLabel="Reativando…"
+        pending={pendingId === reactivateTarget?.id}
+        onCancel={() => setReactivateTarget(null)}
+        onConfirm={() => {
+          if (reactivateTarget) void reactivate(reactivateTarget)
+        }}
+      />
 
       <div className="grid gap-3 rounded-2xl border bg-card p-4 sm:grid-cols-[1fr_14rem_auto]">
         <Label className="grid gap-2">
@@ -164,9 +230,9 @@ export function CustomerList() {
           }
           action={
             !query.search && query.archive === 'ACTIVE' ? (
-              <Link href="/app/clientes/novo" className={buttonVariants()}>
+              <Button onClick={() => setCreating(true)}>
                 Cadastrar cliente
-              </Link>
+              </Button>
             ) : undefined
           }
         />
@@ -203,11 +269,18 @@ export function CustomerList() {
                   <Button
                     variant="ghost"
                     disabled={pendingId === customer.id}
-                    onClick={() => void archive(customer.id, customer.name)}
+                    onClick={() => setArchiveTarget(customer)}
                   >
                     {pendingId === customer.id ? 'Arquivando…' : 'Arquivar'}
                   </Button>
-                ) : null}
+                ) : (
+                  <Button
+                    disabled={pendingId === customer.id}
+                    onClick={() => setReactivateTarget(customer)}
+                  >
+                    {pendingId === customer.id ? 'Reativando…' : 'Reativar'}
+                  </Button>
+                )}
               </div>
             </article>
           ))}

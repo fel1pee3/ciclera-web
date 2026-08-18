@@ -27,18 +27,22 @@ export function formatDocument(value: string, type: DocumentType): string {
 }
 
 export function normalizeBrazilPhone(value: string): string {
-  const digits = onlyDigits(value)
-  if (!digits) return ''
-  return (digits.startsWith('55') ? digits : `55${digits}`).slice(0, 13)
+  return onlyDigits(value).slice(0, 13)
+}
+
+export function formatPostalCode(value: string): string {
+  const digits = onlyDigits(value).slice(0, 8)
+  return digits.replace(/^(\d{5})(\d)/, '$1-$2')
 }
 
 export function formatBrazilPhone(value: string): string {
   const digits = normalizeBrazilPhone(value)
   if (!digits) return ''
 
+  const countryCode = digits.slice(0, 2)
   const areaCode = digits.slice(2, 4)
   const local = digits.slice(4)
-  let formatted = '+55'
+  let formatted = `+${countryCode}`
   if (areaCode) formatted += ` (${areaCode}`
   if (areaCode.length === 2) formatted += ')'
   if (local) {

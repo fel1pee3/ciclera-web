@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { getApiFieldErrors } from '@/features/auth/errors'
+import { cn } from '@/lib/utils'
 import { createEquipment, updateEquipment } from './api'
 import type { Equipment } from './contracts'
 import { getEquipmentErrorMessage } from './errors'
@@ -21,10 +22,12 @@ import { equipmentFormSchema, type EquipmentFormInput } from './schemas'
 
 export function EquipmentForm({
   equipment,
+  embedded = false,
   onCancel,
   onSaved,
 }: {
   equipment?: Equipment
+  embedded?: boolean
   onCancel?: () => void
   onSaved: (equipment: Equipment) => void
 }) {
@@ -77,76 +80,148 @@ export function EquipmentForm({
 
   return (
     <form
-      className="grid gap-4 rounded-2xl border bg-card p-5 sm:grid-cols-2"
+      className={cn(
+        'space-y-5',
+        !embedded && 'rounded-3xl border bg-card p-5 shadow-sm sm:p-6',
+      )}
       noValidate
       onSubmit={handleSubmit(submit)}
     >
-      <div className="sm:col-span-2">
-        <h2 className="font-heading text-lg font-semibold">
-          {equipment ? 'Editar equipamento' : 'Dados do equipamento'}
-        </h2>
-      </div>
+      {!embedded ? (
+        <div>
+          <h2 className="font-heading text-xl font-semibold">
+            {equipment ? 'Editar equipamento' : 'Dados do equipamento'}
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Primeiro escolha onde o ativo está instalado; depois informe seus
+            dados técnicos.
+          </p>
+        </div>
+      ) : null}
       {errorMessage ? (
-        <Alert className="sm:col-span-2" variant="destructive" role="alert">
+        <Alert variant="destructive" role="alert">
           {errorMessage}
         </Alert>
       ) : null}
-      <Field label="Cliente" error={errors.customerId?.message}>
-        <RemoteCustomerSelector
-          value={customerId}
-          onChange={(nextCustomerId) => {
-            setValue('customerId', nextCustomerId, { shouldValidate: true })
-            setValue(
-              'locationId',
-              dependentLocationValue(customerId, nextCustomerId, locationId),
-              { shouldValidate: true },
-            )
-          }}
-        />
-      </Field>
-      <Field label="Local" error={errors.locationId?.message}>
-        <RemoteLocationSelector
-          customerId={customerId}
-          value={locationId}
-          onChange={(value) =>
-            setValue('locationId', value, { shouldValidate: true })
-          }
-        />
-      </Field>
-      <Field label="Nome" error={errors.name?.message}>
-        <Input {...register('name')} />
-      </Field>
-      <Field label="Identificação" error={errors.identifier?.message}>
-        <Input {...register('identifier')} />
-      </Field>
-      <Field label="Categoria" error={errors.category?.message}>
-        <Input {...register('category')} />
-      </Field>
-      <Field label="Marca" error={errors.brand?.message}>
-        <Input {...register('brand')} />
-      </Field>
-      <Field label="Modelo" error={errors.model?.message}>
-        <Input {...register('model')} />
-      </Field>
-      <Field label="Serial" error={errors.serialNumber?.message}>
-        <Input {...register('serialNumber')} />
-      </Field>
-      <Field
-        className="sm:col-span-2"
-        label="Observações técnicas"
-        error={errors.notes?.message}
-      >
-        <Textarea rows={4} {...register('notes')} />
-      </Field>
-      <div className="flex flex-wrap gap-3 sm:col-span-2">
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Salvando…' : 'Salvar equipamento'}
-        </Button>
+
+      <section className="rounded-2xl border bg-muted/20 p-4 sm:p-5">
+        <div className="mb-4">
+          <p className="text-xs font-semibold tracking-wide text-primary uppercase">
+            Etapa 1
+          </p>
+          <h3 className="mt-1 font-heading text-lg font-semibold">
+            Onde está o equipamento?
+          </h3>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Escolha o cliente primeiro. Em seguida, selecione uma unidade desse
+            cliente.
+          </p>
+        </div>
+        <div className="grid gap-5 sm:grid-cols-2">
+          <Field label="Cliente" error={errors.customerId?.message}>
+            <RemoteCustomerSelector
+              value={customerId}
+              onChange={(nextCustomerId) => {
+                setValue('customerId', nextCustomerId, {
+                  shouldValidate: true,
+                })
+                setValue(
+                  'locationId',
+                  dependentLocationValue(
+                    customerId,
+                    nextCustomerId,
+                    locationId,
+                  ),
+                  { shouldValidate: true },
+                )
+              }}
+            />
+          </Field>
+          <Field
+            label="Local de atendimento"
+            error={errors.locationId?.message}
+          >
+            <RemoteLocationSelector
+              customerId={customerId}
+              value={locationId}
+              onChange={(value) =>
+                setValue('locationId', value, { shouldValidate: true })
+              }
+            />
+          </Field>
+        </div>
+      </section>
+
+      <section className="rounded-2xl border p-4 sm:p-5">
+        <div className="mb-4">
+          <p className="text-xs font-semibold tracking-wide text-primary uppercase">
+            Etapa 2
+          </p>
+          <h3 className="mt-1 font-heading text-lg font-semibold">
+            Identificação técnica
+          </h3>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Use um nome fácil de reconhecer e registre os dados disponíveis na
+            etiqueta do equipamento.
+          </p>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Nome do equipamento" error={errors.name?.message}>
+            <Input
+              placeholder="Ex.: Ar-condicionado da recepção"
+              {...register('name')}
+            />
+          </Field>
+          <Field
+            label="Identificação interna"
+            error={errors.identifier?.message}
+          >
+            <Input placeholder="Ex.: AR-REC-001" {...register('identifier')} />
+          </Field>
+          <Field label="Categoria" error={errors.category?.message}>
+            <Input
+              placeholder="Ex.: Ar-condicionado Split"
+              {...register('category')}
+            />
+          </Field>
+          <Field label="Marca" error={errors.brand?.message}>
+            <Input placeholder="Ex.: Daikin" {...register('brand')} />
+          </Field>
+          <Field label="Modelo" error={errors.model?.message}>
+            <Input
+              placeholder="Ex.: EcoSwing 24.000 BTU"
+              {...register('model')}
+            />
+          </Field>
+          <Field label="Número de série" error={errors.serialNumber?.message}>
+            <Input
+              placeholder="Ex.: DK2408BR2026001842"
+              {...register('serialNumber')}
+            />
+          </Field>
+          <Field
+            className="sm:col-span-2"
+            label="Observações técnicas"
+            error={errors.notes?.message}
+          >
+            <Textarea
+              rows={4}
+              placeholder="Ex.: Instalado acima do forro. Desligar o disjuntor QD-REC-04 antes de abrir o painel."
+              {...register('notes')}
+            />
+          </Field>
+        </div>
+      </section>
+
+      <div className="flex flex-wrap justify-end gap-3 border-t pt-5">
         {onCancel ? (
           <Button type="button" variant="ghost" onClick={onCancel}>
             Cancelar
           </Button>
         ) : null}
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? 'Salvando…' : 'Salvar equipamento'}
+        </Button>
       </div>
     </form>
   )

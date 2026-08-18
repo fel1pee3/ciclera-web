@@ -46,7 +46,9 @@ export function RemoteEquipmentSelector({
         aria-label="Buscar equipamento"
         disabled={!locationId}
         placeholder={
-          locationId ? 'Buscar equipamento' : 'Selecione primeiro o local'
+          locationId
+            ? 'Digite o nome ou identificação'
+            : 'Escolha um local primeiro'
         }
         value={search}
         onChange={(event) => setSearch(event.target.value)}

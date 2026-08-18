@@ -73,7 +73,6 @@ A API é sempre a autoridade final sobre identidade, organização, permissões,
 - Lista das próprias ordens atribuídas.
 - Detalhes necessários para o atendimento.
 - Início da execução.
-- Checklist.
 - Observações.
 - Fotos e evidências.
 - Materiais, horas ou serviços adicionais.
@@ -232,12 +231,12 @@ As rotas devem usar Route Groups para separar contextos sem adicionar segmentos 
 
 ### Área do técnico
 
-| Rota                                   | Finalidade                                                       | Perfil                 |
-| -------------------------------------- | ---------------------------------------------------------------- | ---------------------- |
-| `/field`                               | Resumo das ordens atribuídas                                     | `TECHNICIAN`           |
-| `/field/ordens`                        | Lista das próprias ordens                                        | `TECHNICIAN`           |
-| `/field/ordens/[workOrderId]`          | Detalhes do atendimento                                          | `TECHNICIAN` atribuído |
-| `/field/ordens/[workOrderId]/executar` | Execução, checklist, evidências, adicionais e envio para revisão | `TECHNICIAN` atribuído |
+| Rota                                   | Finalidade                                            | Perfil                 |
+| -------------------------------------- | ----------------------------------------------------- | ---------------------- |
+| `/field`                               | Resumo das ordens atribuídas                          | `TECHNICIAN`           |
+| `/field/ordens`                        | Lista das próprias ordens                             | `TECHNICIAN`           |
+| `/field/ordens/[workOrderId]`          | Detalhes do atendimento                               | `TECHNICIAN` atribuído |
+| `/field/ordens/[workOrderId]/executar` | Execução, evidências, adicionais e envio para revisão | `TECHNICIAN` atribuído |
 
 Os nomes internos de pastas, componentes e tipos devem permanecer em inglês. Segmentos públicos da URL e conteúdo visível podem permanecer em português por serem parte da experiência do usuário brasileiro.
 

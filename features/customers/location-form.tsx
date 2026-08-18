@@ -2,7 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 
 import { Alert } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -10,9 +10,12 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { getApiFieldErrors } from '@/features/auth/errors'
+import { cn } from '@/lib/utils'
 import { createLocation, updateLocation } from './api'
 import type { ServiceLocation } from './contracts'
 import { getCustomerErrorMessage } from './errors'
+import { formatBrazilPhone, formatPostalCode } from './formatters'
+import { MaskedInput } from './masked-input'
 import { locationFormSchema, type LocationFormInput } from './schemas'
 
 const fields = [
@@ -33,11 +36,13 @@ const fields = [
 
 export function LocationForm({
   customerId,
+  embedded = false,
   location,
   onCancel,
   onSaved,
 }: {
   customerId: string
+  embedded?: boolean
   location?: ServiceLocation
   onCancel?: () => void
   onSaved: (location: ServiceLocation) => void
@@ -45,6 +50,7 @@ export function LocationForm({
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const {
     register,
+    control,
     handleSubmit,
     setError,
     formState: { errors, isSubmitting },
@@ -52,7 +58,7 @@ export function LocationForm({
     resolver: zodResolver(locationFormSchema),
     defaultValues: {
       name: location?.name ?? '',
-      postalCode: location?.postalCode ?? '',
+      postalCode: formatPostalCode(location?.postalCode ?? ''),
       street: location?.street ?? '',
       number: location?.number ?? '',
       complement: location?.complement ?? '',
@@ -61,7 +67,7 @@ export function LocationForm({
       state: location?.state ?? '',
       country: location?.country ?? 'BR',
       contactName: location?.contactName ?? '',
-      contactPhone: location?.contactPhone ?? '',
+      contactPhone: formatBrazilPhone(location?.contactPhone ?? ''),
       accessInstructions: location?.accessInstructions ?? '',
       status: location?.status ?? 'ACTIVE',
     },
@@ -87,13 +93,18 @@ export function LocationForm({
 
   return (
     <form
-      className="grid gap-4 rounded-2xl border bg-card p-5 sm:grid-cols-2 lg:grid-cols-3"
+      className={cn(
+        'grid gap-4 sm:grid-cols-2 lg:grid-cols-3',
+        !embedded && 'rounded-2xl border bg-card p-5',
+      )}
       noValidate
       onSubmit={handleSubmit(submit)}
     >
-      <h3 className="font-heading text-lg font-semibold sm:col-span-2 lg:col-span-3">
-        {location ? 'Editar local' : 'Adicionar local'}
-      </h3>
+      {!embedded ? (
+        <h3 className="font-heading text-lg font-semibold sm:col-span-2 lg:col-span-3">
+          {location ? 'Editar local' : 'Adicionar local'}
+        </h3>
+      ) : null}
       {errorMessage ? (
         <Alert
           className="sm:col-span-2 lg:col-span-3"
@@ -104,37 +115,76 @@ export function LocationForm({
         </Alert>
       ) : null}
       <Field label="Nome da unidade" error={errors.name?.message}>
-        <Input {...register('name')} />
+        <Input placeholder="Ex.: Unidade Centro" {...register('name')} />
       </Field>
       <Field label="CEP" error={errors.postalCode?.message}>
-        <Input {...register('postalCode')} />
+        <Controller
+          control={control}
+          name="postalCode"
+          render={({ field }) => (
+            <MaskedInput
+              name={field.name}
+              value={field.value}
+              inputRef={field.ref}
+              onBlur={field.onBlur}
+              onValueChange={field.onChange}
+              format={formatPostalCode}
+              inputMode="numeric"
+              maxLength={9}
+              placeholder="00000-000"
+              aria-invalid={Boolean(errors.postalCode)}
+            />
+          )}
+        />
       </Field>
       <Field label="Logradouro" error={errors.street?.message}>
-        <Input {...register('street')} />
+        <Input placeholder="Ex.: Avenida Paulista" {...register('street')} />
       </Field>
       <Field label="Número" error={errors.number?.message}>
-        <Input {...register('number')} />
+        <Input placeholder="Ex.: 1578" {...register('number')} />
       </Field>
       <Field label="Complemento" error={errors.complement?.message}>
-        <Input {...register('complement')} />
+        <Input
+          placeholder="Ex.: Bloco A, sala 12"
+          {...register('complement')}
+        />
       </Field>
       <Field label="Bairro" error={errors.neighborhood?.message}>
-        <Input {...register('neighborhood')} />
+        <Input placeholder="Ex.: Bela Vista" {...register('neighborhood')} />
       </Field>
       <Field label="Cidade" error={errors.city?.message}>
-        <Input {...register('city')} />
+        <Input placeholder="Ex.: São Paulo" {...register('city')} />
       </Field>
       <Field label="UF" error={errors.state?.message}>
-        <Input maxLength={2} {...register('state')} />
+        <Input maxLength={2} placeholder="SP" {...register('state')} />
       </Field>
       <Field label="País" error={errors.country?.message}>
-        <Input maxLength={2} {...register('country')} />
+        <Input maxLength={2} placeholder="BR" {...register('country')} />
       </Field>
       <Field label="Contato local" error={errors.contactName?.message}>
-        <Input {...register('contactName')} />
+        <Input placeholder="Nome do responsável" {...register('contactName')} />
       </Field>
       <Field label="Telefone do local" error={errors.contactPhone?.message}>
-        <Input type="tel" {...register('contactPhone')} />
+        <Controller
+          control={control}
+          name="contactPhone"
+          render={({ field }) => (
+            <MaskedInput
+              name={field.name}
+              value={field.value}
+              inputRef={field.ref}
+              onBlur={field.onBlur}
+              onValueChange={field.onChange}
+              format={formatBrazilPhone}
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel"
+              maxLength={19}
+              placeholder="+55 (85) 93344-9080"
+              aria-invalid={Boolean(errors.contactPhone)}
+            />
+          )}
+        />
       </Field>
       <Field label="Status" error={errors.status?.message}>
         <select className="input" {...register('status')}>
@@ -147,9 +197,13 @@ export function LocationForm({
         label="Instruções de acesso"
         error={errors.accessInstructions?.message}
       >
-        <Textarea rows={3} {...register('accessInstructions')} />
+        <Textarea
+          rows={3}
+          placeholder="Ex.: Apresentar documento na recepção e solicitar acesso à área técnica."
+          {...register('accessInstructions')}
+        />
       </Field>
-      <div className="flex flex-wrap gap-3 sm:col-span-2 lg:col-span-3">
+      <div className="flex flex-wrap justify-end gap-3 border-t pt-4 sm:col-span-2 lg:col-span-3">
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting ? 'Salvando…' : 'Salvar local'}
         </Button>

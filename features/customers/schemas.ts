@@ -42,7 +42,14 @@ export type CustomerFormInput = z.infer<typeof customerFormSchema>
 
 export const locationFormSchema = z.object({
   name: z.string().trim().min(2).max(160),
-  postalCode: z.string().trim().min(3).max(16),
+  postalCode: z
+    .string()
+    .trim()
+    .max(9)
+    .refine(
+      (value) => onlyDigits(value).length === 8,
+      'Informe um CEP com 8 dígitos.',
+    ),
   street: z.string().trim().min(2).max(160),
   number: z.string().trim().min(1).max(32),
   complement: optionalText(120),
@@ -59,7 +66,10 @@ export const locationFormSchema = z.object({
     .length(2, 'Informe o país com 2 letras.')
     .transform((value) => value.toUpperCase()),
   contactName: optionalText(160),
-  contactPhone: optionalText(32),
+  contactPhone: optionalText(19).refine((value) => {
+    const digits = onlyDigits(value)
+    return digits.length === 0 || /^55\d{10,11}$/.test(digits)
+  }, 'Informe o país, DDD e telefone completos.'),
   accessInstructions: optionalText(1000),
   status: z.enum(['ACTIVE', 'INACTIVE']),
 })
@@ -90,9 +100,10 @@ export function toLocationPayload(input: LocationFormInput) {
   const parsed = locationFormSchema.parse(input)
   return {
     ...parsed,
+    postalCode: onlyDigits(parsed.postalCode),
     complement: nullable(parsed.complement),
     contactName: nullable(parsed.contactName),
-    contactPhone: nullable(parsed.contactPhone),
+    contactPhone: nullableDigits(parsed.contactPhone),
     accessInstructions: nullable(parsed.accessInstructions),
   }
 }

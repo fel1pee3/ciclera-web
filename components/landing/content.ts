@@ -42,7 +42,7 @@ export const problems: { title: string; text: string; icon: LucideIcon }[] = [
   },
   {
     title: 'Evidência ausente',
-    text: 'Fotos, checklists ou assinatura incompletos impedem a conferência e atrasam a cobrança.',
+    text: 'Fotos, observações ou assinatura ausentes impedem a conferência e atrasam a cobrança.',
     icon: Camera,
   },
   {
@@ -68,7 +68,7 @@ export const steps = [
   ],
   [
     'Registre o trabalho em campo',
-    'O técnico acessa pelo navegador, preenche checklist, fotos, observações, materiais e assinatura.',
+    'O técnico acessa pelo navegador e registra fotos, observações, materiais e assinatura.',
   ],
   [
     'Revise as evidências',
@@ -102,8 +102,8 @@ export const features: { title: string; text: string; icon: LucideIcon }[] = [
     icon: Wrench,
   },
   {
-    title: 'Checklists e evidências',
-    text: 'Respostas, fotos, observações e assinatura do atendimento.',
+    title: 'Registros e evidências',
+    text: 'Fotos, observações e assinatura do atendimento.',
     icon: CheckCircle2,
   },
   {

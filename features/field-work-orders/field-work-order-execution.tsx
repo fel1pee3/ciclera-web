@@ -2,13 +2,26 @@
 
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
+import {
+  ArrowLeft,
+  Building2,
+  CalendarClock,
+  ClipboardCheck,
+  FileText,
+  MapPin,
+  Play,
+  Save,
+  Send,
+} from 'lucide-react'
 import { Alert } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
+import { useSession } from '@/features/auth/session-provider'
+import { WorkOrderStatusBadge } from '@/features/work-orders/status-badge'
 import {
   findFieldWorkOrder,
   saveFieldWorkOrderExecution,
@@ -16,14 +29,13 @@ import {
   submitFieldWorkOrderForReview,
   resumeFieldWorkOrderCorrection,
 } from './api'
-import { ApiError } from '@/lib/api/errors'
 import type { FieldWorkOrder } from './contracts'
 import { getFieldWorkOrderErrorMessage } from './errors'
-import { ExecutionChecklistFields } from './execution-checklist'
 import { ExecutionEvidence } from './execution-evidence'
 import { ExecutionAdditionalItems } from './execution-additional-items'
 
 export function FieldWorkOrderExecution() {
+  const { account } = useSession()
   const { workOrderId } = useParams<{ workOrderId: string }>()
   const [order, setOrder] = useState<FieldWorkOrder | null>(null)
   const [notes, setNotes] = useState('')
@@ -31,7 +43,6 @@ export function FieldWorkOrderExecution() {
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
-  const [completionIssues, setCompletionIssues] = useState<string[]>([])
   const [reloadKey, setReloadKey] = useState(0)
 
   useEffect(() => {
@@ -64,10 +75,6 @@ export function FieldWorkOrderExecution() {
   const canStart = order?.status === 'SCHEDULED' && !order.execution
   const canEdit = order?.status === 'IN_PROGRESS' && order.execution
   const canResume = order?.status === 'PENDING_CORRECTION' && order.execution
-  const summary = useMemo(() => {
-    if (!order) return null
-    return `${order.number} · ${order.customer.name} · ${order.location.name}`
-  }, [order])
 
   async function start() {
     if (!order) return
@@ -114,7 +121,6 @@ export function FieldWorkOrderExecution() {
     setPending(true)
     setError(null)
     setNotice(null)
-    setCompletionIssues([])
     try {
       const updated = await submitFieldWorkOrderForReview(
         order.id,
@@ -123,13 +129,6 @@ export function FieldWorkOrderExecution() {
       setOrder(updated)
       setNotice('Execução enviada para revisão do escritório.')
     } catch (reason: unknown) {
-      if (reason instanceof ApiError) {
-        const issues = reason.problem?.fieldErrors?.completion
-        if (issues?.length) {
-          setCompletionIssues(issues)
-          return
-        }
-      }
       setError(getFieldWorkOrderErrorMessage(reason))
     } finally {
       setPending(false)
@@ -164,21 +163,22 @@ export function FieldWorkOrderExecution() {
   }
 
   return (
-    <section className="space-y-4 pb-24">
-      <div className="sticky top-0 z-10 -mx-4 border-b border-border bg-background/95 px-4 py-3 backdrop-blur">
+    <section className="space-y-5 pb-24">
+      <div className="sticky top-[4.5rem] z-20 -mx-4 flex min-h-14 items-center justify-between gap-3 border-b bg-card/95 px-4 backdrop-blur sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
         <Link
-          className="inline-flex min-h-11 items-center font-semibold text-primary"
+          className="inline-flex min-h-11 items-center gap-2 font-semibold text-primary"
           href={`/field/ordens/${workOrderId}`}
         >
-          ← Voltar para a ordem
+          <ArrowLeft aria-hidden="true" className="size-4" />
+          Voltar para a ordem
         </Link>
-        {summary ? (
-          <p className="truncate text-sm font-semibold">{summary}</p>
-        ) : null}
         {dirty ? (
-          <p className="mt-1 text-xs font-medium text-amber-700" role="status">
-            Há alterações ainda não salvas.
-          </p>
+          <span
+            className="shrink-0 rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800"
+            role="status"
+          >
+            Não salvo
+          </span>
         ) : null}
       </div>
 
@@ -195,29 +195,76 @@ export function FieldWorkOrderExecution() {
           </Button>
         </Alert>
       ) : null}
-      {notice ? <Alert>{notice}</Alert> : null}
+      {notice ? <Alert variant="success">{notice}</Alert> : null}
 
       {order ? (
-        <Card className="space-y-5 p-5">
-          <div>
-            <p className="eyebrow">Execução em campo</p>
-            <h1 className="mt-2 font-heading text-2xl font-bold">
-              {order.title}
-            </h1>
-            <p className="mt-2 text-sm text-muted-foreground">
-              {order.description}
-            </p>
-          </div>
+        <>
+          <Card className="overflow-hidden p-0">
+            <div className="p-5 sm:p-7">
+              <div className="flex flex-col items-start gap-3 sm:flex-row sm:justify-between">
+                <div className="min-w-0">
+                  <p className="eyebrow">Execução em campo · {order.number}</p>
+                  <h1 className="mt-2 break-words font-heading text-2xl leading-tight font-bold sm:text-3xl">
+                    {order.title}
+                  </h1>
+                </div>
+                <WorkOrderStatusBadge status={order.status} />
+              </div>
+              <p className="mt-4 max-w-4xl whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground sm:text-base">
+                {order.description}
+              </p>
+            </div>
+
+            <div className="grid gap-4 border-t bg-muted/30 px-5 py-4 text-sm sm:grid-cols-3 sm:px-7">
+              <ExecutionContext
+                icon={<Building2 aria-hidden="true" className="size-4" />}
+                label="Cliente"
+                value={order.customer.name}
+              />
+              <ExecutionContext
+                icon={<MapPin aria-hidden="true" className="size-4" />}
+                label="Local"
+                value={order.location.name}
+              />
+              <ExecutionContext
+                icon={<CalendarClock aria-hidden="true" className="size-4" />}
+                label="Horário"
+                value={formatSchedule(
+                  order.scheduledStartAt,
+                  order.scheduledEndAt,
+                  account?.organization.timezone,
+                )}
+              />
+            </div>
+          </Card>
 
           {canStart ? (
-            <Button
-              className="w-full"
-              size="lg"
-              disabled={pending}
-              onClick={() => void start()}
-            >
-              {pending ? 'Iniciando…' : 'Iniciar atendimento'}
-            </Button>
+            <Card className="border-primary/20 bg-gradient-to-r from-primary/10 via-card to-card p-5 sm:p-6">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-start gap-3">
+                  <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-primary text-primary-foreground">
+                    <Play aria-hidden="true" className="size-5" />
+                  </span>
+                  <div>
+                    <h2 className="font-heading text-lg font-semibold">
+                      Pronto para iniciar?
+                    </h2>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      O horário real de início será registrado no servidor.
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  className="w-full sm:w-auto"
+                  size="lg"
+                  disabled={pending}
+                  onClick={() => void start()}
+                >
+                  <Play aria-hidden="true" />
+                  {pending ? 'Iniciando…' : 'Iniciar atendimento'}
+                </Button>
+              </div>
+            </Card>
           ) : null}
 
           {canResume && order.currentCorrection ? (
@@ -235,12 +282,26 @@ export function FieldWorkOrderExecution() {
           ) : null}
 
           {canEdit ? (
-            <div className="space-y-5">
-              <div className="space-y-3">
-                <Label htmlFor="execution-notes">
+            <div className="space-y-4">
+              <Card className="p-5 sm:p-6">
+                <div className="flex items-center gap-3">
+                  <span className="grid size-10 place-items-center rounded-xl bg-primary/10 text-primary">
+                    <FileText aria-hidden="true" className="size-5" />
+                  </span>
+                  <div>
+                    <h2 className="font-heading text-lg font-semibold">
+                      Observações do atendimento
+                    </h2>
+                    <p className="text-sm text-muted-foreground">
+                      Registre o diagnóstico e o trabalho realizado.
+                    </p>
+                  </div>
+                </div>
+                <Label className="sr-only" htmlFor="execution-notes">
                   Observações do atendimento
                 </Label>
                 <Textarea
+                  className="mt-4"
                   id="execution-notes"
                   value={notes}
                   maxLength={4000}
@@ -248,65 +309,57 @@ export function FieldWorkOrderExecution() {
                   placeholder="Registre diagnóstico, atividades realizadas e informações importantes."
                   onChange={(event) => setNotes(event.target.value)}
                 />
-                <p className="text-right text-xs text-muted-foreground">
-                  {notes.length}/4000
-                </p>
-                <Button
-                  className="w-full"
-                  size="lg"
-                  disabled={pending || !dirty}
-                  onClick={() => void save()}
-                >
-                  {pending ? 'Salvando…' : 'Salvar observações'}
-                </Button>
-              </div>
-              {order.execution?.checklist ? (
-                <ExecutionChecklistFields
-                  key={order.execution.version}
-                  order={order}
-                  checklist={order.execution.checklist}
-                  onSaved={setOrder}
-                />
-              ) : (
-                <Alert>
-                  Nenhum checklist foi configurado para este atendimento.
-                </Alert>
-              )}
+                <div className="mt-3 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="text-xs text-muted-foreground">
+                    {notes.length}/4000 caracteres
+                  </p>
+                  <Button
+                    className="w-full sm:w-auto"
+                    disabled={pending || !dirty}
+                    onClick={() => void save()}
+                  >
+                    <Save aria-hidden="true" />
+                    {pending ? 'Salvando…' : 'Salvar observações'}
+                  </Button>
+                </div>
+              </Card>
               <ExecutionEvidence order={order} onOrderChange={setOrder} />
               <ExecutionAdditionalItems
                 order={order}
                 onOrderChange={setOrder}
               />
-              {completionIssues.length ? (
-                <Alert variant="destructive">
-                  <p className="font-semibold">Pendências da execução:</p>
-                  <ul className="mt-2 list-disc space-y-1 pl-5">
-                    {completionIssues.map((issue) => (
-                      <li key={issue}>{issue}</li>
-                    ))}
-                  </ul>
-                </Alert>
-              ) : null}
-              <div className="rounded-2xl border border-border bg-muted/40 p-4">
-                <p className="font-semibold">Finalizar atendimento</p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Depois do envio, os dados ficam bloqueados até uma eventual
-                  solicitação de correção.
-                </p>
-                <Button
-                  className="mt-4 w-full"
-                  size="lg"
-                  disabled={pending || dirty}
-                  onClick={() => void submitForReview()}
-                >
-                  {pending ? 'Enviando…' : 'Enviar para revisão'}
-                </Button>
-                {dirty ? (
-                  <p className="mt-2 text-sm text-amber-700">
-                    Salve as observações antes de enviar.
-                  </p>
-                ) : null}
-              </div>
+              <Card className="border-primary/20 bg-gradient-to-r from-primary/10 via-card to-card p-5 sm:p-6">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-start gap-3">
+                    <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-primary text-primary-foreground">
+                      <ClipboardCheck aria-hidden="true" className="size-5" />
+                    </span>
+                    <div>
+                      <h2 className="font-heading text-lg font-semibold">
+                        Finalizar atendimento
+                      </h2>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Depois do envio, os dados ficam bloqueados até uma
+                        eventual solicitação de correção.
+                      </p>
+                      {dirty ? (
+                        <p className="mt-2 text-sm font-medium text-amber-700">
+                          Salve as observações antes de enviar.
+                        </p>
+                      ) : null}
+                    </div>
+                  </div>
+                  <Button
+                    className="w-full sm:w-auto"
+                    size="lg"
+                    disabled={pending || dirty}
+                    onClick={() => void submitForReview()}
+                  >
+                    <Send aria-hidden="true" />
+                    {pending ? 'Enviando…' : 'Enviar para revisão'}
+                  </Button>
+                </div>
+              </Card>
             </div>
           ) : null}
 
@@ -315,8 +368,45 @@ export function FieldWorkOrderExecution() {
               Esta ordem não está em um estado editável para execução.
             </Alert>
           ) : null}
-        </Card>
+        </>
       ) : null}
     </section>
   )
+}
+
+function ExecutionContext({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode
+  label: string
+  value: string
+}) {
+  return (
+    <div className="flex min-w-0 items-start gap-3">
+      <span className="mt-0.5 shrink-0 text-primary">{icon}</span>
+      <div className="min-w-0">
+        <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+          {label}
+        </p>
+        <p className="mt-1 break-words font-medium">{value}</p>
+      </div>
+    </div>
+  )
+}
+
+function formatSchedule(
+  start: string | null,
+  end: string | null,
+  timezone?: string,
+) {
+  const formatter = new Intl.DateTimeFormat('pt-BR', {
+    timeZone: timezone,
+    dateStyle: 'short',
+    timeStyle: 'short',
+  })
+  const format = (value: string | null) =>
+    value ? formatter.format(new Date(value)) : 'Não informado'
+  return `${format(start)} — ${format(end)}`
 }

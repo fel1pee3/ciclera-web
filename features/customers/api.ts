@@ -67,6 +67,17 @@ export function archiveCustomer(customerId: string) {
   })
 }
 
+export function reactivateCustomer(customerId: string) {
+  return clientApiRequest(
+    `customers/${customerId}/reactivate`,
+    customerSchema,
+    {
+      method: 'POST',
+      retryAfterUnauthorized: true,
+    },
+  )
+}
+
 export function listLocations(customerId: string, query: ListLocationsQuery) {
   const params = new URLSearchParams({
     page: String(query.page),

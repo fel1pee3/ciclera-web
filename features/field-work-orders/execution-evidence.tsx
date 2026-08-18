@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Alert } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { buildApiUrl } from '@/lib/api/config'
 import {
@@ -142,7 +143,7 @@ export function ExecutionEvidence({
   }
 
   return (
-    <div className="space-y-6 border-t border-border pt-5">
+    <Card className="space-y-6 p-5 sm:p-6">
       <div>
         <h2 className="font-heading text-xl font-bold">Fotos e assinatura</h2>
         <p className="text-sm text-muted-foreground">
@@ -261,6 +262,6 @@ export function ExecutionEvidence({
           }}
         />
       </div>
-    </div>
+    </Card>
   )
 }

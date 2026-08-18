@@ -2,7 +2,6 @@ import { z } from 'zod'
 import {
   additionalItemSchema,
   evidenceSchema,
-  executionChecklistSchema,
 } from '@/features/field-work-orders/contracts'
 import { workOrderPrioritySchema } from '@/features/work-orders/contracts'
 
@@ -44,7 +43,6 @@ export const reviewDetailsSchema = reviewQueueItemSchema.extend({
     notes: z.string().nullable(),
     startedAt: z.string().datetime(),
     updatedAt: z.string().datetime(),
-    checklist: executionChecklistSchema.nullable(),
     evidence: z.array(evidenceSchema.omit({ createdAt: true })),
     additionalItems: z.array(
       additionalItemSchema.omit({ createdAt: true, updatedAt: true }),
@@ -72,7 +70,6 @@ export const evidenceReadUrlSchema = z.object({
 export const reviewReasons = [
   'REQUIRED_PHOTO_MISSING',
   'SIGNATURE_MISSING',
-  'CHECKLIST_INCOMPLETE',
   'MATERIAL_WITHOUT_VALUE',
   'ADDITIONAL_SERVICE_UNAPPROVED',
   'EQUIPMENT_DATA_INCORRECT',

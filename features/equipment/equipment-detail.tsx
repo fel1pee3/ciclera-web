@@ -1,5 +1,16 @@
 'use client'
 
+import {
+  Archive,
+  Barcode,
+  Box,
+  Building2,
+  Factory,
+  MapPin,
+  Pencil,
+  Tag,
+  Wrench,
+} from 'lucide-react'
 import Link from 'next/link'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
@@ -7,11 +18,13 @@ import { useEffect, useMemo, useState } from 'react'
 import { Alert } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { EmptyState } from '@/components/ui/empty-state'
+import { Modal } from '@/components/ui/modal'
 import { Skeleton } from '@/components/ui/skeleton'
 import { findCustomer, findLocation } from '@/features/customers/api'
 import type { Customer, ServiceLocation } from '@/features/customers/contracts'
-import { archiveEquipment, findEquipment } from './api'
+import { archiveEquipment, findEquipment, reactivateEquipment } from './api'
 import type { Equipment } from './contracts'
 import { EquipmentForm } from './equipment-form'
 import { getEquipmentErrorMessage } from './errors'
@@ -27,6 +40,10 @@ export function EquipmentDetail() {
   const [customer, setCustomer] = useState<Customer | null>(null)
   const [location, setLocation] = useState<ServiceLocation | null>(null)
   const [editing, setEditing] = useState(false)
+  const [archiveOpen, setArchiveOpen] = useState(false)
+  const [archiving, setArchiving] = useState(false)
+  const [reactivateOpen, setReactivateOpen] = useState(false)
+  const [reactivating, setReactivating] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
 
@@ -53,12 +70,30 @@ export function EquipmentDetail() {
   }, [equipmentId])
 
   const archive = async () => {
-    if (!equipment || !window.confirm(`Arquivar ${equipment.name}?`)) return
+    if (!equipment) return
+    setArchiving(true)
     try {
       setEquipment(await archiveEquipment(equipment.id))
       setNotice(`${equipment.name} foi arquivado.`)
+      setArchiveOpen(false)
     } catch (reason) {
       setError(getEquipmentErrorMessage(reason))
+    } finally {
+      setArchiving(false)
+    }
+  }
+
+  const reactivate = async () => {
+    if (!equipment) return
+    setReactivating(true)
+    try {
+      setEquipment(await reactivateEquipment(equipment.id))
+      setNotice(`${equipment.name} foi reativado.`)
+      setReactivateOpen(false)
+    } catch (reason) {
+      setError(getEquipmentErrorMessage(reason))
+    } finally {
+      setReactivating(false)
     }
   }
 
@@ -81,50 +116,119 @@ export function EquipmentDetail() {
 
       {equipment ? (
         <>
-          <header className="rounded-2xl border bg-card p-6">
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div className="min-w-0">
-                <p className="eyebrow">Equipamento</p>
-                <h1 className="mt-3 break-words font-heading text-3xl font-bold">
-                  {equipment.name}
-                </h1>
-                <p className="mt-2 text-muted-foreground">
-                  {equipment.identifier} · {equipment.category}
-                </p>
+          <header className="overflow-hidden rounded-3xl border bg-card shadow-sm">
+            <div className="flex flex-col gap-5 border-b bg-gradient-to-br from-primary/[0.08] via-card to-card p-6 sm:flex-row sm:items-start sm:justify-between">
+              <div className="flex min-w-0 items-start gap-4">
+                <span className="hidden size-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary sm:flex">
+                  <Wrench aria-hidden="true" className="size-6" />
+                </span>
+                <div className="min-w-0">
+                  <p className="eyebrow">Cadastro do equipamento</p>
+                  <h1 className="mt-2 break-words font-heading text-3xl font-bold">
+                    {equipment.name}
+                  </h1>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    {equipment.identifier} · {equipment.category}
+                  </p>
+                </div>
               </div>
               <Badge variant={equipment.archivedAt ? 'outline' : 'secondary'}>
                 {equipment.archivedAt ? 'Arquivado' : 'Ativo'}
               </Badge>
             </div>
-            <dl className="mt-5 grid gap-3 text-sm sm:grid-cols-2">
-              <Data label="Cliente" value={customer?.name ?? 'Carregando…'} />
-              <Data label="Local" value={location?.name ?? 'Carregando…'} />
-              <Data label="Marca" value={equipment.brand ?? 'Não informada'} />
-              <Data label="Modelo" value={equipment.model ?? 'Não informado'} />
-              <Data
-                label="Serial"
-                value={equipment.serialNumber ?? 'Não informado'}
-              />
-            </dl>
-            {equipment.notes ? (
-              <p className="mt-4 whitespace-pre-wrap text-sm">
-                {equipment.notes}
-              </p>
-            ) : null}
-            <div className="mt-5 flex flex-wrap gap-2">
+
+            <div className="grid gap-6 p-6 lg:grid-cols-[1fr_1.4fr]">
+              <section className="rounded-2xl bg-primary/[0.06] p-4">
+                <p className="text-xs font-semibold tracking-wide text-primary uppercase">
+                  Onde está instalado
+                </p>
+                <div className="mt-4 space-y-4">
+                  <EquipmentInfo
+                    icon={<Building2 aria-hidden="true" />}
+                    label="Cliente"
+                    value={customer?.name ?? 'Carregando…'}
+                  />
+                  <EquipmentInfo
+                    icon={<MapPin aria-hidden="true" />}
+                    label="Local de atendimento"
+                    value={location?.name ?? 'Carregando…'}
+                  />
+                </div>
+              </section>
+
+              <section>
+                <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                  Dados técnicos
+                </p>
+                <div className="mt-4 grid gap-5 sm:grid-cols-2">
+                  <EquipmentInfo
+                    icon={<Tag aria-hidden="true" />}
+                    label="Identificação interna"
+                    value={equipment.identifier}
+                  />
+                  <EquipmentInfo
+                    icon={<Box aria-hidden="true" />}
+                    label="Categoria"
+                    value={equipment.category}
+                  />
+                  <EquipmentInfo
+                    icon={<Factory aria-hidden="true" />}
+                    label="Marca"
+                    value={equipment.brand ?? 'Não informada'}
+                  />
+                  <EquipmentInfo
+                    icon={<Wrench aria-hidden="true" />}
+                    label="Modelo"
+                    value={equipment.model ?? 'Não informado'}
+                  />
+                  <EquipmentInfo
+                    icon={<Barcode aria-hidden="true" />}
+                    label="Número de série"
+                    value={equipment.serialNumber ?? 'Não informado'}
+                  />
+                </div>
+              </section>
+
+              <div className="rounded-2xl bg-muted/45 p-4 lg:col-span-2">
+                <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                  Observações técnicas
+                </p>
+                <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed">
+                  {equipment.notes ?? 'Nenhuma observação informada.'}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-2 border-t bg-muted/20 px-6 py-4">
               <Button variant="outline" onClick={() => setEditing(true)}>
-                Editar
+                <Pencil aria-hidden="true" />
+                Editar dados
               </Button>
               {!equipment.archivedAt ? (
-                <Button variant="ghost" onClick={() => void archive()}>
-                  Arquivar
+                <Button
+                  variant="destructive"
+                  onClick={() => setArchiveOpen(true)}
+                >
+                  <Archive aria-hidden="true" />
+                  Arquivar equipamento
                 </Button>
-              ) : null}
+              ) : (
+                <Button onClick={() => setReactivateOpen(true)}>
+                  Reativar equipamento
+                </Button>
+              )}
             </div>
           </header>
 
-          {editing ? (
+          <Modal
+            className="sm:max-w-4xl"
+            open={editing}
+            onClose={() => setEditing(false)}
+            title="Editar equipamento"
+            description="Atualize o vínculo e os dados técnicos deste equipamento."
+          >
             <EquipmentForm
+              embedded
               equipment={equipment}
               onCancel={() => setEditing(false)}
               onSaved={(updated) => {
@@ -140,7 +244,30 @@ export function EquipmentDetail() {
                 })
               }}
             />
-          ) : null}
+          </Modal>
+
+          <ConfirmDialog
+            open={archiveOpen}
+            title="Arquivar equipamento?"
+            description={`${equipment.name} deixará de aparecer entre os equipamentos ativos. O cadastro e todo o histórico técnico serão preservados; nenhum dado será excluído.`}
+            confirmLabel="Arquivar equipamento"
+            pendingLabel="Arquivando…"
+            variant="destructive"
+            pending={archiving}
+            onCancel={() => setArchiveOpen(false)}
+            onConfirm={() => void archive()}
+          />
+
+          <ConfirmDialog
+            open={reactivateOpen}
+            title="Reativar equipamento?"
+            description={`${equipment.name} voltará para os equipamentos ativos e poderá ser utilizado em novas ordens.`}
+            confirmLabel="Reativar equipamento"
+            pendingLabel="Reativando…"
+            pending={reactivating}
+            onCancel={() => setReactivateOpen(false)}
+            onConfirm={() => void reactivate()}
+          />
 
           <div>
             <h2 className="font-heading text-2xl font-bold">
@@ -192,11 +319,26 @@ export function safeEquipmentReturn(value: string | null): string {
     : '/app/equipamentos'
 }
 
-function Data({ label, value }: { label: string; value: string }) {
+function EquipmentInfo({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode
+  label: string
+  value: string
+}) {
   return (
-    <div>
-      <dt className="text-muted-foreground">{label}</dt>
-      <dd>{value}</dd>
+    <div className="flex min-w-0 items-start gap-3">
+      <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground [&_svg]:size-4">
+        {icon}
+      </span>
+      <div className="min-w-0">
+        <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+          {label}
+        </p>
+        <p className="mt-1 break-words text-sm font-medium">{value}</p>
+      </div>
     </div>
   )
 }

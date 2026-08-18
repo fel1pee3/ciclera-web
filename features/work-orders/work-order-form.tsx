@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { getApiFieldErrors } from '@/features/auth/errors'
+import { cn } from '@/lib/utils'
 import {
   RemoteCustomerSelector,
   RemoteLocationSelector,
@@ -27,10 +28,12 @@ import { RemoteEquipmentSelector } from './selectors'
 
 export function WorkOrderForm({
   workOrder,
+  embedded = false,
   onCancel,
   onSaved,
 }: {
   workOrder?: WorkOrderDetails
+  embedded?: boolean
   onCancel?: () => void
   onSaved: (workOrder: WorkOrderDetails) => void
 }) {
@@ -84,13 +87,18 @@ export function WorkOrderForm({
 
   return (
     <form
-      className="grid gap-4 rounded-2xl border bg-card p-5 sm:grid-cols-2"
+      className={cn(
+        'grid gap-4 sm:grid-cols-2',
+        !embedded && 'rounded-2xl border bg-card p-5',
+      )}
       noValidate
       onSubmit={handleSubmit(submit)}
     >
-      <h2 className="font-heading text-lg font-semibold sm:col-span-2">
-        {workOrder ? 'Editar rascunho' : 'Dados da ordem de serviço'}
-      </h2>
+      {!embedded ? (
+        <h2 className="font-heading text-lg font-semibold sm:col-span-2">
+          {workOrder ? 'Editar rascunho' : 'Dados da ordem de serviço'}
+        </h2>
+      ) : null}
       {errorMessage ? (
         <Alert className="sm:col-span-2" variant="destructive">
           {errorMessage}
@@ -158,15 +166,15 @@ export function WorkOrderForm({
           {...register('expectedAmount')}
         />
       </Field>
-      <div className="flex flex-wrap items-end gap-3 sm:col-span-2">
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Salvando…' : 'Salvar ordem'}
-        </Button>
+      <div className="flex flex-wrap items-end justify-end gap-3 border-t pt-5 sm:col-span-2">
         {onCancel ? (
           <Button type="button" variant="ghost" onClick={onCancel}>
             Descartar
           </Button>
         ) : null}
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? 'Salvando…' : 'Salvar ordem'}
+        </Button>
       </div>
     </form>
   )

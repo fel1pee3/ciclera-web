@@ -98,7 +98,7 @@ function Orders() {
 }
 function Review() {
   const checks = [
-    'Checklist preenchido',
+    'Observações registradas',
     'Fotos recebidas',
     'Assinatura recebida',
     'Serviço adicional conferido',
@@ -109,7 +109,7 @@ function Review() {
       <div>
         <p className="text-sm text-muted-foreground">OS #1842 · Clima Norte</p>
         <h3 className="mt-1 font-heading text-xl font-semibold">
-          Checklist de validação
+          Validação do atendimento
         </h3>
       </div>
       <ul className="grid gap-3 sm:grid-cols-2">

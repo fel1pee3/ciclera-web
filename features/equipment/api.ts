@@ -65,3 +65,14 @@ export function archiveEquipment(equipmentId: string) {
     retryAfterUnauthorized: true,
   })
 }
+
+export function reactivateEquipment(equipmentId: string) {
+  return clientApiRequest(
+    `equipment/${equipmentId}/reactivate`,
+    equipmentSchema,
+    {
+      method: 'POST',
+      retryAfterUnauthorized: true,
+    },
+  )
+}
