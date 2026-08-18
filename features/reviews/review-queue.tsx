@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Alert } from '@/components/ui/alert'
 import { Card } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/empty-state'
+import { FilterPanel } from '@/components/ui/filter-panel'
 import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
 import { buttonVariants } from '@/components/ui/button'
@@ -62,19 +63,35 @@ export function ReviewQueueList() {
           Aguardando revisão
         </h1>
       </header>
-      <Label className="grid max-w-sm gap-2">
-        <span>Ordenar por</span>
-        <select
-          className="input"
-          value={query.orderBy}
-          onChange={(event) =>
-            navigate(1, event.target.value as typeof query.orderBy)
-          }
-        >
-          <option value="AGING_DESC">Há mais tempo aguardando</option>
-          <option value="EXPECTED_AMOUNT_DESC">Maior valor previsto</option>
-        </select>
-      </Label>
+      <FilterPanel
+        activeFilterCount={query.orderBy === 'AGING_DESC' ? 0 : 1}
+        title="Organizar fila"
+        description="Escolha como priorizar as execuções que aguardam conferência."
+      >
+        <div className="grid gap-4 sm:grid-cols-[minmax(0,24rem)_auto] sm:items-end">
+          <Label className="grid gap-2">
+            <span>Ordenar por</span>
+            <select
+              className="input"
+              value={query.orderBy}
+              onChange={(event) =>
+                navigate(1, event.target.value as typeof query.orderBy)
+              }
+            >
+              <option value="AGING_DESC">Há mais tempo aguardando</option>
+              <option value="EXPECTED_AMOUNT_DESC">Maior valor previsto</option>
+            </select>
+          </Label>
+          {query.orderBy !== 'AGING_DESC' ? (
+            <Link
+              className={buttonVariants({ variant: 'ghost' })}
+              href="/app/revisao"
+            >
+              Restaurar ordem padrão
+            </Link>
+          ) : null}
+        </div>
+      </FilterPanel>
       {error ? <Alert variant="destructive">{error}</Alert> : null}
       {!result && !error ? (
         <Skeleton

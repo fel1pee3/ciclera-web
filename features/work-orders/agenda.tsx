@@ -9,6 +9,7 @@ import { Alert } from '@/components/ui/alert'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/empty-state'
+import { FilterPanel } from '@/components/ui/filter-panel'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Modal } from '@/components/ui/modal'
@@ -115,45 +116,64 @@ export function AdministrativeAgenda() {
           onError={setError}
         />
       </Modal>
-      <form
-        className="grid gap-3 rounded-2xl border bg-card p-4 sm:grid-cols-2 lg:grid-cols-5"
-        onSubmit={(event) => {
-          event.preventDefault()
-          apply(event.currentTarget)
-        }}
+      <FilterPanel
+        activeFilterCount={
+          2 +
+          Number(Boolean(query.technicianId)) +
+          Number(Boolean(query.status))
+        }
+        title="Período e agenda"
+        description="Defina a janela de atendimento e refine por técnico ou status."
       >
-        <Field label="De">
-          <Input type="date" name="from" defaultValue={query.from} />
-        </Field>
-        <Field label="Até">
-          <Input type="date" name="to" defaultValue={query.to} />
-        </Field>
-        <Field label="Técnico">
-          <TechnicianSelect
-            name="technicianId"
-            technicians={technicians}
-            value={query.technicianId ?? ''}
-            allLabel="Todos"
-          />
-        </Field>
-        <Field label="Status">
-          <select
-            className="input"
-            name="status"
-            defaultValue={query.status ?? ''}
-          >
-            <option value="">Todos</option>
-            {workOrderStatuses.map((status) => (
-              <option key={status} value={status}>
-                {workOrderStatusLabel(status)}
-              </option>
-            ))}
-          </select>
-        </Field>
-        <Button className="self-end" type="submit">
-          Aplicar filtros
-        </Button>
-      </form>
+        <form
+          key={searchParams.toString()}
+          className="space-y-5"
+          onSubmit={(event) => {
+            event.preventDefault()
+            apply(event.currentTarget)
+          }}
+        >
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <Field label="Data inicial">
+              <Input type="date" name="from" defaultValue={query.from} />
+            </Field>
+            <Field label="Data final">
+              <Input type="date" name="to" defaultValue={query.to} />
+            </Field>
+            <Field label="Técnico">
+              <TechnicianSelect
+                name="technicianId"
+                technicians={technicians}
+                value={query.technicianId ?? ''}
+                allLabel="Todos os técnicos"
+              />
+            </Field>
+            <Field label="Status">
+              <select
+                className="input"
+                name="status"
+                defaultValue={query.status ?? ''}
+              >
+                <option value="">Todos os status</option>
+                {workOrderStatuses.map((status) => (
+                  <option key={status} value={status}>
+                    {workOrderStatusLabel(status)}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          </div>
+          <div className="flex flex-col-reverse gap-2 border-t pt-5 sm:flex-row sm:justify-end">
+            <Link
+              className={buttonVariants({ variant: 'ghost' })}
+              href="/app/agenda"
+            >
+              Restaurar período
+            </Link>
+            <Button type="submit">Aplicar filtros</Button>
+          </div>
+        </form>
+      </FilterPanel>
       {!agenda && !error ? (
         <Skeleton className="h-72 rounded-2xl" aria-label="Carregando agenda" />
       ) : null}

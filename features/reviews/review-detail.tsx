@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react'
 import { Alert } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -32,6 +33,9 @@ export function ReviewDetail() {
   const [description, setDescription] = useState('')
   const [pending, setPending] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
+  const [confirmation, setConfirmation] = useState<
+    'APPROVE' | 'CORRECTION' | null
+  >(null)
 
   useEffect(() => {
     let active = true
@@ -79,18 +83,12 @@ export function ReviewDetail() {
       )
     } finally {
       setPending(false)
+      setConfirmation(null)
     }
   }
 
   async function approve() {
     if (!review) return
-    if (
-      !window.confirm(
-        'Confirma a aprovação e a liberação desta ordem para faturamento?',
-      )
-    ) {
-      return
-    }
     setPending(true)
     setError(null)
     try {
@@ -105,10 +103,11 @@ export function ReviewDetail() {
       )
     } finally {
       setPending(false)
+      setConfirmation(null)
     }
   }
 
-  if (!review && !error) {
+  if (!review && !error && !notice) {
     return (
       <Skeleton
         className="mx-auto h-96 max-w-6xl rounded-2xl"
@@ -164,6 +163,7 @@ export function ReviewDetail() {
                     // eslint-disable-next-line @next/next/no-img-element -- authorized temporary URL
                     <img
                       className="mt-3 max-h-72 w-full rounded-lg object-contain"
+                      crossOrigin="use-credentials"
                       src={evidenceUrls[item.id]}
                       alt="Evidência privada"
                     />
@@ -230,7 +230,7 @@ export function ReviewDetail() {
             <Button
               className="mt-4 w-full"
               disabled={pending}
-              onClick={() => void approve()}
+              onClick={() => setConfirmation('APPROVE')}
             >
               {pending ? 'Aprovando…' : 'Aprovar e liberar para faturamento'}
             </Button>
@@ -268,12 +268,33 @@ export function ReviewDetail() {
               <Button
                 variant="destructive"
                 disabled={pending || description.trim().length < 3}
-                onClick={() => void sendCorrection()}
+                onClick={() => setConfirmation('CORRECTION')}
               >
                 {pending ? 'Enviando…' : 'Solicitar correção'}
               </Button>
             </div>
           </Card>
+          <ConfirmDialog
+            open={confirmation === 'APPROVE'}
+            title="Aprovar esta execução?"
+            description="O valor final será congelado e a ordem será liberada para faturamento. Essa ação não poderá ser desfeita diretamente."
+            confirmLabel="Sim, aprovar execução"
+            pendingLabel="Aprovando…"
+            pending={pending}
+            onCancel={() => setConfirmation(null)}
+            onConfirm={() => void approve()}
+          />
+          <ConfirmDialog
+            open={confirmation === 'CORRECTION'}
+            title="Solicitar correção ao técnico?"
+            description={`A ordem voltará para o técnico com o motivo “${reasonLabels[reason]}”. A orientação informada ficará registrada no histórico.`}
+            confirmLabel="Sim, solicitar correção"
+            pendingLabel="Enviando…"
+            pending={pending}
+            variant="destructive"
+            onCancel={() => setConfirmation(null)}
+            onConfirm={() => void sendCorrection()}
+          />
         </>
       ) : null}
     </section>

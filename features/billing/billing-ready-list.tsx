@@ -2,9 +2,18 @@
 
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useMemo, useState, type ComponentProps } from 'react'
+import {
+  CalendarCheck,
+  Download,
+  Filter,
+  ReceiptText,
+  RotateCcw,
+  WalletCards,
+} from 'lucide-react'
 import { Alert } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -20,16 +29,21 @@ import {
 import type { BillingReadyPage } from './contracts'
 
 const pageSize = 20
+type BillingReadyItem = BillingReadyPage['items'][number]
 
 export function BillingReadyList() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const query = useMemo(() => parseQuery(searchParams), [searchParams])
+  const appliedFilterCount = getAppliedFilterCount(query)
   const [result, setResult] = useState<BillingReadyPage | null>(null)
   const [customers, setCustomers] = useState<Customer[]>([])
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [pendingId, setPendingId] = useState<string | null>(null)
+  const [confirmingItem, setConfirmingItem] = useState<BillingReadyItem | null>(
+    null,
+  )
   const [exporting, setExporting] = useState(false)
 
   useEffect(() => {
@@ -69,10 +83,8 @@ export function BillingReadyList() {
     router.push(`/app/faturamento${params.size ? `?${params}` : ''}`)
   }
 
-  async function markBilled(id: string, version: number) {
-    if (!window.confirm('Confirma que esta ordem foi faturada externamente?')) {
-      return
-    }
+  async function markBilled(item: BillingReadyItem) {
+    const { id, version } = item
     setPendingId(id)
     setError(null)
     try {
@@ -100,6 +112,7 @@ export function BillingReadyList() {
       setError('A ordem foi alterada por outra pessoa. Recarregue a fila.')
     } finally {
       setPendingId(null)
+      setConfirmingItem(null)
     }
   }
 
@@ -125,86 +138,127 @@ export function BillingReadyList() {
 
   return (
     <section className="mx-auto max-w-7xl space-y-6">
-      <header>
-        <p className="eyebrow">Controle administrativo</p>
-        <h1 className="mt-3 font-heading text-3xl font-bold">
-          Prontas para faturar
-        </h1>
-        <p className="mt-2 text-muted-foreground">
-          Serviços aprovados para acompanhamento. A Ciclera não emite nota
-          fiscal.
-        </p>
+      <header className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <p className="eyebrow">Controle administrativo</p>
+          <h1 className="mt-3 font-heading text-3xl font-bold sm:text-4xl">
+            Prontas para faturar
+          </h1>
+          <p className="mt-2 max-w-2xl text-muted-foreground">
+            Acompanhe os serviços aprovados e registre o faturamento realizado
+            no seu sistema fiscal.
+          </p>
+        </div>
+        <Button
+          className="w-full lg:w-auto"
+          type="button"
+          variant="outline"
+          disabled={exporting}
+          onClick={() => void exportCsv()}
+        >
+          <Download aria-hidden="true" />
+          {exporting ? 'Exportando…' : 'Exportar CSV'}
+        </Button>
       </header>
-      <Card className="p-5">
+      <Card className="overflow-hidden p-0">
+        <div className="flex flex-col gap-3 border-b bg-muted/30 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <div className="flex items-start gap-3">
+            <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+              <Filter aria-hidden="true" className="size-5" />
+            </span>
+            <div>
+              <h2 className="font-heading text-lg font-semibold">
+                Refinar faturamento
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Filtre por cliente, período, tempo de espera ou faixa de valor.
+              </p>
+            </div>
+          </div>
+          {appliedFilterCount > 0 ? (
+            <span className="w-fit rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+              {appliedFilterCount}{' '}
+              {appliedFilterCount === 1 ? 'filtro ativo' : 'filtros ativos'}
+            </span>
+          ) : null}
+        </div>
         <form
-          className="grid gap-4 md:grid-cols-3"
+          key={searchParams.toString()}
+          className="space-y-5 p-5 sm:p-6"
           onSubmit={(event) => {
             event.preventDefault()
             applyFilters(event.currentTarget)
           }}
         >
-          <Label className="grid gap-2">
-            <span>Cliente</span>
-            <select
-              className="input"
-              name="customerId"
-              defaultValue={query.customerId}
-            >
-              <option value="">Todos</option>
-              {customers.map((customer) => (
-                <option key={customer.id} value={customer.id}>
-                  {customer.name}
-                </option>
-              ))}
-            </select>
-          </Label>
-          <FilterInput
-            label="Conclusão desde"
-            name="completedFrom"
-            type="date"
-            defaultValue={displayDate(query.completedFrom)}
-          />
-          <FilterInput
-            label="Conclusão até"
-            name="completedTo"
-            type="date"
-            defaultValue={displayDate(query.completedTo)}
-          />
-          <FilterInput
-            label="Aging mínimo (dias)"
-            name="minimumAgingDays"
-            type="number"
-            min="0"
-            defaultValue={query.minimumAgingDays?.toString()}
-          />
-          <FilterInput
-            label="Valor mínimo (R$)"
-            name="minimumAmount"
-            inputMode="decimal"
-            defaultValue={displayMoneyInput(query.minimumAmountInCents)}
-          />
-          <FilterInput
-            label="Valor máximo (R$)"
-            name="maximumAmount"
-            inputMode="decimal"
-            defaultValue={displayMoneyInput(query.maximumAmountInCents)}
-          />
-          <div className="flex items-end gap-3 md:col-span-3">
-            <Button type="submit">Aplicar filtros</Button>
+          <div className="grid gap-4 lg:grid-cols-12">
+            <Label className="grid gap-2 lg:col-span-4">
+              <span>Cliente</span>
+              <select
+                className="input"
+                name="customerId"
+                defaultValue={query.customerId}
+              >
+                <option value="">Todos os clientes</option>
+                {customers.map((customer) => (
+                  <option key={customer.id} value={customer.id}>
+                    {customer.name}
+                  </option>
+                ))}
+              </select>
+            </Label>
+            <FilterInput
+              containerClassName="lg:col-span-4"
+              label="Concluída a partir de"
+              name="completedFrom"
+              type="date"
+              defaultValue={displayDate(query.completedFrom)}
+            />
+            <FilterInput
+              containerClassName="lg:col-span-4"
+              label="Concluída até"
+              name="completedTo"
+              type="date"
+              defaultValue={displayDate(query.completedTo)}
+            />
+          </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            <FilterInput
+              label="Aguardando há pelo menos"
+              name="minimumAgingDays"
+              type="number"
+              min="0"
+              placeholder="Dias"
+              defaultValue={query.minimumAgingDays?.toString()}
+            />
+            <FilterInput
+              label="Valor mínimo"
+              name="minimumAmount"
+              inputMode="decimal"
+              placeholder="R$ 0,00"
+              defaultValue={displayMoneyInput(query.minimumAmountInCents)}
+            />
+            <FilterInput
+              label="Valor máximo"
+              name="maximumAmount"
+              inputMode="decimal"
+              placeholder="R$ 0,00"
+              defaultValue={displayMoneyInput(query.maximumAmountInCents)}
+            />
+          </div>
+          <div className="flex flex-col-reverse gap-3 border-t pt-5 sm:flex-row sm:justify-end">
             <Button
+              className="w-full sm:w-auto"
               type="button"
-              variant="outline"
+              variant="ghost"
+              disabled={appliedFilterCount === 0}
               onClick={() => router.push('/app/faturamento')}
             >
-              Limpar
+              <RotateCcw aria-hidden="true" />
+              Limpar filtros
             </Button>
-            <Button
-              type="button"
-              variant="outline"
-              disabled={exporting}
-              onClick={() => void exportCsv()}
-            >
-              {exporting ? 'Exportando…' : 'Exportar CSV'}
+            <Button className="w-full sm:w-auto" type="submit">
+              <Filter aria-hidden="true" />
+              Aplicar filtros
             </Button>
           </div>
         </form>
@@ -218,11 +272,31 @@ export function BillingReadyList() {
         />
       ) : null}
       {result ? (
-        <Card className="flex flex-wrap items-center justify-between gap-3 p-5">
-          <span>{result.total} ordem(ns) no filtro</span>
-          <strong className="font-heading text-2xl text-primary">
-            {formatMoney(result.totalAmountInCents)}
-          </strong>
+        <Card className="grid gap-5 p-5 sm:grid-cols-2 sm:p-6">
+          <div className="flex items-center gap-4">
+            <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-primary/10 text-primary">
+              <ReceiptText aria-hidden="true" className="size-6" />
+            </span>
+            <div>
+              <p className="text-sm text-muted-foreground">
+                Ordens encontradas
+              </p>
+              <strong className="font-heading text-2xl">{result.total}</strong>
+            </div>
+          </div>
+          <div className="flex items-center gap-4 sm:justify-end">
+            <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-emerald-100 text-emerald-700">
+              <WalletCards aria-hidden="true" className="size-6" />
+            </span>
+            <div className="sm:text-right">
+              <p className="text-sm text-muted-foreground">
+                Valor pronto para faturar
+              </p>
+              <strong className="font-heading text-2xl text-primary sm:text-3xl">
+                {formatMoney(result.totalAmountInCents)}
+              </strong>
+            </div>
+          </div>
         </Card>
       ) : null}
       {result?.total === 0 ? (
@@ -233,35 +307,79 @@ export function BillingReadyList() {
       ) : null}
       <div className="grid gap-4 md:grid-cols-2">
         {result?.items.map((item) => (
-          <Card className="p-5" key={item.id}>
-            <div className="flex justify-between gap-4">
-              <div>
-                <p className="text-sm font-semibold text-primary">
-                  {item.number}
-                </p>
-                <h2 className="mt-1 font-heading text-lg font-bold">
-                  {item.title}
-                </h2>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {item.customer.name}
-                </p>
+          <Card
+            className="flex h-full flex-col overflow-hidden p-0"
+            key={item.id}
+          >
+            <div className="flex flex-1 flex-col gap-5 p-5 sm:p-6">
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold tracking-wide text-primary">
+                    {item.number}
+                  </p>
+                  <h2 className="mt-1 break-words font-heading text-xl leading-snug font-bold">
+                    {item.title}
+                  </h2>
+                </div>
+                <div className="shrink-0 text-right">
+                  <p className="text-xs font-medium text-muted-foreground uppercase">
+                    Valor final
+                  </p>
+                  <strong className="mt-1 block font-heading text-xl text-primary">
+                    {formatMoney(item.finalAmountInCents)}
+                  </strong>
+                </div>
               </div>
-              <strong>{formatMoney(item.finalAmountInCents)}</strong>
+              <div className="rounded-xl bg-muted/40 p-4">
+                <p className="font-medium">{item.customer.name}</p>
+                <div className="mt-3 flex items-start gap-2 text-sm text-muted-foreground">
+                  <CalendarCheck
+                    aria-hidden="true"
+                    className="mt-0.5 size-4 shrink-0 text-primary"
+                  />
+                  <p>
+                    Concluída em {formatDate(item.actualEndAt)}
+                    <br />
+                    Aprovada em {formatDate(item.approvedAt)}
+                  </p>
+                </div>
+              </div>
             </div>
-            <p className="mt-4 text-sm text-muted-foreground">
-              Concluída em {formatDate(item.actualEndAt)} · aprovada em{' '}
-              {formatDate(item.approvedAt)}
-            </p>
-            <Button
-              className="mt-5 w-full"
-              disabled={pendingId === item.id}
-              onClick={() => void markBilled(item.id, item.version)}
-            >
-              {pendingId === item.id ? 'Registrando…' : 'Marcar como faturada'}
-            </Button>
+            <div className="border-t bg-card p-4 sm:px-6">
+              <Button
+                className="w-full"
+                disabled={pendingId === item.id}
+                onClick={() => setConfirmingItem(item)}
+              >
+                <ReceiptText aria-hidden="true" />
+                {pendingId === item.id
+                  ? 'Registrando…'
+                  : 'Marcar como faturada'}
+              </Button>
+            </div>
           </Card>
         ))}
       </div>
+      <ConfirmDialog
+        open={Boolean(confirmingItem)}
+        title={
+          confirmingItem
+            ? `Marcar ${confirmingItem.number} como faturada?`
+            : 'Marcar ordem como faturada?'
+        }
+        description={
+          confirmingItem
+            ? `Confirme que o faturamento de ${formatMoney(confirmingItem.finalAmountInCents)} foi realizado no sistema externo. A Ciclera apenas registrará essa confirmação e não emitirá nota fiscal.`
+            : ''
+        }
+        confirmLabel="Sim, marcar como faturada"
+        pendingLabel="Registrando…"
+        pending={Boolean(confirmingItem && pendingId === confirmingItem.id)}
+        onCancel={() => setConfirmingItem(null)}
+        onConfirm={() => {
+          if (confirmingItem) void markBilled(confirmingItem)
+        }}
+      />
       {result && result.total > result.pageSize ? (
         <nav
           className="flex justify-between"
@@ -289,11 +407,15 @@ export function BillingReadyList() {
 }
 
 function FilterInput({
+  containerClassName,
   label,
   ...props
-}: { label: string } & ComponentProps<typeof Input>) {
+}: {
+  containerClassName?: string
+  label: string
+} & ComponentProps<typeof Input>) {
   return (
-    <Label className="grid gap-2">
+    <Label className={`grid gap-2 ${containerClassName ?? ''}`}>
       <span>{label}</span>
       <Input {...props} />
     </Label>
@@ -302,7 +424,8 @@ function FilterInput({
 
 function parseQuery(params: Pick<URLSearchParams, 'get'>) {
   const page = Number(params.get('page'))
-  const aging = Number(params.get('minimumAgingDays'))
+  const agingValue = params.get('minimumAgingDays')
+  const aging = agingValue === null ? Number.NaN : Number(agingValue)
   return {
     page: Number.isInteger(page) && page > 0 ? page : 1,
     pageSize,
@@ -313,6 +436,17 @@ function parseQuery(params: Pick<URLSearchParams, 'get'>) {
     minimumAmountInCents: params.get('minimumAmountInCents') || undefined,
     maximumAmountInCents: params.get('maximumAmountInCents') || undefined,
   }
+}
+
+function getAppliedFilterCount(query: ReturnType<typeof parseQuery>) {
+  return [
+    query.customerId,
+    query.completedFrom,
+    query.completedTo,
+    query.minimumAgingDays,
+    query.minimumAmountInCents,
+    query.maximumAmountInCents,
+  ].filter((value) => value !== undefined).length
 }
 
 function setParam(

@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { EmptyState } from '@/components/ui/empty-state'
+import { FilterPanel } from '@/components/ui/filter-panel'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Modal } from '@/components/ui/modal'
@@ -164,39 +165,50 @@ export function EquipmentList() {
         }}
       />
 
-      <div className="grid gap-3 rounded-2xl border bg-card p-4 sm:grid-cols-[1fr_14rem_auto]">
-        <Label className="grid gap-2">
-          <span>Buscar</span>
-          <Input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Nome, identificação ou serial"
-          />
-        </Label>
-        <Label className="grid gap-2">
-          <span>Situação</span>
-          <select
-            className="input"
-            value={query.archive}
-            onChange={(event) => {
-              const next = new URLSearchParams(searchParams.toString())
-              next.delete('page')
-              next.set('archive', event.target.value)
-              router.replace(`${pathname}?${next.toString()}`)
-            }}
-          >
-            <option value="ACTIVE">Ativos</option>
-            <option value="ARCHIVED">Arquivados</option>
-            <option value="ALL">Todos</option>
-          </select>
-        </Label>
-        <Link
-          className="self-end text-center text-sm font-semibold text-primary"
-          href="/app/equipamentos"
-        >
-          Limpar filtros
-        </Link>
-      </div>
+      <FilterPanel
+        activeFilterCount={
+          Number(Boolean(query.search)) + Number(query.archive !== 'ACTIVE')
+        }
+        description="Encontre ativos pela identificação e consulte equipamentos arquivados."
+      >
+        <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_14rem]">
+          <Label className="grid gap-2">
+            <span>Buscar equipamento</span>
+            <Input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Nome, identificação ou serial"
+            />
+          </Label>
+          <Label className="grid gap-2">
+            <span>Situação</span>
+            <select
+              className="input"
+              value={query.archive}
+              onChange={(event) => {
+                const next = new URLSearchParams(searchParams.toString())
+                next.delete('page')
+                next.set('archive', event.target.value)
+                router.replace(`${pathname}?${next.toString()}`)
+              }}
+            >
+              <option value="ACTIVE">Somente ativos</option>
+              <option value="ARCHIVED">Somente arquivados</option>
+              <option value="ALL">Ativos e arquivados</option>
+            </select>
+          </Label>
+        </div>
+        {query.search || query.archive !== 'ACTIVE' ? (
+          <div className="mt-5 flex justify-end border-t pt-5">
+            <Link
+              className={buttonVariants({ variant: 'ghost' })}
+              href="/app/equipamentos"
+            >
+              Limpar filtros
+            </Link>
+          </div>
+        ) : null}
+      </FilterPanel>
 
       {!result && !error ? (
         <div

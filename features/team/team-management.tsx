@@ -7,9 +7,10 @@ import { useEffect, useMemo, useState } from 'react'
 
 import { Alert } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+import { Button, buttonVariants } from '@/components/ui/button'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { EmptyState } from '@/components/ui/empty-state'
+import { FilterPanel } from '@/components/ui/filter-panel'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Modal } from '@/components/ui/modal'
@@ -166,49 +167,67 @@ export function TeamManagement() {
         }}
       />
 
-      <form
-        action="/app/equipe"
-        className="grid gap-3 rounded-2xl border bg-card p-4 sm:grid-cols-2 lg:grid-cols-[1fr_12rem_12rem_auto_auto]"
+      <FilterPanel
+        activeFilterCount={
+          Number(Boolean(query.search)) +
+          Number(Boolean(query.role)) +
+          Number(Boolean(query.status))
+        }
+        description="Encontre integrantes por nome, perfil ou situação de acesso."
       >
-        <Label className="grid gap-2">
-          <span>Buscar</span>
-          <Input
-            name="search"
-            defaultValue={query.search}
-            placeholder="Nome ou e-mail"
-          />
-        </Label>
-        <Label className="grid gap-2">
-          <span>Perfil</span>
-          <select className="input" name="role" defaultValue={query.role ?? ''}>
-            <option value="">Todos</option>
-            <option value="OWNER">Proprietário</option>
-            <option value="ADMIN">Administrador</option>
-            <option value="TECHNICIAN">Técnico</option>
-          </select>
-        </Label>
-        <Label className="grid gap-2">
-          <span>Status</span>
-          <select
-            className="input"
-            name="status"
-            defaultValue={query.status ?? ''}
-          >
-            <option value="">Todos</option>
-            <option value="ACTIVE">Ativo</option>
-            <option value="INACTIVE">Inativo</option>
-          </select>
-        </Label>
-        <Button className="self-end" type="submit">
-          Filtrar
-        </Button>
-        <Link
-          href="/app/equipe"
-          className="inline-flex min-h-11 items-center justify-center self-end rounded-lg px-4 text-sm font-semibold text-primary"
+        <form
+          key={searchParams.toString()}
+          action="/app/equipe"
+          className="space-y-5"
         >
-          Limpar
-        </Link>
-      </form>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_12rem_12rem]">
+            <Label className="grid gap-2">
+              <span>Buscar integrante</span>
+              <Input
+                name="search"
+                defaultValue={query.search}
+                placeholder="Nome ou e-mail"
+              />
+            </Label>
+            <Label className="grid gap-2">
+              <span>Perfil</span>
+              <select
+                className="input"
+                name="role"
+                defaultValue={query.role ?? ''}
+              >
+                <option value="">Todos os perfis</option>
+                <option value="OWNER">Proprietário</option>
+                <option value="ADMIN">Administrador</option>
+                <option value="TECHNICIAN">Técnico</option>
+              </select>
+            </Label>
+            <Label className="grid gap-2">
+              <span>Status</span>
+              <select
+                className="input"
+                name="status"
+                defaultValue={query.status ?? ''}
+              >
+                <option value="">Todos os status</option>
+                <option value="ACTIVE">Ativo</option>
+                <option value="INACTIVE">Inativo</option>
+              </select>
+            </Label>
+          </div>
+          <div className="flex flex-col-reverse gap-2 border-t pt-5 sm:flex-row sm:justify-end">
+            {query.search || query.role || query.status ? (
+              <Link
+                href="/app/equipe"
+                className={buttonVariants({ variant: 'ghost' })}
+              >
+                Limpar filtros
+              </Link>
+            ) : null}
+            <Button type="submit">Aplicar filtros</Button>
+          </div>
+        </form>
+      </FilterPanel>
 
       {loadError ? (
         <Alert variant="destructive" role="alert">

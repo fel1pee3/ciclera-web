@@ -223,6 +223,7 @@ export function ExecutionEvidence({
                 // eslint-disable-next-line @next/next/no-img-element -- authorized temporary API URL
                 <img
                   className="mt-3 max-h-64 w-full rounded-lg object-contain"
+                  crossOrigin="use-credentials"
                   src={viewUrls[item.id]}
                   alt={
                     item.kind === 'SIGNATURE'

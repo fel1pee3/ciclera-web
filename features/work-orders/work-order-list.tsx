@@ -7,6 +7,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Alert } from '@/components/ui/alert'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
+import { FilterPanel } from '@/components/ui/filter-panel'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Modal } from '@/components/ui/modal'
@@ -107,46 +108,65 @@ export function WorkOrderList() {
           }}
         />
       </Modal>
-      <div className="grid gap-3 rounded-2xl border bg-card p-4 md:grid-cols-3">
-        <Label className="grid gap-2">
-          <span>Buscar</span>
-          <Input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Número ou título"
-          />
-        </Label>
-        <Label className="grid gap-2">
-          <span>Status</span>
-          <select
-            className="input"
-            value={query.status ?? ''}
-            onChange={(event) => changeFilter('status', event.target.value)}
-          >
-            <option value="">Todos</option>
-            {workOrderStatuses.map((status) => (
-              <option key={status} value={status}>
-                {workOrderStatusLabel(status)}
-              </option>
-            ))}
-          </select>
-        </Label>
-        <Label className="grid gap-2">
-          <span>Prioridade</span>
-          <select
-            className="input"
-            value={query.priority ?? ''}
-            onChange={(event) => changeFilter('priority', event.target.value)}
-          >
-            <option value="">Todas</option>
-            {workOrderPriorities.map((priority) => (
-              <option key={priority} value={priority}>
-                {priorityLabels[priority]}
-              </option>
-            ))}
-          </select>
-        </Label>
-      </div>
+      <FilterPanel
+        activeFilterCount={
+          Number(Boolean(query.search)) +
+          Number(Boolean(query.status)) +
+          Number(Boolean(query.priority))
+        }
+        description="Busque ordens e combine status e prioridade para encontrar o atendimento certo."
+      >
+        <div className="grid gap-4 md:grid-cols-3">
+          <Label className="grid gap-2">
+            <span>Buscar ordem</span>
+            <Input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Número ou título"
+            />
+          </Label>
+          <Label className="grid gap-2">
+            <span>Status</span>
+            <select
+              className="input"
+              value={query.status ?? ''}
+              onChange={(event) => changeFilter('status', event.target.value)}
+            >
+              <option value="">Todos os status</option>
+              {workOrderStatuses.map((status) => (
+                <option key={status} value={status}>
+                  {workOrderStatusLabel(status)}
+                </option>
+              ))}
+            </select>
+          </Label>
+          <Label className="grid gap-2">
+            <span>Prioridade</span>
+            <select
+              className="input"
+              value={query.priority ?? ''}
+              onChange={(event) => changeFilter('priority', event.target.value)}
+            >
+              <option value="">Todas as prioridades</option>
+              {workOrderPriorities.map((priority) => (
+                <option key={priority} value={priority}>
+                  {priorityLabels[priority]}
+                </option>
+              ))}
+            </select>
+          </Label>
+        </div>
+        {query.search || query.status || query.priority ? (
+          <div className="mt-5 flex justify-end border-t pt-5">
+            <Link
+              className={buttonVariants({ variant: 'ghost' })}
+              href="/app/ordens"
+            >
+              Limpar filtros
+            </Link>
+          </div>
+        ) : null}
+      </FilterPanel>
       {error ? <Alert variant="destructive">{error}</Alert> : null}
       {!result && !error ? (
         <Skeleton className="h-64 rounded-2xl" aria-label="Carregando ordens" />

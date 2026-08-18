@@ -13,6 +13,8 @@ import { findEquipment, listEquipment } from '@/features/equipment/api'
 import type { Equipment } from '@/features/equipment/contracts'
 import { EquipmentDetail } from '@/features/equipment/equipment-detail'
 import { EquipmentList } from '@/features/equipment/equipment-list'
+import { listWorkOrders } from '@/features/work-orders/api'
+import type { WorkOrder } from '@/features/work-orders/contracts'
 
 vi.mock('next/navigation', () => ({
   useParams: () => ({
@@ -39,10 +41,20 @@ vi.mock('@/features/equipment/api', () => ({
   updateEquipment: vi.fn(),
 }))
 
+vi.mock('@/features/work-orders/api', () => ({
+  listWorkOrders: vi.fn(),
+}))
+
 describe('equipment UI', () => {
   beforeEach(() => {
     cleanup()
     vi.clearAllMocks()
+    vi.mocked(listWorkOrders).mockResolvedValue({
+      items: [],
+      page: 1,
+      pageSize: 6,
+      total: 0,
+    })
   })
 
   it('creates and archives equipment through clear dialogs', async () => {
@@ -98,6 +110,34 @@ describe('equipment UI', () => {
       ).not.toBeInTheDocument(),
     )
   })
+
+  it('shows real work orders linked to the equipment in its technical history', async () => {
+    vi.mocked(findEquipment).mockResolvedValueOnce(equipment)
+    vi.mocked(findCustomer).mockResolvedValueOnce(customer)
+    vi.mocked(findLocation).mockResolvedValueOnce(location)
+    vi.mocked(listWorkOrders).mockResolvedValueOnce({
+      items: [workOrder],
+      page: 1,
+      pageSize: 6,
+      total: 1,
+    })
+
+    render(<EquipmentDetail />)
+
+    expect(
+      await screen.findByRole('heading', { name: workOrder.title }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Faturada')).toBeInTheDocument()
+    expect(screen.getByText(workOrder.serviceType)).toBeInTheDocument()
+    expect(
+      screen.queryByText('Nenhum atendimento registrado'),
+    ).not.toBeInTheDocument()
+    expect(listWorkOrders).toHaveBeenCalledWith({
+      page: 1,
+      pageSize: 6,
+      equipmentId: equipment.id,
+    })
+  })
 })
 
 const equipment: Equipment = {
@@ -146,4 +186,30 @@ const location: ServiceLocation = {
   status: 'ACTIVE',
   createdAt: '2026-08-17T12:00:00.000Z',
   updatedAt: '2026-08-17T12:00:00.000Z',
+}
+
+const workOrder: WorkOrder = {
+  id: '50000000-0000-4000-8000-000000000004',
+  number: 'OS-000001',
+  customerId: equipment.customerId,
+  locationId: equipment.locationId,
+  equipmentId: equipment.id,
+  serviceType: 'Manutenção preventiva',
+  title: 'Manutenção preventiva do ar-condicionado da recepção',
+  description: 'Limpeza dos filtros e inspeção da serpentina.',
+  priority: 'NORMAL',
+  status: 'BILLED',
+  scheduledStartAt: '2026-08-18T12:00:00.000Z',
+  scheduledEndAt: '2026-08-18T15:00:00.000Z',
+  actualStartAt: '2026-08-18T12:05:00.000Z',
+  actualEndAt: '2026-08-18T14:30:00.000Z',
+  expectedAmountInCents: '50000',
+  finalAmountInCents: '62540',
+  version: 8,
+  createdByUserId: '50000000-0000-4000-8000-000000000005',
+  canceledByUserId: null,
+  canceledAt: null,
+  cancellationReason: null,
+  createdAt: '2026-08-17T12:00:00.000Z',
+  updatedAt: '2026-08-18T14:30:00.000Z',
 }

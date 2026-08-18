@@ -54,7 +54,7 @@ export default function RootLayout({
       data-scroll-behavior="smooth"
       className={`bg-background ${inter.variable} ${sora.variable}`}
     >
-      <body className="font-sans antialiased">
+      <body className="font-sans antialiased" suppressHydrationWarning>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

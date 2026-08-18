@@ -5,6 +5,8 @@ import {
   Barcode,
   Box,
   Building2,
+  CalendarClock,
+  ClipboardList,
   Factory,
   MapPin,
   Pencil,
@@ -17,17 +19,22 @@ import { useEffect, useMemo, useState } from 'react'
 
 import { Alert } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+import { Button, buttonVariants } from '@/components/ui/button'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Modal } from '@/components/ui/modal'
 import { Skeleton } from '@/components/ui/skeleton'
 import { findCustomer, findLocation } from '@/features/customers/api'
 import type { Customer, ServiceLocation } from '@/features/customers/contracts'
+import { listWorkOrders } from '@/features/work-orders/api'
+import type { WorkOrder, WorkOrderPage } from '@/features/work-orders/contracts'
+import { WorkOrderStatusBadge } from '@/features/work-orders/status-badge'
 import { archiveEquipment, findEquipment, reactivateEquipment } from './api'
 import type { Equipment } from './contracts'
 import { EquipmentForm } from './equipment-form'
 import { getEquipmentErrorMessage } from './errors'
+
+const historyPageSize = 6
 
 export function EquipmentDetail() {
   const { equipmentId } = useParams<{ equipmentId: string }>()
@@ -39,6 +46,10 @@ export function EquipmentDetail() {
   const [equipment, setEquipment] = useState<Equipment | null>(null)
   const [customer, setCustomer] = useState<Customer | null>(null)
   const [location, setLocation] = useState<ServiceLocation | null>(null)
+  const [workOrderHistory, setWorkOrderHistory] =
+    useState<WorkOrderPage | null>(null)
+  const [historyPage, setHistoryPage] = useState(1)
+  const [historyError, setHistoryError] = useState<string | null>(null)
   const [editing, setEditing] = useState(false)
   const [archiveOpen, setArchiveOpen] = useState(false)
   const [archiving, setArchiving] = useState(false)
@@ -68,6 +79,29 @@ export function EquipmentDetail() {
       active = false
     }
   }, [equipmentId])
+
+  useEffect(() => {
+    let active = true
+    void listWorkOrders({
+      page: historyPage,
+      pageSize: historyPageSize,
+      equipmentId,
+    })
+      .then((page) => {
+        if (!active) return
+        setWorkOrderHistory(page)
+        setHistoryError(null)
+      })
+      .catch(() => {
+        if (!active) return
+        setHistoryError(
+          'Não foi possível carregar o histórico técnico deste equipamento.',
+        )
+      })
+    return () => {
+      active = false
+    }
+  }, [equipmentId, historyPage])
 
   const archive = async () => {
     if (!equipment) return
@@ -269,18 +303,88 @@ export function EquipmentDetail() {
             onConfirm={() => void reactivate()}
           />
 
-          <div>
-            <h2 className="font-heading text-2xl font-bold">
-              Histórico técnico
-            </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Registros reais das ordens vinculadas aparecerão aqui.
-            </p>
-          </div>
-          <EmptyState
-            title="Nenhum atendimento registrado"
-            description="O histórico será preenchido somente quando existirem ordens de serviço reais para este equipamento."
-          />
+          <section className="space-y-4" aria-labelledby="equipment-history">
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <h2
+                  id="equipment-history"
+                  className="font-heading text-2xl font-bold"
+                >
+                  Histórico técnico
+                </h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Ordens de serviço vinculadas a este equipamento, da mais
+                  recente para a mais antiga.
+                </p>
+              </div>
+              {workOrderHistory?.total ? (
+                <Badge variant="outline">
+                  {workOrderHistory.total}{' '}
+                  {workOrderHistory.total === 1 ? 'ordem' : 'ordens'}
+                </Badge>
+              ) : null}
+            </div>
+
+            {historyError ? (
+              <Alert variant="destructive">{historyError}</Alert>
+            ) : null}
+            {!workOrderHistory && !historyError ? (
+              <Skeleton
+                className="h-52 rounded-2xl"
+                aria-label="Carregando histórico técnico"
+              />
+            ) : null}
+            {workOrderHistory?.total === 0 ? (
+              <EmptyState
+                title="Nenhum atendimento registrado"
+                description="Crie uma ordem de serviço e selecione este equipamento para que ela apareça no histórico técnico."
+              />
+            ) : null}
+            {workOrderHistory?.items.length ? (
+              <div className="grid gap-4 lg:grid-cols-2">
+                {workOrderHistory.items.map((order) => (
+                  <EquipmentHistoryCard key={order.id} order={order} />
+                ))}
+              </div>
+            ) : null}
+            {workOrderHistory &&
+            workOrderHistory.total > workOrderHistory.pageSize ? (
+              <nav
+                aria-label="Paginação do histórico técnico"
+                className="flex flex-col gap-3 rounded-2xl border bg-card p-4 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <Button
+                  variant="outline"
+                  disabled={workOrderHistory.page <= 1}
+                  onClick={() => {
+                    setWorkOrderHistory(null)
+                    setHistoryPage((current) => Math.max(1, current - 1))
+                  }}
+                >
+                  Anterior
+                </Button>
+                <span className="text-center text-sm text-muted-foreground">
+                  Página {workOrderHistory.page} de{' '}
+                  {Math.ceil(
+                    workOrderHistory.total / workOrderHistory.pageSize,
+                  )}
+                </span>
+                <Button
+                  variant="outline"
+                  disabled={
+                    workOrderHistory.page * workOrderHistory.pageSize >=
+                    workOrderHistory.total
+                  }
+                  onClick={() => {
+                    setWorkOrderHistory(null)
+                    setHistoryPage((current) => current + 1)
+                  }}
+                >
+                  Próxima
+                </Button>
+              </nav>
+            ) : null}
+          </section>
         </>
       ) : null}
     </section>
@@ -341,4 +445,80 @@ function EquipmentInfo({
       </div>
     </div>
   )
+}
+
+function EquipmentHistoryCard({ order }: { order: WorkOrder }) {
+  const date = workOrderReferenceDate(order)
+
+  return (
+    <article className="overflow-hidden rounded-2xl border bg-card shadow-sm">
+      <div className="flex items-start justify-between gap-4 border-b bg-muted/20 p-5">
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-primary">{order.number}</p>
+          <h3 className="mt-1 break-words font-heading text-lg font-bold">
+            {order.title}
+          </h3>
+        </div>
+        <WorkOrderStatusBadge status={order.status} />
+      </div>
+      <div className="space-y-4 p-5">
+        <div className="grid gap-3 text-sm sm:grid-cols-2">
+          <div className="flex items-start gap-2">
+            <ClipboardList
+              aria-hidden="true"
+              className="mt-0.5 size-4 shrink-0 text-primary"
+            />
+            <div>
+              <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                Tipo de serviço
+              </p>
+              <p className="mt-1 font-medium">{order.serviceType}</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-2">
+            <CalendarClock
+              aria-hidden="true"
+              className="mt-0.5 size-4 shrink-0 text-primary"
+            />
+            <div>
+              <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                {date.label}
+              </p>
+              <p className="mt-1 font-medium">
+                {formatHistoryDate(date.value)}
+              </p>
+            </div>
+          </div>
+        </div>
+        <p className="line-clamp-2 text-sm leading-relaxed text-muted-foreground">
+          {order.description}
+        </p>
+        <div className="flex justify-end border-t pt-4">
+          <Link
+            className={buttonVariants({ variant: 'outline' })}
+            href={`/app/ordens/${order.id}`}
+          >
+            Ver ordem
+          </Link>
+        </div>
+      </div>
+    </article>
+  )
+}
+
+function workOrderReferenceDate(order: WorkOrder) {
+  if (order.actualEndAt) {
+    return { label: 'Concluída em', value: order.actualEndAt }
+  }
+  if (order.scheduledStartAt) {
+    return { label: 'Agendada para', value: order.scheduledStartAt }
+  }
+  return { label: 'Criada em', value: order.createdAt }
+}
+
+function formatHistoryDate(value: string) {
+  return new Intl.DateTimeFormat('pt-BR', {
+    dateStyle: 'short',
+    timeStyle: 'short',
+  }).format(new Date(value))
 }

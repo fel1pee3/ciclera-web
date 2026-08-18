@@ -4,13 +4,18 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { centsToMoney, moneyToCents } from '@/features/work-orders/schemas'
+import { centsToMoney } from '@/features/work-orders/schemas'
 import {
   createAdditionalItem,
   removeAdditionalItem,
   updateAdditionalItem,
 } from './api'
 import type { AdditionalItem, FieldWorkOrder } from './contracts'
+import {
+  CurrencyInput,
+  currencyInputToCents,
+  formatCurrencyInput,
+} from './currency-input'
 import { getFieldWorkOrderErrorMessage } from './errors'
 
 const labels = {
@@ -47,12 +52,12 @@ export function ExecutionAdditionalItems({
     setType(item.type)
     setDescription(item.description)
     setQuantity(item.quantity)
-    setUnitAmount(centsToMoney(item.unitAmountInCents))
+    setUnitAmount(formatCurrencyInput(centsToMoney(item.unitAmountInCents)))
   }
 
   async function save() {
     if (!order.execution) return
-    const cents = moneyToCents(unitAmount)
+    const cents = currencyInputToCents(unitAmount)
     const normalizedQuantity = quantity.trim().replace(',', '.')
     if (
       !description.trim() ||
@@ -174,10 +179,10 @@ export function ExecutionAdditionalItems({
           </Label>
           <Label className="grid gap-2">
             <span>Valor unitário (R$)</span>
-            <Input
-              inputMode="decimal"
+            <CurrencyInput
+              placeholder="0,00"
               value={unitAmount}
-              onChange={(event) => setUnitAmount(event.target.value)}
+              onValueChange={setUnitAmount}
             />
           </Label>
         </div>

@@ -14,6 +14,7 @@ import { useEffect, useState } from 'react'
 import { Alert } from '@/components/ui/alert'
 import { Card } from '@/components/ui/card'
 import { EmptyState } from '@/components/ui/empty-state'
+import { FilterPanel } from '@/components/ui/filter-panel'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -62,29 +63,32 @@ export function RevenueDashboard() {
 
   return (
     <section className="mx-auto max-w-7xl space-y-6">
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="eyebrow">Garantia de receita</p>
-          <h1 className="mt-3 font-heading text-3xl font-bold">
-            Visão operacional
-          </h1>
-          <p className="mt-2 text-muted-foreground">
-            Valores reais das ordens da sua organização.
-          </p>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
+      <header>
+        <p className="eyebrow">Garantia de receita</p>
+        <h1 className="mt-3 font-heading text-3xl font-bold">
+          Visão operacional
+        </h1>
+        <p className="mt-2 text-muted-foreground">
+          Valores reais das ordens da sua organização.
+        </p>
+      </header>
+      <FilterPanel
+        title="Período analisado"
+        description="Os indicadores são atualizados automaticamente quando o período muda."
+      >
+        <div className="grid gap-4 sm:max-w-2xl sm:grid-cols-2">
           <DateFilter
-            label="De"
+            label="Data inicial"
             value={period.from}
             onChange={(from) => setPeriod((current) => ({ ...current, from }))}
           />
           <DateFilter
-            label="Até"
+            label="Data final"
             value={period.to}
             onChange={(to) => setPeriod((current) => ({ ...current, to }))}
           />
         </div>
-      </header>
+      </FilterPanel>
       {error ? <Alert variant="destructive">{error}</Alert> : null}
       {!summary && !error ? (
         <Skeleton className="h-72 rounded-2xl" aria-label="Carregando painel" />

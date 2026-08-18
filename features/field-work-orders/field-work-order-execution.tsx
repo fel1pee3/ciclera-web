@@ -17,6 +17,7 @@ import {
 import { Alert } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
@@ -43,6 +44,7 @@ export function FieldWorkOrderExecution() {
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
+  const [confirmingReview, setConfirmingReview] = useState(false)
   const [reloadKey, setReloadKey] = useState(0)
 
   useEffect(() => {
@@ -132,6 +134,7 @@ export function FieldWorkOrderExecution() {
       setError(getFieldWorkOrderErrorMessage(reason))
     } finally {
       setPending(false)
+      setConfirmingReview(false)
     }
   }
 
@@ -353,13 +356,23 @@ export function FieldWorkOrderExecution() {
                     className="w-full sm:w-auto"
                     size="lg"
                     disabled={pending || dirty}
-                    onClick={() => void submitForReview()}
+                    onClick={() => setConfirmingReview(true)}
                   >
                     <Send aria-hidden="true" />
                     {pending ? 'Enviando…' : 'Enviar para revisão'}
                   </Button>
                 </div>
               </Card>
+              <ConfirmDialog
+                open={confirmingReview}
+                title="Enviar atendimento para revisão?"
+                description="Confirme se as observações, evidências e itens adicionais estão corretos. Depois do envio, a execução ficará bloqueada até ser aprovada ou devolvida para correção."
+                confirmLabel="Sim, enviar para revisão"
+                pendingLabel="Enviando…"
+                pending={pending}
+                onCancel={() => setConfirmingReview(false)}
+                onConfirm={() => void submitForReview()}
+              />
             </div>
           ) : null}
 
