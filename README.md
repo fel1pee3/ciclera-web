@@ -66,6 +66,7 @@ A API é sempre a autoridade final sobre identidade, organização, permissões,
 - Registro de pendências.
 - Fila de serviços prontos para faturar.
 - Marcação manual de ordens como faturadas.
+- Gestão do plano e da assinatura da organização pelo proprietário.
 - Configurações básicas da organização e conta.
 
 ### Área do técnico
@@ -191,6 +192,23 @@ Regras:
 - O formulário público não pode exibir sucesso se o lead não tiver sido persistido ou entregue ao destino configurado.
 - Se o lead for futuramente recebido pela API, remover a responsabilidade de webhook do frontend e atualizar esta documentação.
 
+### Assinatura da organização
+
+A rota `/app/assinatura` exibe os planos Essencial, Profissional e Operação,
+consumo de usuários e evidências, situação da cobrança e data final do ciclo.
+Somente `OWNER` pode contratar, programar troca de plano ou cancelar a renovação.
+Não há período de teste.
+
+O frontend envia à API apenas o código do plano e o método escolhido. Valores e
+limites vêm da API, e cartão, Pix ou boleto são preenchidos no ambiente hospedado
+do Asaas. A volta para a Ciclera apenas informa que o pagamento foi enviado; a
+ativação depende da confirmação recebida pelo webhook da API. Nenhuma chave do
+Asaas ou dado de cartão pertence às variáveis ou ao bundle da web.
+
+`/app/faturamento` continua sendo o faturamento operacional das ordens de
+serviço. `/app/assinatura` trata exclusivamente da mensalidade que a organização
+paga para usar a Ciclera.
+
 ## Arquitetura de rotas
 
 As rotas devem usar Route Groups para separar contextos sem adicionar segmentos desnecessários à URL.
@@ -227,6 +245,7 @@ As rotas devem usar Route Groups para separar contextos sem adicionar segmentos 
 | `/app/revisao/[workOrderId]`      | Conferência da execução e evidências    | `OWNER`, `ADMIN`               |
 | `/app/faturamento`                | Fila pronta para faturar                | `OWNER`, `ADMIN`               |
 | `/app/importacao`                 | Importação inicial assistida por CSV    | `OWNER`                        |
+| `/app/assinatura`                 | Plano, cobrança e capacidade da conta   | `OWNER`                        |
 | `/app/configuracoes`              | Configurações básicas                   | `OWNER`, `ADMIN` conforme ação |
 
 ### Área do técnico

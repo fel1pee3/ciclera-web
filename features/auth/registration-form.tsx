@@ -57,7 +57,7 @@ export function RegistrationForm() {
     setErrorMessage(null)
     try {
       await registerOrganization(input)
-      router.replace('/app')
+      router.replace('/app/assinatura')
       router.refresh()
     } catch (error) {
       const fieldErrors = getApiFieldErrors(error)

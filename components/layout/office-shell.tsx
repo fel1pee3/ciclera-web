@@ -12,6 +12,7 @@ import { LogoutButton } from '@/features/auth/logout-button'
 import { cn } from '@/lib/utils'
 import { AccountSummary } from './account-summary'
 import { ShellNavigation } from './shell-navigation'
+import { SubscriptionNotice } from '@/features/subscriptions/subscription-notice'
 
 export function OfficeShell({
   account,
@@ -169,6 +170,7 @@ export function OfficeShell({
         ) : null}
 
         <main id="conteudo" tabIndex={-1} className="p-4 sm:p-6 lg:p-8">
+          <SubscriptionNotice role={account.user.role} />
           {children}
         </main>
       </div>

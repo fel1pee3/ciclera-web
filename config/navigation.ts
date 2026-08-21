@@ -8,6 +8,7 @@ import {
   ClipboardCheck,
   CircleDollarSign,
   FileUp,
+  BadgeDollarSign,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -33,6 +34,12 @@ export const officeNavigation: readonly NavigationItem[] = [
     href: '/app/importacao',
     icon: FileUp,
     label: 'Importação',
+    roles: ['OWNER'],
+  },
+  {
+    href: '/app/assinatura',
+    icon: BadgeDollarSign,
+    label: 'Plano e assinatura',
     roles: ['OWNER'],
   },
 ]

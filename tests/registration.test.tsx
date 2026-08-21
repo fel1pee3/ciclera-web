@@ -114,7 +114,7 @@ describe('public registration', () => {
     await waitFor(() =>
       expect(mocks.registerOrganization).toHaveBeenCalledOnce(),
     )
-    expect(mocks.replace).toHaveBeenCalledWith('/app')
+    expect(mocks.replace).toHaveBeenCalledWith('/app/assinatura')
     expect(mocks.refresh).toHaveBeenCalledOnce()
   })
 
@@ -229,7 +229,9 @@ describe('public registration', () => {
     fireEvent.click(button)
     expect(mocks.registerOrganization).toHaveBeenCalledOnce()
     finishRegistration?.(account)
-    await waitFor(() => expect(mocks.replace).toHaveBeenCalledWith('/app'))
+    await waitFor(() =>
+      expect(mocks.replace).toHaveBeenCalledWith('/app/assinatura'),
+    )
   })
 
   it('recognizes a genuinely empty operational workspace', () => {

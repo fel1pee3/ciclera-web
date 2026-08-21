@@ -34,6 +34,9 @@ describe('protected layout foundation', () => {
     expect(fieldRoles).toEqual(['TECHNICIAN'])
     expect(navigationForRole('OWNER')).toBe(officeNavigation)
     expect(navigationForRole('TECHNICIAN')).toBe(fieldNavigation)
+    expect(
+      officeNavigation.find((item) => item.href === '/app/assinatura'),
+    ).toMatchObject({ roles: ['OWNER'] })
   })
 
   it('identifies the user, role, and organization in the shell', () => {

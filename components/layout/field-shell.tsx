@@ -9,6 +9,7 @@ import type { AuthenticatedAccount } from '@/features/auth/contracts'
 import { LogoutButton } from '@/features/auth/logout-button'
 import { AccountSummary } from './account-summary'
 import { ShellNavigation } from './shell-navigation'
+import { SubscriptionNotice } from '@/features/subscriptions/subscription-notice'
 
 export function FieldShell({
   account,
@@ -44,6 +45,7 @@ export function FieldShell({
         tabIndex={-1}
         className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8"
       >
+        <SubscriptionNotice role={account.user.role} />
         {children}
       </main>
       <div className="fixed inset-x-0 bottom-0 z-30 border-t bg-card/95 px-3 py-2 shadow-[0_-8px_30px_rgba(15,23,42,0.08)] backdrop-blur safe-area-pb sm:bottom-4 sm:left-1/2 sm:right-auto sm:w-auto sm:-translate-x-1/2 sm:rounded-2xl sm:border sm:px-2 sm:shadow-lg">
