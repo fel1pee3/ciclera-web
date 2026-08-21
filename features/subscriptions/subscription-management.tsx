@@ -9,7 +9,7 @@ import {
   Smartphone,
   Users,
 } from 'lucide-react'
-import { useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Alert } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
@@ -23,25 +23,27 @@ import {
   cancelSubscription,
   changeSubscriptionPlan,
   createSubscriptionCheckout,
-  getCurrentSubscription,
   listSubscriptionPlans,
 } from './api'
 import type { CurrentSubscription, SubscriptionPlan } from './contracts'
+import { useSubscription } from './subscription-provider'
 
 export function SubscriptionManagement({
   account,
 }: {
   account: AuthenticatedAccount
 }) {
+  const router = useRouter()
   const searchParams = useSearchParams()
   const [plans, setPlans] = useState<SubscriptionPlan[]>([])
-  const [subscription, setSubscription] = useState<CurrentSubscription | null>(
-    null,
-  )
+  const { refresh, subscription, update } = useSubscription()
   const [selected, setSelected] = useState<SubscriptionPlan | null>(null)
   const [changingTo, setChangingTo] = useState<SubscriptionPlan | null>(null)
   const [cancelOpen, setCancelOpen] = useState(false)
   const [pending, setPending] = useState(false)
+  const [confirmingPayment, setConfirmingPayment] = useState(
+    () => searchParams.get('retorno') === 'sucesso',
+  )
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(() =>
     checkoutReturnMessage(searchParams.get('retorno')),
@@ -51,12 +53,11 @@ export function SubscriptionManagement({
   const reload = async () => {
     setError(null)
     try {
-      const [planResult, current] = await Promise.all([
+      const [planResult] = await Promise.all([
         listSubscriptionPlans(),
-        getCurrentSubscription(),
+        refresh(),
       ])
       setPlans(planResult.items)
-      setSubscription(current)
     } catch {
       setError('Não foi possível carregar a assinatura. Tente novamente.')
     }
@@ -64,11 +65,10 @@ export function SubscriptionManagement({
 
   useEffect(() => {
     let active = true
-    void Promise.all([listSubscriptionPlans(), getCurrentSubscription()])
-      .then(([planResult, current]) => {
+    void listSubscriptionPlans()
+      .then((planResult) => {
         if (!active) return
         setPlans(planResult.items)
-        setSubscription(current)
       })
       .catch(() => {
         if (active) {
@@ -79,6 +79,49 @@ export function SubscriptionManagement({
       active = false
     }
   }, [])
+
+  const checkoutReturn = searchParams.get('retorno')
+
+  useEffect(() => {
+    if (checkoutReturn !== 'sucesso') return
+
+    let active = true
+    let timer: ReturnType<typeof setTimeout> | undefined
+    let attempts = 0
+
+    const confirmPayment = async () => {
+      attempts += 1
+      try {
+        const current = await refresh()
+        if (!active) return
+        if (!current.enforcementEnabled || current.access === 'FULL') {
+          setConfirmingPayment(false)
+          setNotice('Pagamento confirmado. Sua operação foi liberada.')
+          router.replace('/app')
+          router.refresh()
+          return
+        }
+      } catch {
+        // A próxima tentativa cobre indisponibilidades transitórias do webhook.
+      }
+
+      if (!active) return
+      if (attempts >= 20) {
+        setConfirmingPayment(false)
+        setNotice(
+          'O Asaas ainda está confirmando o pagamento. Use “Atualizar situação” em alguns instantes; nenhuma nova cobrança será criada.',
+        )
+        return
+      }
+      timer = setTimeout(() => void confirmPayment(), 3_000)
+    }
+
+    void confirmPayment()
+    return () => {
+      active = false
+      if (timer) clearTimeout(timer)
+    }
+  }, [checkoutReturn, refresh, router])
 
   const status = useMemo(
     () => (subscription ? statusPresentation(subscription) : null),
@@ -107,7 +150,7 @@ export function SubscriptionManagement({
     setPending(true)
     setError(null)
     try {
-      setSubscription(await changeSubscriptionPlan(changingTo.code))
+      update(await changeSubscriptionPlan(changingTo.code))
       setNotice(
         `A mudança para o plano ${changingTo.name} foi programada para o próximo ciclo.`,
       )
@@ -125,7 +168,7 @@ export function SubscriptionManagement({
     setPending(true)
     setError(null)
     try {
-      setSubscription(await cancelSubscription())
+      update(await cancelSubscription())
       setNotice(
         'A renovação foi cancelada. O acesso segue disponível até o fim do período já pago.',
       )
@@ -151,7 +194,11 @@ export function SubscriptionManagement({
           </p>
         </div>
         <Button type="button" variant="outline" onClick={() => void reload()}>
-          <RefreshCw aria-hidden="true" /> Atualizar situação
+          <RefreshCw
+            aria-hidden="true"
+            className={confirmingPayment ? 'animate-spin' : undefined}
+          />{' '}
+          {confirmingPayment ? 'Confirmando pagamento…' : 'Atualizar situação'}
         </Button>
       </header>
 

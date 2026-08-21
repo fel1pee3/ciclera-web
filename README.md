@@ -195,8 +195,16 @@ Não há período de teste.
 O frontend envia à API apenas o código do plano e o método escolhido. Valores e
 limites vêm da API, e cartão, Pix ou boleto são preenchidos no ambiente hospedado
 do Asaas. A volta para a Ciclera apenas informa que o pagamento foi enviado; a
-ativação depende da confirmação recebida pelo webhook da API. Nenhuma chave do
-Asaas ou dado de cartão pertence às variáveis ou ao bundle da web.
+ativação depende da confirmação recebida pelo webhook da API. No retorno de
+pagamento, a página acompanha essa confirmação por um período curto e libera a
+operação somente quando a API informar acesso completo. Nenhuma chave do Asaas
+ou dado de cartão pertence às variáveis ou ao bundle da web.
+
+Enquanto não houver plano confirmado, as telas e consultas operacionais não são
+montadas. O `OWNER` permanece em um portal enxuto de ativação na própria rota de
+assinatura; demais perfis recebem uma orientação para procurar o proprietário.
+Em inadimplência, o frontend segue os níveis informados pela API e mantém somente
+o fluxo de campo expressamente permitido durante a tolerância limitada.
 
 `/app/faturamento` continua sendo o faturamento operacional das ordens de
 serviço. `/app/assinatura` trata exclusivamente da mensalidade que a organização

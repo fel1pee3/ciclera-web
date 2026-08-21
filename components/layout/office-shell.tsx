@@ -9,16 +9,19 @@ import { Button } from '@/components/ui/button'
 import { officeNavigation } from '@/config/navigation'
 import type { AuthenticatedAccount } from '@/features/auth/contracts'
 import { LogoutButton } from '@/features/auth/logout-button'
+import type { CurrentSubscription } from '@/features/subscriptions/contracts'
+import { SubscriptionNotice } from '@/features/subscriptions/subscription-notice'
 import { cn } from '@/lib/utils'
 import { AccountSummary } from './account-summary'
 import { ShellNavigation } from './shell-navigation'
-import { SubscriptionNotice } from '@/features/subscriptions/subscription-notice'
 
 export function OfficeShell({
   account,
+  subscription,
   children,
 }: {
   account: AuthenticatedAccount
+  subscription?: CurrentSubscription
   children: ReactNode
 }) {
   const [menuOpen, setMenuOpen] = useState(false)
@@ -170,7 +173,10 @@ export function OfficeShell({
         ) : null}
 
         <main id="conteudo" tabIndex={-1} className="p-4 sm:p-6 lg:p-8">
-          <SubscriptionNotice role={account.user.role} />
+          <SubscriptionNotice
+            role={account.user.role}
+            subscription={subscription}
+          />
           {children}
         </main>
       </div>

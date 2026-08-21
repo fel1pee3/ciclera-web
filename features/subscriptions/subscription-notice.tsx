@@ -2,26 +2,16 @@
 
 import { AlertTriangle, CreditCard } from 'lucide-react'
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
 import type { UserRole } from '@/features/auth/contracts'
-import { getCurrentSubscription } from './api'
 import type { CurrentSubscription } from './contracts'
 
-export function SubscriptionNotice({ role }: { role: UserRole }) {
-  const [subscription, setSubscription] = useState<CurrentSubscription | null>(
-    null,
-  )
-
-  useEffect(() => {
-    let active = true
-    void getCurrentSubscription()
-      .then((value) => active && setSubscription(value))
-      .catch(() => undefined)
-    return () => {
-      active = false
-    }
-  }, [])
-
+export function SubscriptionNotice({
+  role,
+  subscription,
+}: {
+  role: UserRole
+  subscription?: CurrentSubscription
+}) {
   if (
     !subscription ||
     !subscription.enforcementEnabled ||
