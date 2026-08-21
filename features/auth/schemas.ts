@@ -20,14 +20,6 @@ export const forgotPasswordSchema = z.object({
     .max(320, 'O e-mail deve ter no máximo 320 caracteres.'),
 })
 
-export const resetPasswordSchema = z.object({
-  password: z
-    .string()
-    .min(8, 'A senha deve ter pelo menos 8 caracteres.')
-    .max(128, 'A senha deve ter no máximo 128 caracteres.'),
-  confirmPassword: z.string(),
-})
-
 export const currentLegalVersion = '2026-08-17'
 
 export const securePasswordRules = [
@@ -70,6 +62,16 @@ export const securePasswordSchema = z
         })
       }
     }
+  })
+
+export const resetPasswordSchema = z
+  .object({
+    password: securePasswordSchema,
+    confirmPassword: z.string(),
+  })
+  .refine((value) => value.password === value.confirmPassword, {
+    message: 'As senhas precisam ser iguais.',
+    path: ['confirmPassword'],
   })
 
 export const registrationSchema = z

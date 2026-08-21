@@ -13,7 +13,6 @@ import { isEmptyWorkspace } from '@/features/dashboard/revenue-dashboard'
 import { ApiError } from '@/lib/api/errors'
 
 const mocks = vi.hoisted(() => ({
-  getCurrentAccount: vi.fn(),
   registerOrganization: vi.fn(),
   replace: vi.fn(),
   refresh: vi.fn(),
@@ -23,7 +22,6 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ replace: mocks.replace, refresh: mocks.refresh }),
 }))
 vi.mock('@/features/auth/api', () => ({
-  getCurrentAccount: mocks.getCurrentAccount,
   registerOrganization: mocks.registerOrganization,
 }))
 
@@ -43,8 +41,6 @@ const account = {
 
 describe('public registration', () => {
   beforeEach(() => {
-    mocks.getCurrentAccount.mockReset()
-    mocks.getCurrentAccount.mockRejectedValue(new ApiError('unauthorized', 401))
     mocks.registerOrganization.mockReset()
     mocks.registerOrganization.mockResolvedValue(account)
     mocks.replace.mockReset()
@@ -52,6 +48,15 @@ describe('public registration', () => {
   })
 
   afterEach(cleanup)
+
+  it('renders immediately without probing an unauthenticated session', () => {
+    render(<RegistrationForm />)
+
+    expect(
+      screen.getByRole('heading', { name: 'Crie sua conta Ciclera' }),
+    ).toBeInTheDocument()
+    expect(screen.queryByText(/Verificando sess/)).not.toBeInTheDocument()
+  })
 
   it('validates password confirmation and mandatory legal acceptance', () => {
     const result = registrationSchema.safeParse({
@@ -202,19 +207,6 @@ describe('public registration', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent(message)
     expect(screen.getByLabelText('E-mail')).toHaveValue('maria@example.test')
-  })
-
-  it('redirects an authenticated technician away from registration', async () => {
-    mocks.getCurrentAccount.mockResolvedValue({
-      ...account,
-      user: { ...account.user, role: 'TECHNICIAN' },
-    })
-    render(<RegistrationForm />)
-
-    await waitFor(() => expect(mocks.replace).toHaveBeenCalledWith('/field'))
-    expect(
-      screen.queryByRole('heading', { name: 'Crie sua conta Ciclera' }),
-    ).not.toBeInTheDocument()
   })
 
   it('blocks repeated submission while registration is in progress', async () => {

@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 
 import { Alert } from '@/components/ui/alert'
@@ -11,12 +11,10 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { PasswordInput } from '@/components/ui/password-input'
-import { ApiError } from '@/lib/api/errors'
-import { getCurrentAccount, registerOrganization } from './api'
+import { registerOrganization } from './api'
 import { BackToLandingLink } from './back-to-landing-link'
 import { getApiFieldErrors, getAuthErrorMessage } from './errors'
 import { PasswordRequirements } from './password-requirements'
-import { roleHome } from './redirects'
 import { registrationSchema, type RegistrationInput } from './schemas'
 
 const labels = {
@@ -39,7 +37,6 @@ const placeholders = {
 
 export function RegistrationForm() {
   const router = useRouter()
-  const [checkingSession, setCheckingSession] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const {
     register,
@@ -56,26 +53,6 @@ export function RegistrationForm() {
   })
   const password = useWatch({ control, name: 'password', defaultValue: '' })
 
-  useEffect(() => {
-    let active = true
-    void getCurrentAccount()
-      .then((account) => {
-        if (active) router.replace(roleHome(account.user.role))
-      })
-      .catch((error: unknown) => {
-        if (!active) return
-        if (!(error instanceof ApiError) || error.status !== 401) {
-          setErrorMessage(
-            'N\u00e3o foi poss\u00edvel verificar sua sess\u00e3o. Voc\u00ea ainda pode criar a conta.',
-          )
-        }
-        setCheckingSession(false)
-      })
-    return () => {
-      active = false
-    }
-  }, [router])
-
   const onSubmit = async (input: RegistrationInput) => {
     setErrorMessage(null)
     try {
@@ -90,10 +67,6 @@ export function RegistrationForm() {
       }
       setErrorMessage(getAuthErrorMessage(error, 'registration'))
     }
-  }
-
-  if (checkingSession) {
-    return <p role="status">Verificando sess\u00e3o...</p>
   }
 
   return (
