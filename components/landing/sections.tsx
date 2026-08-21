@@ -1,22 +1,25 @@
 import {
-  ArrowRight,
+  CalendarClock,
+  CalendarDays,
+  Camera,
   Check,
   ChevronDown,
   CircleDollarSign,
+  ClipboardCheck,
+  ClipboardList,
+  FileSpreadsheet,
   Globe2,
+  Home,
+  MessageSquareText,
   Monitor,
-  Smartphone,
+  ReceiptText,
+  Route,
+  Search,
+  Wrench,
 } from 'lucide-react'
-import {
-  benefits,
-  faqs,
-  features,
-  flow,
-  problems,
-  segments,
-  steps,
-} from './content'
+import { benefits, faqs, features, problems, segments, steps } from './content'
 import { ProductDemo } from './product-demo'
+import { Brand } from './brand'
 
 const Eyebrow = ({
   children,
@@ -40,30 +43,48 @@ const Title = ({
 )
 
 export function PositioningStrip() {
+  const stages = [
+    ['Chamado', 'Demanda registrada', MessageSquareText],
+    ['Planejamento', 'Agenda e responsável', CalendarClock],
+    ['Execução', 'Trabalho em campo', Wrench],
+    ['Evidências', 'Fotos e assinatura', Camera],
+    ['Revisão', 'Conferência do serviço', ClipboardCheck],
+    ['Faturamento', 'Receita liberada', ReceiptText],
+  ] as const
+
   return (
-    <section className="border-y border-border bg-card py-8">
+    <section className="border-y border-border bg-card py-10">
       <div className="mx-auto max-w-7xl px-5 lg:px-8">
-        <p className="text-center font-heading text-lg font-semibold">
+        <p className="text-center font-heading text-xl font-semibold">
           Do chamado ao caixa, cada etapa sob controle.
         </p>
-        <div
-          className="mt-5 flex overflow-x-auto pb-2"
-          tabIndex={0}
-          role="region"
-          aria-label="Etapas do fluxo operacional"
-        >
-          <div className="mx-auto flex min-w-max items-center">
-            {flow.map((x, i) => (
-              <div key={x} className="flex items-center">
-                <span className="rounded-full bg-muted px-4 py-2 text-sm font-medium">
-                  {x}
+        <p className="mx-auto mt-2 max-w-2xl text-center text-sm text-muted-foreground">
+          A informação acompanha a ordem do primeiro contato até a liberação da
+          receita.
+        </p>
+        <div className="relative mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
+          <div className="absolute left-[8%] right-[8%] top-6 hidden h-px bg-primary/20 lg:block" />
+          {stages.map(([title, description, Icon], index) => (
+            <div
+              key={title}
+              className="relative rounded-2xl border border-border bg-background p-4 lg:border-0 lg:bg-transparent lg:p-0 lg:text-center"
+            >
+              <div className="relative z-10 flex items-center gap-3 lg:flex-col">
+                <span className="grid size-12 shrink-0 place-items-center rounded-2xl border border-primary/20 bg-card text-primary shadow-sm">
+                  <Icon className="size-5" />
                 </span>
-                {i < flow.length - 1 && (
-                  <ArrowRight className="mx-2 size-4 text-muted-foreground" />
-                )}
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-primary">
+                    0{index + 1}
+                  </p>
+                  <p className="font-heading text-sm font-semibold">{title}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {description}
+                  </p>
+                </div>
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
       </div>
     </section>
@@ -220,58 +241,133 @@ export function FieldSection() {
   )
 }
 function FieldMockups() {
-  const tasks = [
-    'Registrar observações',
-    'Adicionar fotos',
-    'Serviço adicional',
-    'Coletar assinatura',
-  ]
   return (
-    <div className="relative mx-auto flex w-full max-w-xl items-end justify-center gap-4">
-      <div className="w-56 rounded-3xl border-4 border-institutional bg-background p-2 shadow-xl">
-        <div className="rounded-2xl border border-border bg-card">
-          <div className="flex items-center gap-2 border-b border-border px-3 py-2 text-xs">
-            <Smartphone className="size-3" />
-            ciclera.com.br
+    <div className="relative mx-auto min-h-[31rem] w-full max-w-xl">
+      <div className="absolute right-0 top-6 hidden w-[82%] overflow-hidden rounded-3xl border border-border bg-background shadow-xl sm:block">
+        <div className="flex items-center justify-between border-b border-border bg-card px-5 py-4">
+          <div className="flex items-center gap-3">
+            <span className="-mr-3 origin-left scale-75">
+              <Brand />
+            </span>
+            <div>
+              <p className="text-[10px] text-muted-foreground">
+                Juarez Silva · Técnico
+              </p>
+            </div>
           </div>
-          <div className="p-4">
-            <p className="text-xs text-muted-foreground">OS #1842</p>
-            <p className="mt-1 font-heading font-semibold">
-              Unidade condensadora
-            </p>
-            <button className="mt-4 w-full rounded-lg bg-primary py-2 text-xs font-semibold text-primary-foreground">
-              Iniciar atendimento
-            </button>
-            <div className="mt-4 flex flex-col gap-2">
-              {tasks.map((t) => (
-                <span key={t} className="rounded-lg bg-muted px-3 py-2 text-xs">
-                  {t}
-                </span>
-              ))}
+          <span className="rounded-full bg-primary/10 px-3 py-1 text-[10px] font-semibold text-primary">
+            Área de campo
+          </span>
+        </div>
+        <div className="p-5 pl-28">
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
+            Atendimentos
+          </p>
+          <h3 className="mt-1 font-heading text-xl font-semibold">
+            Minhas ordens
+          </h3>
+          <div className="mt-4 flex gap-2 text-[10px]">
+            <span className="rounded-lg bg-primary px-3 py-2 font-semibold text-primary-foreground">
+              Todas
+            </span>
+            {['Hoje', 'Próximas', 'Em execução'].map((filter) => (
+              <span key={filter} className="rounded-lg bg-card px-3 py-2">
+                {filter}
+              </span>
+            ))}
+          </div>
+          <div className="mt-4 rounded-2xl border border-border bg-card p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-primary">
+                  OS-000184
+                </p>
+                <p className="mt-1 font-heading text-sm font-semibold">
+                  Manutenção preventiva do ar-condicionado
+                </p>
+              </div>
+              <span className="rounded-full bg-active/15 px-2 py-1 text-[9px] font-semibold text-primary">
+                Agendada
+              </span>
+            </div>
+            <div className="mt-4 grid gap-2 text-[10px] text-muted-foreground">
+              <p className="flex items-center gap-2">
+                <CalendarDays className="size-3.5 text-primary" /> 20 ago. 2026
+                · 09:00
+              </p>
+              <p className="flex items-center gap-2">
+                <Home className="size-3.5 text-primary" /> Hotel Serra Verde ·
+                Unidade Centro
+              </p>
+            </div>
+            <div className="mt-4 rounded-xl bg-primary px-3 py-2 text-center text-[10px] font-semibold text-primary-foreground">
+              Ver atendimento
             </div>
           </div>
         </div>
       </div>
-      <div className="hidden w-80 rounded-2xl border border-border bg-background p-4 shadow-xl sm:block">
-        <div className="flex items-center justify-between">
-          <strong className="font-heading">Agenda operacional</strong>
-          <span className="text-xs text-muted-foreground">Hoje</span>
+
+      <div className="absolute bottom-0 left-1/2 w-64 -translate-x-1/2 overflow-hidden rounded-[2rem] border-[5px] border-institutional bg-background shadow-2xl sm:left-0 sm:translate-x-0">
+        <div className="flex items-center justify-between border-b border-border bg-card px-4 py-3">
+          <div className="flex items-center">
+            <span className="-mr-4 origin-left scale-[.62]">
+              <Brand />
+            </span>
+          </div>
+          <span className="text-[9px] text-muted-foreground">
+            ciclera.online
+          </span>
         </div>
-        <div className="mt-4 grid grid-cols-2 gap-3">
-          {[
-            ['Em execução', '8'],
-            ['Pendências', '3'],
-            ['Revisão', '6'],
-            ['Prontas', 'R$ 14.850'],
-          ].map((x) => (
-            <div
-              key={x[0]}
-              className="rounded-xl border border-border bg-card p-3"
-            >
-              <p className="text-xs text-muted-foreground">{x[0]}</p>
-              <strong className="mt-1 block">{x[1]}</strong>
-            </div>
-          ))}
+        <div className="p-4">
+          <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-primary">
+            Área de campo
+          </p>
+          <h3 className="mt-1 font-heading text-lg font-semibold">
+            Seus atendimentos
+          </h3>
+          <p className="mt-1 text-[10px] leading-relaxed text-muted-foreground">
+            Acompanhe sua agenda e retome serviços iniciados.
+          </p>
+
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            {[
+              ['Hoje', '1', CalendarDays],
+              ['Próximas', '3', CalendarClock],
+              ['Em execução', '1', Wrench],
+              ['Pendentes', '0', ClipboardList],
+            ].map(([label, value, Icon]) => (
+              <div
+                key={label as string}
+                className="rounded-xl border border-border bg-card p-3"
+              >
+                <div className="flex items-center justify-between">
+                  <Icon className="size-3.5 text-primary" />
+                  <strong className="font-heading text-lg">
+                    {value as string}
+                  </strong>
+                </div>
+                <p className="mt-2 text-[9px] font-semibold">
+                  {label as string}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-4 rounded-xl border border-border bg-card p-3">
+            <p className="text-[9px] font-bold text-primary">PRÓXIMO</p>
+            <p className="mt-1 text-[10px] font-semibold">
+              OS-000184 · Hotel Serra Verde
+            </p>
+            <p className="mt-1 text-[9px] text-muted-foreground">
+              Hoje, 09:00 · Unidade Centro
+            </p>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 border-t border-border bg-card p-2 text-center text-[9px]">
+          <span className="rounded-lg bg-primary/10 py-2 font-semibold text-primary">
+            Resumo
+          </span>
+          <span className="py-2 text-muted-foreground">Ordens</span>
         </div>
       </div>
     </div>
@@ -359,22 +455,76 @@ export function BenefitsSection() {
             </article>
           ))}
         </div>
-        <div className="mt-12 grid gap-px overflow-hidden rounded-2xl border border-border bg-border md:grid-cols-2">
-          <div className="bg-muted p-7">
-            <span className="text-xs font-bold uppercase tracking-widest text-foreground">
-              Antes
-            </span>
-            <p className="mt-3 font-heading text-lg">
-              WhatsApp + papel + planilha + conferência manual
+        <div className="mt-12 grid gap-5 lg:grid-cols-2">
+          <div className="rounded-3xl border border-border bg-muted/60 p-6 sm:p-8">
+            <div className="flex items-center gap-3">
+              <span className="grid size-11 place-items-center rounded-2xl bg-card text-muted-foreground shadow-sm">
+                <FileSpreadsheet className="size-5" />
+              </span>
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
+                  Antes · informação espalhada
+                </span>
+                <p className="font-heading text-lg font-semibold">
+                  Cada etapa em um lugar diferente
+                </p>
+              </div>
+            </div>
+            <div className="mt-6 grid grid-cols-2 gap-3 text-sm">
+              {[
+                ['WhatsApp', MessageSquareText],
+                ['Papel', ClipboardList],
+                ['Planilha', FileSpreadsheet],
+                ['Conferência manual', Search],
+              ].map(([label, Icon]) => (
+                <div
+                  key={label as string}
+                  className="flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-3"
+                >
+                  <Icon className="size-4 text-muted-foreground" />
+                  <span>{label as string}</span>
+                </div>
+              ))}
+            </div>
+            <p className="mt-5 text-sm leading-relaxed text-muted-foreground">
+              A equipe precisa reconstruir o atendimento antes de saber se ele
+              pode ser faturado.
             </p>
           </div>
-          <div className="bg-active/10 p-7">
-            <span className="text-xs font-bold uppercase tracking-widest text-institutional">
-              Depois
-            </span>
-            <p className="mt-3 font-heading text-lg">
-              Execução → evidências → revisão → pronta para faturar
-            </p>
+
+          <div className="rounded-3xl border border-primary/20 bg-primary p-6 text-primary-foreground sm:p-8">
+            <div className="flex items-center gap-3">
+              <span className="grid size-11 place-items-center rounded-2xl bg-primary-foreground/10 text-accent">
+                <Route className="size-5" />
+              </span>
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-active">
+                  Com a Ciclera · fluxo rastreável
+                </span>
+                <p className="font-heading text-lg font-semibold">
+                  Uma ordem, do campo à receita
+                </p>
+              </div>
+            </div>
+            <div className="mt-6 grid gap-2 sm:grid-cols-4">
+              {['Execução', 'Evidências', 'Revisão', 'Faturamento'].map(
+                (stage, index) => (
+                  <div
+                    key={stage}
+                    className="relative rounded-xl border border-primary-foreground/15 bg-primary-foreground/5 p-3"
+                  >
+                    <p className="text-[9px] font-bold text-active">
+                      0{index + 1}
+                    </p>
+                    <p className="mt-1 text-xs font-semibold">{stage}</p>
+                  </div>
+                ),
+              )}
+            </div>
+            <div className="mt-5 flex items-center justify-between gap-4 rounded-xl bg-active px-4 py-3 text-institutional">
+              <span className="text-sm font-semibold">Pronta para faturar</span>
+              <CircleDollarSign className="size-5" />
+            </div>
           </div>
         </div>
       </div>

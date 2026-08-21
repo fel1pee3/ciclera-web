@@ -18,7 +18,6 @@ O `ciclera-web` é responsável por:
 
 - Landing page pública da Ciclera.
 - Cadastro público de uma organização e seu primeiro proprietário.
-- Canal comercial para contato com a equipe.
 - Páginas públicas institucionais e jurídicas.
 - Cadastro, login e recuperação de acesso.
 - Painel operacional para `OWNER` e `ADMIN`.
@@ -47,7 +46,7 @@ A API é sempre a autoridade final sobre identidade, organização, permissões,
 - Landing page completa.
 - Apresentação do problema, proposta e fluxo do produto.
 - Demonstração visual claramente identificada como demonstrativa.
-- Cadastro self-service e formulário de contato comercial.
+- Cadastro self-service com acesso direto ao produto.
 - Contato por WhatsApp e e-mail quando configurados.
 - Política de Privacidade.
 - Termos de Uso.
@@ -161,13 +160,12 @@ Este README deve refletir os scripts reais. Se um script ainda não existir, ele
 
 Manter um `.env.example` versionado e sincronizado com a validação de ambiente da aplicação.
 
-| Variável                      | Escopo   |       Obrigatória | Finalidade                              |
-| ----------------------------- | -------- | ----------------: | --------------------------------------- |
-| `NEXT_PUBLIC_APP_URL`         | Público  |               Sim | URL canônica da aplicação web           |
-| `NEXT_PUBLIC_API_URL`         | Público  |               Sim | URL pública da `ciclera-api`            |
-| `NEXT_PUBLIC_WHATSAPP_NUMBER` | Público  |               Não | WhatsApp usado nos CTAs públicos        |
-| `NEXT_PUBLIC_CONTACT_EMAIL`   | Público  |               Não | E-mail público de contato da Ciclera    |
-| `LEAD_WEBHOOK_URL`            | Servidor | Conforme captação | Destino server-side dos leads do piloto |
+| Variável                      | Escopo  | Obrigatória | Finalidade                           |
+| ----------------------------- | ------- | ----------: | ------------------------------------ |
+| `NEXT_PUBLIC_APP_URL`         | Público |         Sim | URL canônica da aplicação web        |
+| `NEXT_PUBLIC_API_URL`         | Público |         Sim | URL pública da `ciclera-api`         |
+| `NEXT_PUBLIC_WHATSAPP_NUMBER` | Público |         Não | WhatsApp usado nos CTAs públicos     |
+| `NEXT_PUBLIC_CONTACT_EMAIL`   | Público |         Não | E-mail público de contato da Ciclera |
 
 Exemplo seguro:
 
@@ -176,7 +174,6 @@ NEXT_PUBLIC_APP_URL="http://localhost:3000"
 NEXT_PUBLIC_API_URL="http://localhost:3333"
 NEXT_PUBLIC_WHATSAPP_NUMBER=""
 NEXT_PUBLIC_CONTACT_EMAIL="contatociclera@gmail.com"
-LEAD_WEBHOOK_URL=""
 ```
 
 Regras:
@@ -185,12 +182,8 @@ Regras:
 - Nunca versionar `.env.local`.
 - Validar variáveis obrigatórias na inicialização.
 - Não espalhar chamadas diretas a `process.env` por componentes.
-- Centralizar schema e parsing em `config/env-schema.ts`, valores públicos em
-  `config/public-env.ts` e valores privados em `config/server-env.ts`.
-- O módulo privado utiliza `server-only` e não pode ser importado por Client
-  Components.
-- O formulário público não pode exibir sucesso se o lead não tiver sido persistido ou entregue ao destino configurado.
-- Se o lead for futuramente recebido pela API, remover a responsabilidade de webhook do frontend e atualizar esta documentação.
+- Centralizar schema e parsing em `config/env-schema.ts` e valores públicos em
+  `config/public-env.ts`.
 
 ### Assinatura da organização
 
@@ -293,8 +286,6 @@ src/
 │   │   ├── layout.tsx
 │   │   ├── page.tsx
 │   │   └── ordens/
-│   ├── api/
-│   │   └── leads/
 │   ├── error.tsx
 │   ├── global-error.tsx
 │   ├── not-found.tsx
@@ -625,7 +616,7 @@ Regras da interface:
 ## Landing page
 
 A landing page explica o problema, demonstra o produto e oferece acesso direto ao
-cadastro e ao login, preservando o formulário de leads como canal comercial.
+cadastro e ao login.
 
 Mensagem central:
 
@@ -646,7 +637,6 @@ Ela deve conter, de forma equilibrada:
 - Segmentos e critérios de qualificação.
 - Benefícios sem números inventados.
 - Cadastro e entrada no produto.
-- Formulário de captação.
 - FAQ.
 - Contato e páginas jurídicas.
 
@@ -656,8 +646,6 @@ Regras:
 - Não apresentar clientes, depoimentos ou resultados inexistentes.
 - Não prometer aplicativo, offline, emissão fiscal, IA ou integrações.
 - Exibir `Entrar` e `Criar conta` no header desktop e mobile.
-- O formulário deve possuir honeypot e proteção server-side contra abuso.
-- A URL do webhook nunca pode chegar ao client bundle.
 - CTA de WhatsApp deve ser omitido quando o número não estiver configurado.
 
 ## Design system e identidade visual
@@ -933,7 +921,7 @@ Não criar todas as páginas com dados mockados antes de conectar os fluxos esse
 10. Revisão e correção.
 11. Fila pronta para faturar.
 12. Dashboard operacional.
-13. Landing page e captação do piloto, se ainda não estiverem concluídas.
+13. Landing page pública, se ainda não estiver concluída.
 14. Testes end-to-end, performance, acessibilidade e hardening.
 
 ## Definition of Done de uma página
@@ -957,7 +945,7 @@ Uma página não está concluída apenas porque renderiza o cenário de sucesso.
 
 O `ciclera-web` está pronto para piloto quando:
 
-- Landing page e captação funcionam sem sucesso falso.
+- Landing page oferece acesso direto e funcional ao cadastro e ao login.
 - Login, recuperação e logout funcionam de forma segura.
 - Perfis são direcionados à experiência correta.
 - `OWNER` e `ADMIN` concluem o fluxo administrativo principal.

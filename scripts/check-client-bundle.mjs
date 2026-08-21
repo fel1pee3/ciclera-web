@@ -4,12 +4,7 @@ import { join } from 'node:path'
 const chunksRoot = join(process.cwd(), '.next', 'static', 'chunks')
 const maximumChunkBytes = 350 * 1024
 const maximumTotalBytes = 2 * 1024 * 1024
-const privateMarkers = [
-  'LEAD_WEBHOOK_URL',
-  'JWT_ACCESS_SECRET',
-  'DATABASE_URL',
-  'postgresql://',
-]
+const privateMarkers = ['JWT_ACCESS_SECRET', 'DATABASE_URL', 'postgresql://']
 
 const files = await javascriptFiles(chunksRoot)
 if (files.length === 0)

@@ -16,15 +16,14 @@ export default function Page() {
         <div className="legal-copy">
           <h2>Dados coletados</h2>
           <p>
-            Ao criar uma conta ou solicitar contato, podemos coletar nome,
-            organização, função, e-mail, WhatsApp, localização e informações
-            operacionais fornecidas voluntariamente.
+            Ao criar uma conta e utilizar a plataforma, podemos coletar nome,
+            organização, função, e-mail e informações operacionais fornecidas
+            voluntariamente.
           </p>
           <h2>Finalidade</h2>
           <p>
             Usamos esses dados para provisionar e proteger a conta, operar a
-            plataforma, responder à solicitação e conduzir conversas sobre a
-            Ciclera.
+            plataforma, prestar suporte e manter a segurança da Ciclera.
           </p>
           <h2>Compartilhamento e segurança</h2>
           <p>

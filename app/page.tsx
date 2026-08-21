@@ -12,7 +12,6 @@ import {
   GetStartedSection,
   FaqSection,
 } from '@/components/landing/sections'
-import { LeadForm } from '@/components/landing/lead-form'
 import { Footer } from '@/components/landing/footer'
 
 export default function Page() {
@@ -32,7 +31,6 @@ export default function Page() {
         <FieldSection />
         <AudienceSection />
         <BenefitsSection />
-        <LeadForm />
         <FaqSection />
         <GetStartedSection />
       </main>
