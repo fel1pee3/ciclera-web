@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 
 import { RegistrationForm } from '@/features/auth/registration-form'
+import { PublicAuthRoute } from '@/features/auth/public-auth-route'
 
 export const metadata: Metadata = {
   title: 'Criar conta | Ciclera',
@@ -8,5 +9,9 @@ export const metadata: Metadata = {
 }
 
 export default function RegistrationPage() {
-  return <RegistrationForm />
+  return (
+    <PublicAuthRoute>
+      <RegistrationForm />
+    </PublicAuthRoute>
+  )
 }

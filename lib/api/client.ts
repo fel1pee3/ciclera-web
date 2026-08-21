@@ -8,6 +8,8 @@ interface ClientRequestOptions extends Omit<RequestInit, 'body'> {
   retryAfterUnauthorized?: boolean
 }
 
+let refreshRequest: Promise<boolean> | null = null
+
 export async function clientApiRequest<T>(
   path: string,
   schema: z.ZodType<T>,
@@ -21,11 +23,7 @@ export async function clientApiRequest<T>(
     retryAfterUnauthorized &&
     path !== 'auth/refresh'
   ) {
-    const refreshResponse = await send('auth/refresh', undefined, {
-      method: 'POST',
-    })
-
-    if (refreshResponse.ok) {
+    if (await refreshSession()) {
       return parseApiResponse(await send(path, json, requestInit), schema)
     }
   }
@@ -36,11 +34,24 @@ export async function clientApiRequest<T>(
 export async function clientApiDownload(path: string): Promise<Blob> {
   let response = await send(path, undefined, { method: 'GET' })
   if (response.status === 401) {
-    const refresh = await send('auth/refresh', undefined, { method: 'POST' })
-    if (refresh.ok) response = await send(path, undefined, { method: 'GET' })
+    if (await refreshSession()) {
+      response = await send(path, undefined, { method: 'GET' })
+    }
   }
   if (!response.ok) throw new Error('DOWNLOAD_FAILED')
   return response.blob()
+}
+
+function refreshSession(): Promise<boolean> {
+  if (!refreshRequest) {
+    refreshRequest = send('auth/refresh', undefined, { method: 'POST' })
+      .then((response) => response.ok)
+      .finally(() => {
+        refreshRequest = null
+      })
+  }
+
+  return refreshRequest
 }
 
 function send(

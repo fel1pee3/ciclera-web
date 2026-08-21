@@ -44,6 +44,45 @@ describe('authenticated API client', () => {
     )
   })
 
+  it('shares one refresh between concurrent unauthorized requests', async () => {
+    let protectedRequests = 0
+    let refreshRequests = 0
+    let releaseRefresh: (() => void) | undefined
+    const refreshGate = new Promise<void>((resolve) => {
+      releaseRefresh = resolve
+    })
+    const fetchMock = vi.fn(async (input: string | URL | Request) => {
+      const url = String(input)
+      if (url.endsWith('/auth/refresh')) {
+        refreshRequests += 1
+        await refreshGate
+        return new Response(null, { status: 204 })
+      }
+
+      protectedRequests += 1
+      if (protectedRequests <= 2) {
+        return new Response(JSON.stringify({ code: 'UNAUTHORIZED' }), {
+          status: 401,
+          headers: { 'content-type': 'application/json' },
+        })
+      }
+
+      return new Response(JSON.stringify(account), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      })
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const requests = Promise.all([getCurrentAccount(), getCurrentAccount()])
+    await vi.waitFor(() => expect(refreshRequests).toBe(1))
+    releaseRefresh?.()
+
+    await expect(requests).resolves.toEqual([account, account])
+    expect(refreshRequests).toBe(1)
+    expect(protectedRequests).toBe(4)
+  })
+
   it('stops after a failed refresh without creating a loop', async () => {
     const fetchMock = vi
       .fn()
