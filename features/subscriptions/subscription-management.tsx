@@ -508,8 +508,8 @@ function statusPresentation(subscription: CurrentSubscription) {
       label: 'Pagamento pendente',
       description:
         subscription.access === 'FULL'
-          ? 'Regularize a cobrança para evitar restrições.'
-          : 'Algumas alterações estão restritas até a regularização.',
+          ? 'A carência termina 3 dias após o vencimento. Regularize para evitar o bloqueio.'
+          : 'A carência terminou e a operação está bloqueada até a regularização.',
     }
   if (subscription.status === 'PENDING')
     return {

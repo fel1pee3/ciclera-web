@@ -203,8 +203,10 @@ ou dado de cartão pertence às variáveis ou ao bundle da web.
 Enquanto não houver plano confirmado, as telas e consultas operacionais não são
 montadas. O `OWNER` permanece em um portal enxuto de ativação na própria rota de
 assinatura; demais perfis recebem uma orientação para procurar o proprietário.
-Em inadimplência, o frontend segue os níveis informados pela API e mantém somente
-o fluxo de campo expressamente permitido durante a tolerância limitada.
+Em inadimplência, o frontend mantém a operação disponível, com aviso, por uma
+carência exata de 3 dias. Após 72 horas do vencimento, todas as áreas operacionais
+ficam bloqueadas para perfis administrativos e técnicos; somente autenticação e
+o portal de assinatura continuam disponíveis para permitir a regularização.
 
 `/app/faturamento` continua sendo o faturamento operacional das ordens de
 serviço. `/app/assinatura` trata exclusivamente da mensalidade que a organização

@@ -33,7 +33,7 @@ export const currentSubscriptionSchema = z.object({
   canceledAt: z.string().datetime().nullable(),
   enforcementEnabled: z.boolean(),
   latestInvoiceUrl: z.string().url().nullable(),
-  access: z.enum(['FULL', 'LIMITED', 'READ_ONLY']),
+  access: z.enum(['FULL', 'READ_ONLY']),
   plan: subscriptionPlanSchema.nullable(),
   scheduledPlan: subscriptionPlanSchema.nullable(),
   usage: z.object({

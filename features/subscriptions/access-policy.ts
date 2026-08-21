@@ -13,14 +13,5 @@ export function subscriptionAreaAccess(
     return 'OPERATIONAL'
   }
 
-  if (
-    subscription.planCode &&
-    subscription.access === 'LIMITED' &&
-    area === 'field' &&
-    role === 'TECHNICIAN'
-  ) {
-    return 'OPERATIONAL'
-  }
-
   return role === 'OWNER' && area === 'office' ? 'OWNER_PORTAL' : 'BLOCKED'
 }

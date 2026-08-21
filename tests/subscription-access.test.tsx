@@ -46,7 +46,7 @@ describe('subscription access policy', () => {
     )
   })
 
-  it('preserves full access and lets a limited technician finish field work', () => {
+  it('preserves operational access during the three-day grace period', () => {
     expect(
       subscriptionAreaAccess(
         subscription({
@@ -63,7 +63,7 @@ describe('subscription access policy', () => {
         subscription({
           planCode: 'ESSENTIAL',
           status: 'PAST_DUE',
-          access: 'LIMITED',
+          access: 'FULL',
         }),
         'TECHNICIAN',
         'field',
@@ -71,17 +71,20 @@ describe('subscription access policy', () => {
     ).toBe('OPERATIONAL')
   })
 
-  it('keeps overdue office users away from forms that the API will reject', () => {
-    const limited = subscription({
+  it('blocks office users after the three-day grace period', () => {
+    const blocked = subscription({
       planCode: 'ESSENTIAL',
       status: 'PAST_DUE',
-      access: 'LIMITED',
+      access: 'READ_ONLY',
     })
 
-    expect(subscriptionAreaAccess(limited, 'OWNER', 'office')).toBe(
+    expect(subscriptionAreaAccess(blocked, 'OWNER', 'office')).toBe(
       'OWNER_PORTAL',
     )
-    expect(subscriptionAreaAccess(limited, 'ADMIN', 'office')).toBe('BLOCKED')
+    expect(subscriptionAreaAccess(blocked, 'ADMIN', 'office')).toBe('BLOCKED')
+    expect(subscriptionAreaAccess(blocked, 'TECHNICIAN', 'field')).toBe(
+      'BLOCKED',
+    )
   })
 })
 
@@ -130,13 +133,13 @@ describe('subscription area boundary', () => {
     expect(screen.queryByText('Conteúdo operacional')).not.toBeInTheDocument()
   })
 
-  it('keeps limited field completion available to the assigned technician', async () => {
+  it('keeps field access available with a warning during the grace period', async () => {
     mocks.pathname = '/field/ordens'
     mocks.getCurrentSubscription.mockResolvedValue(
       subscription({
         planCode: 'ESSENTIAL',
         status: 'PAST_DUE',
-        access: 'LIMITED',
+        access: 'FULL',
       }),
     )
 
@@ -152,7 +155,7 @@ describe('subscription area boundary', () => {
       await screen.findByText('Atendimento em andamento'),
     ).toBeInTheDocument()
     expect(
-      screen.getByText('A assinatura precisa de atenção'),
+      screen.getByText('Pagamento em atraso — carência de 3 dias'),
     ).toBeInTheDocument()
   })
 })

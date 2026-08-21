@@ -15,12 +15,16 @@ export function SubscriptionNotice({
   if (
     !subscription ||
     !subscription.enforcementEnabled ||
-    (subscription.access === 'FULL' && !subscription.cancelAtPeriodEnd)
+    (subscription.access === 'FULL' &&
+      subscription.status !== 'PAST_DUE' &&
+      !subscription.cancelAtPeriodEnd)
   ) {
     return null
   }
 
   const pending = !subscription.planCode
+  const overdueInGrace =
+    subscription.status === 'PAST_DUE' && subscription.access === 'FULL'
   return (
     <div className="mb-6 flex flex-col gap-3 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-amber-950 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex items-start gap-3">
@@ -35,11 +39,15 @@ export function SubscriptionNotice({
           <p className="font-semibold">
             {pending
               ? 'Escolha um plano para liberar a operação'
-              : 'A assinatura precisa de atenção'}
+              : overdueInGrace
+                ? 'Pagamento em atraso — carência de 3 dias'
+                : 'Acesso suspenso por pagamento'}
           </p>
           <p className="mt-0.5 text-sm leading-relaxed text-amber-900/80">
             {role === 'OWNER'
-              ? 'Consulte a situação e regularize a cobrança com segurança.'
+              ? overdueInGrace
+                ? 'Regularize a mensalidade dentro da carência para evitar o bloqueio da operação.'
+                : 'Regularize a mensalidade para liberar novamente a operação.'
               : 'Peça ao proprietário da organização para verificar a assinatura.'}
           </p>
         </div>
