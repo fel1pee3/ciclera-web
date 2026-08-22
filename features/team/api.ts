@@ -46,6 +46,7 @@ export function updateUser(userId: string, input: UpdateUserInput) {
   const request = {
     name: input.name,
     email: input.email,
+    role: input.role,
     ...(input.password ? { password: input.password } : {}),
   }
   return clientApiRequest(`users/${userId}`, managedUserSchema, {
@@ -59,6 +60,13 @@ export function setUserStatus(userId: string, status: UserStatus) {
   const action = status === 'ACTIVE' ? 'activate' : 'deactivate'
   return clientApiRequest(`users/${userId}/${action}`, managedUserSchema, {
     method: 'POST',
+    retryAfterUnauthorized: true,
+  })
+}
+
+export function deleteUser(userId: string) {
+  return clientApiRequest(`users/${userId}`, managedUserSchema, {
+    method: 'DELETE',
     retryAfterUnauthorized: true,
   })
 }

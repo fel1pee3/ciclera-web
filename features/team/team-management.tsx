@@ -1,6 +1,6 @@
 'use client'
 
-import { UserPlus } from 'lucide-react'
+import { Trash2, UserPlus } from 'lucide-react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
@@ -16,7 +16,12 @@ import { Label } from '@/components/ui/label'
 import { Modal } from '@/components/ui/modal'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useSession } from '@/features/auth/session-provider'
-import { listUsers, setUserStatus, type ListUsersQuery } from './api'
+import {
+  deleteUser,
+  listUsers,
+  setUserStatus,
+  type ListUsersQuery,
+} from './api'
 import type { ManagedUser, PaginatedUsers } from './contracts'
 import { getTeamErrorMessage } from './errors'
 import { canManageUser } from './permissions'
@@ -33,6 +38,7 @@ export function TeamManagement() {
   const [actionError, setActionError] = useState<string | null>(null)
   const [pendingUserId, setPendingUserId] = useState<string | null>(null)
   const [statusTarget, setStatusTarget] = useState<ManagedUser | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<ManagedUser | null>(null)
   const [creating, setCreating] = useState(false)
   const [editing, setEditing] = useState<ManagedUser | null>(null)
   const [revision, setRevision] = useState(0)
@@ -63,7 +69,22 @@ export function TeamManagement() {
     setCreating(false)
     setEditing(null)
     setStatusTarget(null)
+    setDeleteTarget(null)
     setRevision((value) => value + 1)
+  }
+
+  const removeUser = async (user: ManagedUser) => {
+    setPendingUserId(user.id)
+    setActionError(null)
+    try {
+      await deleteUser(user.id)
+      saved(`${user.name} foi excluído da equipe.`)
+    } catch (error) {
+      setActionError(getTeamErrorMessage(error))
+      setDeleteTarget(null)
+    } finally {
+      setPendingUserId(null)
+    }
   }
 
   const changeStatus = async (user: ManagedUser) => {
@@ -127,6 +148,7 @@ export function TeamManagement() {
         {editing ? (
           <EditUserForm
             key={editing.id}
+            actorRole={account.user.role}
             user={editing}
             onCancel={() => setEditing(null)}
             onSaved={saved}
@@ -163,6 +185,20 @@ export function TeamManagement() {
         onCancel={() => setStatusTarget(null)}
         onConfirm={() => {
           if (statusTarget) void changeStatus(statusTarget)
+        }}
+      />
+
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        title="Excluir integrante?"
+        description={`${deleteTarget?.name ?? 'Esta pessoa'} perderá o acesso e deixará de aparecer na equipe. Ordens, auditoria e históricos já registrados serão preservados.`}
+        confirmLabel="Excluir integrante"
+        pendingLabel="Excluindo…"
+        variant="destructive"
+        pending={pendingUserId === deleteTarget?.id}
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={() => {
+          if (deleteTarget) void removeUser(deleteTarget)
         }}
       />
 
@@ -253,10 +289,10 @@ export function TeamManagement() {
 
       {result && result.items.length > 0 ? (
         <div className="grid gap-3 sm:grid-cols-2">
-          {result.items.map((user) => {
-            const isProtectedOwner =
-              account.user.id === user.id && user.role === 'OWNER'
-            const manageable = canManageUser(account.user.role, user)
+          {ownerFirst(result.items).map((user) => {
+            const isProtectedOwner = user.role === 'OWNER'
+            const manageable =
+              !isProtectedOwner && canManageUser(account.user.role, user)
             return (
               <article
                 key={user.id}
@@ -283,29 +319,29 @@ export function TeamManagement() {
                     <Button variant="outline" onClick={() => setEditing(user)}>
                       Editar
                     </Button>
-                    {!isProtectedOwner ? (
-                      <Button
-                        variant="ghost"
-                        disabled={pendingUserId === user.id}
-                        onClick={() => setStatusTarget(user)}
-                      >
-                        {pendingUserId === user.id
-                          ? 'Processando…'
-                          : user.status === 'ACTIVE'
-                            ? 'Desativar'
-                            : 'Ativar'}
-                      </Button>
-                    ) : null}
+                    <Button
+                      variant="ghost"
+                      disabled={pendingUserId === user.id}
+                      onClick={() => setStatusTarget(user)}
+                    >
+                      {pendingUserId === user.id
+                        ? 'Processando…'
+                        : user.status === 'ACTIVE'
+                          ? 'Desativar'
+                          : 'Ativar'}
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      disabled={pendingUserId === user.id}
+                      onClick={() => setDeleteTarget(user)}
+                    >
+                      <Trash2 aria-hidden="true" />
+                      Excluir
+                    </Button>
                   </div>
-                ) : (
+                ) : !isProtectedOwner ? (
                   <p className="mt-4 text-xs text-muted-foreground">
                     Somente um proprietário pode gerenciar este perfil.
-                  </p>
-                )}
-                {isProtectedOwner ? (
-                  <p className="mt-3 text-xs text-muted-foreground">
-                    Você pode atualizar seus dados de acesso, mas o perfil e a
-                    ativação desta conta são protegidos.
                   </p>
                 ) : null}
               </article>
@@ -391,4 +427,11 @@ function roleLabel(role: ManagedUser['role']): string {
     ADMIN: 'Administrador',
     TECHNICIAN: 'Técnico',
   }[role]
+}
+
+function ownerFirst(users: ManagedUser[]): ManagedUser[] {
+  return [...users].sort(
+    (left, right) =>
+      Number(right.role === 'OWNER') - Number(left.role === 'OWNER'),
+  )
 }

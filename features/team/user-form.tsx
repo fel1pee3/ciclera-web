@@ -93,15 +93,25 @@ export function CreateUserForm({
         </Alert>
       ) : null}
       <FormField label="Nome" error={errors.name?.message}>
-        <Input autoComplete="name" {...register('name')} />
+        <Input
+          autoComplete="name"
+          placeholder="Ex.: Maria Silva"
+          {...register('name')}
+        />
       </FormField>
       <FormField label="E-mail" error={errors.email?.message}>
-        <Input type="email" autoComplete="email" {...register('email')} />
+        <Input
+          type="email"
+          autoComplete="email"
+          placeholder="Ex.: maria@empresa.com.br"
+          {...register('email')}
+        />
       </FormField>
       <FormField label="Senha inicial" error={errors.password?.message}>
         <PasswordInput
           id="team-password"
           autoComplete="new-password"
+          placeholder="Crie uma senha segura"
           aria-invalid={Boolean(errors.password)}
           aria-describedby="password-requirements"
           {...register('password')}
@@ -114,6 +124,7 @@ export function CreateUserForm({
         <PasswordInput
           id="team-confirm-password"
           autoComplete="new-password"
+          placeholder="Repita a senha"
           aria-invalid={Boolean(errors.confirmPassword)}
           {...register('confirmPassword')}
         />
@@ -145,10 +156,12 @@ export function CreateUserForm({
 }
 
 export function EditUserForm({
+  actorRole,
   user,
   onCancel,
   onSaved,
 }: {
+  actorRole: UserRole
   user: ManagedUser
   onCancel: () => void
   onSaved: (message: string) => void
@@ -168,6 +181,7 @@ export function EditUserForm({
       email: user.email,
       password: '',
       confirmPassword: '',
+      role: user.role,
     },
   })
   const password = useWatch({ control, name: 'password', defaultValue: '' })
@@ -179,7 +193,7 @@ export function EditUserForm({
       onSaved(`${updated.name} foi atualizado.`)
     } catch (error) {
       const fieldErrors = getApiFieldErrors(error)
-      for (const field of ['name', 'email', 'password'] as const) {
+      for (const field of ['name', 'email', 'password', 'role'] as const) {
         const message = fieldErrors?.[field]?.[0]
         if (message) setError(field, { message })
       }
@@ -199,15 +213,25 @@ export function EditUserForm({
         </Alert>
       ) : null}
       <FormField label="Nome" error={errors.name?.message}>
-        <Input autoComplete="name" {...register('name')} />
+        <Input
+          autoComplete="name"
+          placeholder="Ex.: Maria Silva"
+          {...register('name')}
+        />
       </FormField>
       <FormField label="E-mail" error={errors.email?.message}>
-        <Input type="email" autoComplete="email" {...register('email')} />
+        <Input
+          type="email"
+          autoComplete="email"
+          placeholder="Ex.: maria@empresa.com.br"
+          {...register('email')}
+        />
       </FormField>
       <FormField label="Nova senha (opcional)" error={errors.password?.message}>
         <PasswordInput
           id={`edit-password-${user.id}`}
           autoComplete="new-password"
+          placeholder="Digite somente se quiser alterar"
           aria-invalid={Boolean(errors.password)}
           aria-describedby={password ? 'password-requirements' : undefined}
           {...register('password')}
@@ -220,36 +244,25 @@ export function EditUserForm({
         <PasswordInput
           id={`edit-confirm-password-${user.id}`}
           autoComplete="new-password"
+          placeholder="Repita a nova senha"
           aria-invalid={Boolean(errors.confirmPassword)}
           {...register('confirmPassword')}
         />
       </FormField>
-      {password ? (
-        <div className="sm:col-span-2">
-          <PasswordRequirements value={password} />
-        </div>
-      ) : (
-        <p className="text-sm text-muted-foreground sm:col-span-2">
+      <div className="space-y-2 sm:col-span-2">
+        <PasswordRequirements value={password} />
+        <p className="text-sm text-muted-foreground">
           Deixe os campos de senha vazios para manter a senha atual.
         </p>
-      )}
-      <FormField label="Perfil">
-        <select
-          aria-label="Perfil"
-          aria-describedby={`edit-role-help-${user.id}`}
-          className="input cursor-not-allowed bg-muted/40 text-muted-foreground"
-          disabled
-          value={user.role}
-        >
-          <option value={user.role}>{roleLabels[user.role]}</option>
+      </div>
+      <FormField label="Perfil" error={errors.role?.message}>
+        <select className="input" {...register('role')}>
+          {creatableRoles(actorRole).map((role) => (
+            <option key={role} value={role}>
+              {roleLabels[role]}
+            </option>
+          ))}
         </select>
-        <span
-          className="text-xs text-muted-foreground"
-          id={`edit-role-help-${user.id}`}
-        >
-          O perfil é definido na criação da conta e não pode ser alterado nesta
-          edição.
-        </span>
       </FormField>
       <div className="flex flex-wrap justify-end gap-3 border-t pt-5 sm:col-span-2">
         <Button type="button" variant="ghost" onClick={onCancel}>

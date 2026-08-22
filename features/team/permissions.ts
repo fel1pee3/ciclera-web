@@ -5,11 +5,10 @@ export function canManageUser(
   actorRole: UserRole,
   target: ManagedUser,
 ): boolean {
+  if (target.role === 'OWNER') return false
   return actorRole === 'OWNER' || target.role === 'TECHNICIAN'
 }
 
 export function creatableRoles(actorRole: UserRole): readonly UserRole[] {
-  return actorRole === 'OWNER'
-    ? ['OWNER', 'ADMIN', 'TECHNICIAN']
-    : ['TECHNICIAN']
+  return actorRole === 'OWNER' ? ['ADMIN', 'TECHNICIAN'] : ['TECHNICIAN']
 }

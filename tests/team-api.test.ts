@@ -1,6 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { createUser, listUsers, updateUser } from '@/features/team/api'
+import {
+  createUser,
+  deleteUser,
+  listUsers,
+  updateUser,
+} from '@/features/team/api'
 
 describe('team API client', () => {
   afterEach(() => vi.unstubAllGlobals())
@@ -66,7 +71,7 @@ describe('team API client', () => {
         id: '20000000-0000-4000-8000-000000000002',
         name: 'Técnica atualizada',
         email: 'updated@example.test',
-        role: 'TECHNICIAN',
+        role: 'ADMIN',
         status: 'ACTIVE',
         createdAt: '2026-08-16T00:00:00.000Z',
         updatedAt: '2026-08-17T00:00:00.000Z',
@@ -79,12 +84,32 @@ describe('team API client', () => {
       email: 'updated@example.test',
       password: '',
       confirmPassword: '',
+      role: 'ADMIN',
     })
 
     const body = String(fetchMock.mock.calls[0]?.[1]?.body)
     expect(body).toContain('updated@example.test')
     expect(body).not.toContain('password')
     expect(body).not.toContain('confirmPassword')
-    expect(body).not.toContain('role')
+    expect(body).toContain('"role":"ADMIN"')
+  })
+
+  it('deletes a team member through the dedicated endpoint', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      Response.json({
+        id: '20000000-0000-4000-8000-000000000002',
+        name: 'Usuário excluído',
+        email: 'deleted.20000000-0000-4000-8000-000000000002@users.invalid',
+        role: 'TECHNICIAN',
+        status: 'INACTIVE',
+        createdAt: '2026-08-16T00:00:00.000Z',
+        updatedAt: '2026-08-17T00:00:00.000Z',
+      }),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+
+    await deleteUser('20000000-0000-4000-8000-000000000002')
+
+    expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({ method: 'DELETE' })
   })
 })
