@@ -349,19 +349,40 @@ export function SubscriptionManagement({
         </Alert>
       ) : null}
       {isOwner && subscription?.planCode && !subscription.cancelAtPeriodEnd ? (
-        <Card className="flex flex-col gap-4 border-destructive/25 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="font-heading text-lg font-semibold">
+        <Card className="overflow-hidden p-0">
+          <div className="flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+            <div className="flex min-w-0 items-start gap-4">
+              <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-muted text-muted-foreground">
+                <CreditCard aria-hidden="true" className="size-5" />
+              </span>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                  Renovação automática
+                </p>
+                <h2 className="mt-1 font-heading text-lg font-semibold">
+                  Gerenciar renovação
+                </h2>
+                <p className="mt-1 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+                  Você pode impedir a próxima cobrança sem perder seus dados. O
+                  acesso continua até{' '}
+                  {subscription.currentPeriodEnd
+                    ? formatDate(subscription.currentPeriodEnd)
+                    : 'o fim do período já pago'}
+                  .
+                </p>
+              </div>
+            </div>
+            <Button
+              className="w-full sm:w-auto"
+              variant="destructive"
+              onClick={() => setCancelOpen(true)}
+            >
               Cancelar renovação
-            </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Nenhum dado é apagado. O acesso continua até o fim do período
-              pago.
-            </p>
+            </Button>
           </div>
-          <Button variant="destructive" onClick={() => setCancelOpen(true)}>
-            Cancelar assinatura
-          </Button>
+          <div className="border-t bg-muted/25 px-5 py-3 text-xs text-muted-foreground sm:px-6">
+            O cancelamento não exclui sua organização, usuários ou histórico.
+          </div>
         </Card>
       ) : null}
 
