@@ -41,7 +41,6 @@ export const updateUserSchema = z
       .max(320),
     password: z.union([z.literal(''), securePasswordSchema]),
     confirmPassword: z.string(),
-    role: userRoleSchema,
   })
   .refine((value) => value.password === value.confirmPassword, {
     message: 'As senhas precisam ser iguais.',

@@ -120,14 +120,13 @@ export function TeamManagement() {
         title={editing ? 'Editar integrante' : 'Adicionar pessoa'}
         description={
           editing
-            ? 'Atualize os dados de acesso e o perfil desta pessoa.'
+            ? 'Atualize o nome, o e-mail ou a senha desta pessoa.'
             : 'Crie o acesso e defina o perfil do novo integrante.'
         }
       >
         {editing ? (
           <EditUserForm
             key={editing.id}
-            actorRole={account.user.role}
             user={editing}
             onCancel={() => setEditing(null)}
             onSaved={saved}
@@ -255,7 +254,13 @@ export function TeamManagement() {
       {result && result.items.length > 0 ? (
         <div className="grid gap-3 sm:grid-cols-2">
           {result.items.map((user) => {
-            const manageable = canManageUser(account.user.role, user)
+            const isProtectedOwner =
+              account.user.id === user.id && user.role === 'OWNER'
+            const manageable = canManageUser(
+              account.user.role,
+              user,
+              account.user.id,
+            )
             return (
               <article
                 key={user.id}
@@ -296,7 +301,9 @@ export function TeamManagement() {
                   </div>
                 ) : (
                   <p className="mt-4 text-xs text-muted-foreground">
-                    Somente um proprietário pode gerenciar este perfil.
+                    {isProtectedOwner
+                      ? 'Sua conta de proprietário é protegida e não pode ser alterada por aqui.'
+                      : 'Somente um proprietário pode gerenciar este perfil.'}
                   </p>
                 )}
               </article>

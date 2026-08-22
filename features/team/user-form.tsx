@@ -145,12 +145,10 @@ export function CreateUserForm({
 }
 
 export function EditUserForm({
-  actorRole,
   user,
   onCancel,
   onSaved,
 }: {
-  actorRole: UserRole
   user: ManagedUser
   onCancel: () => void
   onSaved: (message: string) => void
@@ -170,7 +168,6 @@ export function EditUserForm({
       email: user.email,
       password: '',
       confirmPassword: '',
-      role: user.role,
     },
   })
   const password = useWatch({ control, name: 'password', defaultValue: '' })
@@ -182,7 +179,7 @@ export function EditUserForm({
       onSaved(`${updated.name} foi atualizado.`)
     } catch (error) {
       const fieldErrors = getApiFieldErrors(error)
-      for (const field of ['name', 'email', 'password', 'role'] as const) {
+      for (const field of ['name', 'email', 'password'] as const) {
         const message = fieldErrors?.[field]?.[0]
         if (message) setError(field, { message })
       }
@@ -236,14 +233,23 @@ export function EditUserForm({
           Deixe os campos de senha vazios para manter a senha atual.
         </p>
       )}
-      <FormField label="Perfil" error={errors.role?.message}>
-        <select className="input" {...register('role')}>
-          {creatableRoles(actorRole).map((role) => (
-            <option key={role} value={role}>
-              {roleLabels[role]}
-            </option>
-          ))}
+      <FormField label="Perfil">
+        <select
+          aria-label="Perfil"
+          aria-describedby={`edit-role-help-${user.id}`}
+          className="input cursor-not-allowed bg-muted/40 text-muted-foreground"
+          disabled
+          value={user.role}
+        >
+          <option value={user.role}>{roleLabels[user.role]}</option>
         </select>
+        <span
+          className="text-xs text-muted-foreground"
+          id={`edit-role-help-${user.id}`}
+        >
+          O perfil é definido na criação da conta e não pode ser alterado nesta
+          edição.
+        </span>
       </FormField>
       <div className="flex flex-wrap justify-end gap-3 border-t pt-5 sm:col-span-2">
         <Button type="button" variant="ghost" onClick={onCancel}>

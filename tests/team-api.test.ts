@@ -66,7 +66,7 @@ describe('team API client', () => {
         id: '20000000-0000-4000-8000-000000000002',
         name: 'Técnica atualizada',
         email: 'updated@example.test',
-        role: 'ADMIN',
+        role: 'TECHNICIAN',
         status: 'ACTIVE',
         createdAt: '2026-08-16T00:00:00.000Z',
         updatedAt: '2026-08-17T00:00:00.000Z',
@@ -79,12 +79,12 @@ describe('team API client', () => {
       email: 'updated@example.test',
       password: '',
       confirmPassword: '',
-      role: 'ADMIN',
     })
 
     const body = String(fetchMock.mock.calls[0]?.[1]?.body)
     expect(body).toContain('updated@example.test')
     expect(body).not.toContain('password')
     expect(body).not.toContain('confirmPassword')
+    expect(body).not.toContain('role')
   })
 })
