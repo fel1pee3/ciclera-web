@@ -602,7 +602,7 @@ Listas que podem crescer devem utilizar paginação da API.
 
 ## Upload de evidências
 
-Fotos e assinaturas são dados privados da organização.
+Fotos do atendimento são dados privados da organização.
 
 Fluxo preferencial quando suportado pela API:
 
@@ -741,7 +741,7 @@ Requisitos:
 - `/field` priorizando uso com uma mão e ações principais facilmente alcançáveis.
 - Tabelas convertidas em apresentação adequada quando não couberem.
 - Modais críticos utilizáveis sem esconder ações abaixo da viewport.
-- Upload, câmera do navegador e assinatura testados em dispositivos reais quando disponíveis.
+- Upload e câmera do navegador testados em dispositivos reais quando disponíveis.
 
 Mobile-first é especialmente importante na área `/field`; isso não transforma o produto em aplicativo nativo.
 

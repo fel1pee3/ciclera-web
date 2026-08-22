@@ -1,7 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
+import { X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 
 import { Alert } from '@/components/ui/alert'
@@ -28,11 +29,26 @@ import { displayDocument } from './formatters'
 const pageSize = 12
 
 export function CustomerList() {
-  const router = useRouter()
-  const pathname = usePathname()
   const searchParams = useSearchParams()
-  const query = useMemo(() => readCustomerQuery(searchParams), [searchParams])
-  const [search, setSearch] = useState(query.search ?? '')
+  const initialQuery = useMemo(
+    () => readCustomerQuery(searchParams),
+    [searchParams],
+  )
+  const [search, setSearch] = useState(initialQuery.search ?? '')
+  const [debouncedSearch, setDebouncedSearch] = useState(
+    initialQuery.search ?? '',
+  )
+  const [archiveFilter, setArchiveFilter] = useState(initialQuery.archive)
+  const [page, setPage] = useState(initialQuery.page)
+  const query = useMemo<ListCustomersQuery>(
+    () => ({
+      page,
+      pageSize,
+      archive: archiveFilter,
+      ...(debouncedSearch.trim() ? { search: debouncedSearch.trim() } : {}),
+    }),
+    [archiveFilter, debouncedSearch, page],
+  )
   const [result, setResult] = useState<CustomerPage | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
@@ -46,16 +62,11 @@ export function CustomerList() {
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      const normalized = search.trim()
-      if (normalized === (query.search ?? '')) return
-      const next = new URLSearchParams(searchParams.toString())
-      next.delete('page')
-      if (normalized) next.set('search', normalized)
-      else next.delete('search')
-      router.replace(`${pathname}${next.size ? `?${next.toString()}` : ''}`)
-    }, 350)
+      setDebouncedSearch(search.trim())
+      setPage(1)
+    }, 250)
     return () => window.clearTimeout(timer)
-  }, [pathname, query.search, router, search, searchParams])
+  }, [search])
 
   useEffect(() => {
     let active = true
@@ -182,22 +193,49 @@ export function CustomerList() {
         <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_14rem]">
           <Label className="grid gap-2">
             <span>Buscar cliente</span>
-            <Input
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Nome ou documento"
-            />
+            <div className="relative">
+              <Input
+                className={search ? 'pr-11' : undefined}
+                value={search}
+                onChange={(event) => {
+                  setSearch(event.target.value)
+                  setPage(1)
+                }}
+                placeholder="Nome ou documento"
+              />
+              {search ? (
+                <>
+                  <span
+                    aria-hidden="true"
+                    className="absolute right-10 top-1/2 h-5 w-px -translate-y-1/2 bg-border"
+                  />
+                  <button
+                    type="button"
+                    aria-label="Limpar busca"
+                    title="Limpar busca"
+                    className="absolute right-1 top-1/2 grid size-9 -translate-y-1/2 place-items-center text-muted-foreground transition-colors duration-200 hover:text-primary focus-visible:rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    onClick={() => {
+                      setSearch('')
+                      setDebouncedSearch('')
+                      setPage(1)
+                    }}
+                  >
+                    <X aria-hidden="true" className="size-4 stroke-2" />
+                  </button>
+                </>
+              ) : null}
+            </div>
           </Label>
           <Label className="grid gap-2">
             <span>Situação</span>
             <select
               className="input"
-              value={query.archive}
+              value={archiveFilter}
               onChange={(event) => {
-                const next = new URLSearchParams(searchParams.toString())
-                next.delete('page')
-                next.set('archive', event.target.value)
-                router.replace(`${pathname}?${next.toString()}`)
+                setArchiveFilter(
+                  event.target.value as ListCustomersQuery['archive'],
+                )
+                setPage(1)
               }}
             >
               <option value="ACTIVE">Somente ativos</option>
@@ -206,16 +244,6 @@ export function CustomerList() {
             </select>
           </Label>
         </div>
-        {query.search || query.archive !== 'ACTIVE' ? (
-          <div className="mt-5 flex justify-end border-t pt-5">
-            <Link
-              className={buttonVariants({ variant: 'ghost' })}
-              href="/app/clientes"
-            >
-              Limpar filtros
-            </Link>
-          </div>
-        ) : null}
       </FilterPanel>
 
       {!result && !error ? (
@@ -304,21 +332,21 @@ export function CustomerList() {
           aria-label="Paginação de clientes"
           className="flex items-center justify-between gap-4"
         >
-          <PageLink
+          <PageButton
             disabled={result.page <= 1}
-            href={customerListUrl(query, result.page - 1)}
+            onClick={() => setPage((value) => Math.max(1, value - 1))}
           >
             Anterior
-          </PageLink>
+          </PageButton>
           <span className="text-sm text-muted-foreground">
             Página {result.page} de {Math.ceil(result.total / result.pageSize)}
           </span>
-          <PageLink
+          <PageButton
             disabled={result.page * result.pageSize >= result.total}
-            href={customerListUrl(query, result.page + 1)}
+            onClick={() => setPage((value) => value + 1)}
           >
             Próxima
-          </PageLink>
+          </PageButton>
         </nav>
       ) : null}
     </section>
@@ -348,22 +376,23 @@ export function customerListUrl(
   return `/app/clientes${params.size ? `?${params.toString()}` : ''}`
 }
 
-function PageLink({
+function PageButton({
   children,
   disabled,
-  href,
+  onClick,
 }: {
   children: React.ReactNode
   disabled: boolean
-  href: string
+  onClick: () => void
 }) {
-  return disabled ? (
-    <span className="text-sm text-muted-foreground" aria-disabled="true">
+  return (
+    <button
+      type="button"
+      className="text-sm font-semibold text-primary transition-colors hover:text-primary/80 disabled:cursor-not-allowed disabled:text-muted-foreground"
+      disabled={disabled}
+      onClick={onClick}
+    >
       {children}
-    </span>
-  ) : (
-    <Link className="text-sm font-semibold text-primary" href={href}>
-      {children}
-    </Link>
+    </button>
   )
 }

@@ -4,10 +4,16 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { findCustomer, findLocation } from '@/features/customers/api'
+import {
+  findCustomer,
+  findLocation,
+  listCustomers,
+  listLocations,
+} from '@/features/customers/api'
 import type { Customer, ServiceLocation } from '@/features/customers/contracts'
 import { findEquipment, listEquipment } from '@/features/equipment/api'
 import type { Equipment } from '@/features/equipment/contracts'
@@ -85,6 +91,121 @@ describe('equipment UI', () => {
     })
     expect(archiveDialog).toHaveTextContent('nenhum dado será excluído')
     fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }))
+  })
+
+  it('filters equipment immediately without navigation or a clear-filters row', async () => {
+    const archivedEquipment: Equipment = {
+      ...equipment,
+      id: '50000000-0000-4000-8000-000000000009',
+      name: 'Quadro elétrico principal',
+      identifier: 'QDG-001',
+      serialNumber: 'QDG2026001',
+      archivedAt: '2026-08-18T12:00:00.000Z',
+    }
+    vi.mocked(listEquipment).mockImplementation(async (query) => {
+      const items = [equipment, archivedEquipment].filter((item) => {
+        const matchesArchive =
+          query.archive === 'ALL' ||
+          (query.archive === 'ACTIVE' && !item.archivedAt) ||
+          (query.archive === 'ARCHIVED' && Boolean(item.archivedAt))
+        const term = query.search?.toLocaleLowerCase('pt-BR')
+        const matchesSearch =
+          !term ||
+          item.name.toLocaleLowerCase('pt-BR').includes(term) ||
+          item.identifier.toLocaleLowerCase('pt-BR').includes(term) ||
+          item.serialNumber?.toLocaleLowerCase('pt-BR').includes(term)
+        return matchesArchive && matchesSearch
+      })
+      return {
+        items,
+        page: query.page,
+        pageSize: query.pageSize,
+        total: items.length,
+      }
+    })
+
+    render(<EquipmentList />)
+    await screen.findByRole('heading', { name: equipment.name })
+    expect(screen.queryByText('Limpar filtros')).not.toBeInTheDocument()
+
+    const search = screen.getByPlaceholderText('Nome, identificação ou serial')
+    fireEvent.change(search, { target: { value: 'AR-REC' } })
+    expect(
+      screen.getByRole('button', { name: 'Limpar busca' }),
+    ).toBeInTheDocument()
+    await waitFor(() =>
+      expect(listEquipment).toHaveBeenLastCalledWith({
+        page: 1,
+        pageSize: 12,
+        archive: 'ACTIVE',
+        search: 'AR-REC',
+      }),
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Limpar busca' }))
+    expect(search).toHaveValue('')
+
+    fireEvent.change(screen.getByRole('combobox', { name: 'Situação' }), {
+      target: { value: 'ARCHIVED' },
+    })
+    await waitFor(() =>
+      expect(listEquipment).toHaveBeenLastCalledWith({
+        page: 1,
+        pageSize: 12,
+        archive: 'ARCHIVED',
+      }),
+    )
+    expect(
+      await screen.findByRole('heading', { name: archivedEquipment.name }),
+    ).toBeInTheDocument()
+  })
+
+  it('selects customer and location through guided searchable choices', async () => {
+    vi.mocked(listEquipment).mockResolvedValueOnce({
+      items: [equipment],
+      page: 1,
+      pageSize: 12,
+      total: 1,
+    })
+    vi.mocked(listCustomers).mockResolvedValue({
+      items: [customer],
+      page: 1,
+      pageSize: 10,
+      total: 1,
+    })
+    vi.mocked(listLocations).mockResolvedValue({
+      items: [location],
+      page: 1,
+      pageSize: 10,
+      total: 1,
+    })
+
+    render(<EquipmentList />)
+    await screen.findByRole('heading', { name: equipment.name })
+    fireEvent.click(screen.getByRole('button', { name: 'Novo equipamento' }))
+
+    const dialog = screen.getByRole('dialog', { name: 'Novo equipamento' })
+    expect(within(dialog).getByText('Aguardando o cliente')).toBeInTheDocument()
+    expect(within(dialog).queryByRole('combobox')).not.toBeInTheDocument()
+
+    fireEvent.click(
+      await screen.findByRole('button', {
+        name: `Selecionar cliente ${customer.name}`,
+      }),
+    )
+    expect(
+      screen.getByRole('button', { name: 'Alterar cliente' }),
+    ).toBeInTheDocument()
+
+    fireEvent.click(
+      await screen.findByRole('button', {
+        name: `Selecionar local ${location.name}`,
+      }),
+    )
+    expect(
+      screen.getByRole('button', { name: 'Alterar local' }),
+    ).toBeInTheDocument()
+    expect(within(dialog).queryByRole('combobox')).not.toBeInTheDocument()
   })
 
   it('presents the equipment relationship and edits it in a modal', async () => {

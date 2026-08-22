@@ -42,7 +42,7 @@ export const problems: { title: string; text: string; icon: LucideIcon }[] = [
   },
   {
     title: 'Evidência ausente',
-    text: 'Fotos, observações ou assinatura ausentes impedem a conferência e atrasam a cobrança.',
+    text: 'Fotos ou observações ausentes impedem a conferência e atrasam a cobrança.',
     icon: Camera,
   },
   {
@@ -68,7 +68,7 @@ export const steps = [
   ],
   [
     'Registre o trabalho em campo',
-    'O técnico acessa pelo navegador e registra fotos, observações, materiais e assinatura.',
+    'O técnico acessa pelo navegador e registra fotos, observações e materiais.',
   ],
   [
     'Revise as evidências',
@@ -103,7 +103,7 @@ export const features: { title: string; text: string; icon: LucideIcon }[] = [
   },
   {
     title: 'Registros e evidências',
-    text: 'Fotos, observações e assinatura do atendimento.',
+    text: 'Fotos e observações do atendimento.',
     icon: CheckCircle2,
   },
   {

@@ -1,7 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
+import { X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 
 import { Alert } from '@/components/ui/alert'
@@ -31,11 +32,34 @@ const priorityLabels = {
 } as const
 
 export function WorkOrderList() {
-  const router = useRouter()
-  const pathname = usePathname()
   const searchParams = useSearchParams()
-  const query = useMemo(() => readWorkOrderQuery(searchParams), [searchParams])
-  const [search, setSearch] = useState(query.search ?? '')
+  const initialQuery = useMemo(
+    () => readWorkOrderQuery(searchParams),
+    [searchParams],
+  )
+  const [search, setSearch] = useState(initialQuery.search ?? '')
+  const [debouncedSearch, setDebouncedSearch] = useState(
+    initialQuery.search ?? '',
+  )
+  const [statusFilter, setStatusFilter] = useState(initialQuery.status ?? '')
+  const [priorityFilter, setPriorityFilter] = useState(
+    initialQuery.priority ?? '',
+  )
+  const [page, setPage] = useState(initialQuery.page)
+  const query = useMemo<ListWorkOrdersQuery>(
+    () => ({
+      page,
+      pageSize,
+      ...(debouncedSearch.trim() ? { search: debouncedSearch.trim() } : {}),
+      ...(statusFilter
+        ? { status: statusFilter as ListWorkOrdersQuery['status'] }
+        : {}),
+      ...(priorityFilter
+        ? { priority: priorityFilter as ListWorkOrdersQuery['priority'] }
+        : {}),
+    }),
+    [debouncedSearch, page, priorityFilter, statusFilter],
+  )
   const [result, setResult] = useState<WorkOrderPage | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
@@ -44,15 +68,11 @@ export function WorkOrderList() {
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      if (search.trim() === (query.search ?? '')) return
-      const next = new URLSearchParams(searchParams)
-      next.delete('page')
-      if (search.trim()) next.set('search', search.trim())
-      else next.delete('search')
-      router.replace(`${pathname}${next.size ? `?${next}` : ''}`)
-    }, 350)
+      setDebouncedSearch(search.trim())
+      setPage(1)
+    }, 250)
     return () => window.clearTimeout(timer)
-  }, [pathname, query.search, router, search, searchParams])
+  }, [search])
 
   useEffect(() => {
     let active = true
@@ -71,13 +91,7 @@ export function WorkOrderList() {
     }
   }, [query, revision])
 
-  const changeFilter = (key: string, value: string) => {
-    const next = new URLSearchParams(searchParams)
-    next.delete('page')
-    if (value) next.set(key, value)
-    else next.delete(key)
-    router.replace(`${pathname}${next.size ? `?${next}` : ''}`)
-  }
+  const listUrl = workOrderListUrl(query, query.page)
 
   return (
     <section className="mx-auto max-w-6xl space-y-6">
@@ -119,18 +133,48 @@ export function WorkOrderList() {
         <div className="grid gap-4 md:grid-cols-3">
           <Label className="grid gap-2">
             <span>Buscar ordem</span>
-            <Input
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Número ou título"
-            />
+            <div className="relative">
+              <Input
+                className={search ? 'pr-11' : undefined}
+                value={search}
+                onChange={(event) => {
+                  setSearch(event.target.value)
+                  setPage(1)
+                }}
+                placeholder="Número ou título"
+              />
+              {search ? (
+                <>
+                  <span
+                    aria-hidden="true"
+                    className="absolute right-10 top-1/2 h-5 w-px -translate-y-1/2 bg-border"
+                  />
+                  <button
+                    type="button"
+                    aria-label="Limpar busca"
+                    title="Limpar busca"
+                    className="absolute right-1 top-1/2 grid size-9 -translate-y-1/2 place-items-center text-muted-foreground transition-colors duration-200 hover:text-primary focus-visible:rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    onClick={() => {
+                      setSearch('')
+                      setDebouncedSearch('')
+                      setPage(1)
+                    }}
+                  >
+                    <X aria-hidden="true" className="size-4 stroke-2" />
+                  </button>
+                </>
+              ) : null}
+            </div>
           </Label>
           <Label className="grid gap-2">
             <span>Status</span>
             <select
               className="input"
-              value={query.status ?? ''}
-              onChange={(event) => changeFilter('status', event.target.value)}
+              value={statusFilter}
+              onChange={(event) => {
+                setStatusFilter(event.target.value)
+                setPage(1)
+              }}
             >
               <option value="">Todos os status</option>
               {workOrderStatuses.map((status) => (
@@ -144,8 +188,11 @@ export function WorkOrderList() {
             <span>Prioridade</span>
             <select
               className="input"
-              value={query.priority ?? ''}
-              onChange={(event) => changeFilter('priority', event.target.value)}
+              value={priorityFilter}
+              onChange={(event) => {
+                setPriorityFilter(event.target.value)
+                setPage(1)
+              }}
             >
               <option value="">Todas as prioridades</option>
               {workOrderPriorities.map((priority) => (
@@ -156,16 +203,6 @@ export function WorkOrderList() {
             </select>
           </Label>
         </div>
-        {query.search || query.status || query.priority ? (
-          <div className="mt-5 flex justify-end border-t pt-5">
-            <Link
-              className={buttonVariants({ variant: 'ghost' })}
-              href="/app/ordens"
-            >
-              Limpar filtros
-            </Link>
-          </div>
-        ) : null}
       </FilterPanel>
       {error ? <Alert variant="destructive">{error}</Alert> : null}
       {!result && !error ? (
@@ -212,7 +249,7 @@ export function WorkOrderList() {
                 </span>
                 <Link
                   className={buttonVariants({ variant: 'outline' })}
-                  href={`/app/ordens/${order.id}?from=${encodeURIComponent(currentUrl(searchParams))}`}
+                  href={`/app/ordens/${order.id}?from=${encodeURIComponent(listUrl)}`}
                 >
                   Consultar
                 </Link>
@@ -223,23 +260,21 @@ export function WorkOrderList() {
       ) : null}
       {result && result.total > result.pageSize ? (
         <nav aria-label="Paginação de ordens" className="flex justify-between">
-          <PageLink
-            query={query}
-            page={result.page - 1}
+          <PageButton
             disabled={result.page <= 1}
+            onClick={() => setPage((value) => Math.max(1, value - 1))}
           >
             Anterior
-          </PageLink>
+          </PageButton>
           <span className="text-sm text-muted-foreground">
             Página {result.page} de {Math.ceil(result.total / result.pageSize)}
           </span>
-          <PageLink
-            query={query}
-            page={result.page + 1}
+          <PageButton
             disabled={result.page * result.pageSize >= result.total}
+            onClick={() => setPage((value) => value + 1)}
           >
             Próxima
-          </PageLink>
+          </PageButton>
         </nav>
       ) : null}
     </section>
@@ -278,30 +313,23 @@ export function workOrderListUrl(
   return `/app/ordens${params.size ? `?${params}` : ''}`
 }
 
-function currentUrl(params: URLSearchParams) {
-  return `/app/ordens${params.size ? `?${params}` : ''}`
-}
-function PageLink({
+function PageButton({
   children,
   disabled,
-  page,
-  query,
+  onClick,
 }: {
   children: React.ReactNode
   disabled: boolean
-  page: number
-  query: ListWorkOrdersQuery
+  onClick: () => void
 }) {
-  return disabled ? (
-    <span aria-disabled="true" className="text-sm text-muted-foreground">
-      {children}
-    </span>
-  ) : (
-    <Link
-      className="text-sm font-semibold text-primary"
-      href={workOrderListUrl(query, page)}
+  return (
+    <button
+      type="button"
+      className="text-sm font-semibold text-primary transition-colors hover:text-primary/80 disabled:cursor-not-allowed disabled:text-muted-foreground"
+      disabled={disabled}
+      onClick={onClick}
     >
       {children}
-    </Link>
+    </button>
   )
 }

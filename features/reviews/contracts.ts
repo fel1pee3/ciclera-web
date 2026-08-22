@@ -69,7 +69,6 @@ export const evidenceReadUrlSchema = z.object({
 
 export const reviewReasons = [
   'REQUIRED_PHOTO_MISSING',
-  'SIGNATURE_MISSING',
   'MATERIAL_WITHOUT_VALUE',
   'ADDITIONAL_SERVICE_UNAPPROVED',
   'EQUIPMENT_DATA_INCORRECT',

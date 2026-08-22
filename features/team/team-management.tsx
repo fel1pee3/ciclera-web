@@ -1,13 +1,11 @@
 'use client'
 
-import { Trash2, UserPlus } from 'lucide-react'
-import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
+import { Trash2, UserPlus, X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 
 import { Alert } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
-import { Button, buttonVariants } from '@/components/ui/button'
+import { Button } from '@/components/ui/button'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { EmptyState } from '@/components/ui/empty-state'
 import { FilterPanel } from '@/components/ui/filter-panel'
@@ -15,6 +13,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Modal } from '@/components/ui/modal'
 import { Skeleton } from '@/components/ui/skeleton'
+import type { UserRole } from '@/features/auth/contracts'
 import { useSession } from '@/features/auth/session-provider'
 import {
   deleteUser,
@@ -22,7 +21,7 @@ import {
   setUserStatus,
   type ListUsersQuery,
 } from './api'
-import type { ManagedUser, PaginatedUsers } from './contracts'
+import type { ManagedUser, PaginatedUsers, UserStatus } from './contracts'
 import { getTeamErrorMessage } from './errors'
 import { canManageUser } from './permissions'
 import { CreateUserForm, EditUserForm } from './user-form'
@@ -30,7 +29,6 @@ import { CreateUserForm, EditUserForm } from './user-form'
 const pageSize = 12
 
 export function TeamManagement() {
-  const searchParams = useSearchParams()
   const { account } = useSession()
   const [result, setResult] = useState<PaginatedUsers | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -42,7 +40,28 @@ export function TeamManagement() {
   const [creating, setCreating] = useState(false)
   const [editing, setEditing] = useState<ManagedUser | null>(null)
   const [revision, setRevision] = useState(0)
-  const query = useMemo(() => readQuery(searchParams), [searchParams])
+  const [search, setSearch] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [roleFilter, setRoleFilter] = useState<UserRole | ''>('')
+  const [statusFilter, setStatusFilter] = useState<UserStatus | ''>('')
+  const [page, setPage] = useState(1)
+  const query = useMemo<ListUsersQuery>(
+    () => ({
+      page,
+      pageSize,
+      ...(debouncedSearch ? { search: debouncedSearch } : {}),
+      ...(roleFilter ? { role: roleFilter } : {}),
+      ...(statusFilter ? { status: statusFilter } : {}),
+    }),
+    [debouncedSearch, page, roleFilter, statusFilter],
+  )
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      setDebouncedSearch(search.trim())
+    }, 250)
+    return () => window.clearTimeout(timeout)
+  }, [search])
 
   useEffect(() => {
     let active = true
@@ -207,64 +226,80 @@ export function TeamManagement() {
 
       <FilterPanel
         activeFilterCount={
-          Number(Boolean(query.search)) +
-          Number(Boolean(query.role)) +
-          Number(Boolean(query.status))
+          Number(Boolean(search.trim())) +
+          Number(Boolean(roleFilter)) +
+          Number(Boolean(statusFilter))
         }
         description="Encontre integrantes por nome, perfil ou situação de acesso."
       >
-        <form
-          key={searchParams.toString()}
-          action="/app/equipe"
-          className="space-y-5"
-        >
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_12rem_12rem]">
-            <Label className="grid gap-2">
-              <span>Buscar integrante</span>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_12rem_12rem]">
+          <Label className="grid gap-2">
+            <span>Buscar integrante</span>
+            <div className="relative">
               <Input
-                name="search"
-                defaultValue={query.search}
+                className={search ? 'pr-11' : undefined}
                 placeholder="Nome ou e-mail"
+                value={search}
+                onChange={(event) => {
+                  setSearch(event.target.value)
+                  setPage(1)
+                }}
               />
-            </Label>
-            <Label className="grid gap-2">
-              <span>Perfil</span>
-              <select
-                className="input"
-                name="role"
-                defaultValue={query.role ?? ''}
-              >
-                <option value="">Todos os perfis</option>
-                <option value="OWNER">Proprietário</option>
-                <option value="ADMIN">Administrador</option>
-                <option value="TECHNICIAN">Técnico</option>
-              </select>
-            </Label>
-            <Label className="grid gap-2">
-              <span>Status</span>
-              <select
-                className="input"
-                name="status"
-                defaultValue={query.status ?? ''}
-              >
-                <option value="">Todos os status</option>
-                <option value="ACTIVE">Ativo</option>
-                <option value="INACTIVE">Inativo</option>
-              </select>
-            </Label>
-          </div>
-          <div className="flex flex-col-reverse gap-2 border-t pt-5 sm:flex-row sm:justify-end">
-            {query.search || query.role || query.status ? (
-              <Link
-                href="/app/equipe"
-                className={buttonVariants({ variant: 'ghost' })}
-              >
-                Limpar filtros
-              </Link>
-            ) : null}
-            <Button type="submit">Aplicar filtros</Button>
-          </div>
-        </form>
+              {search ? (
+                <>
+                  <span
+                    aria-hidden="true"
+                    className="absolute right-10 top-1/2 h-5 w-px -translate-y-1/2 bg-border"
+                  />
+                  <button
+                    type="button"
+                    aria-label="Limpar busca"
+                    title="Limpar busca"
+                    className="absolute right-1 top-1/2 grid size-9 -translate-y-1/2 place-items-center text-muted-foreground transition-colors duration-200 hover:text-primary focus-visible:rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    onClick={() => {
+                      setSearch('')
+                      setDebouncedSearch('')
+                      setPage(1)
+                    }}
+                  >
+                    <X aria-hidden="true" className="size-4 stroke-2" />
+                  </button>
+                </>
+              ) : null}
+            </div>
+          </Label>
+          <Label className="grid gap-2">
+            <span>Perfil</span>
+            <select
+              className="input"
+              value={roleFilter}
+              onChange={(event) => {
+                setRoleFilter(event.target.value as UserRole | '')
+                setPage(1)
+              }}
+            >
+              <option value="">Todos os perfis</option>
+              <option value="OWNER">Proprietário</option>
+              <option value="ADMIN">Administrador</option>
+              <option value="TECHNICIAN">Técnico</option>
+            </select>
+          </Label>
+          <Label className="grid gap-2">
+            <span>Status</span>
+            <select
+              className="input"
+              value={statusFilter}
+              onChange={(event) => {
+                setStatusFilter(event.target.value as UserStatus | '')
+                setPage(1)
+              }}
+            >
+              <option value="">Todos os status</option>
+              <option value="ACTIVE">Ativo</option>
+              <option value="INACTIVE">Inativo</option>
+            </select>
+          </Label>
+        </div>
       </FilterPanel>
 
       {loadError ? (
@@ -372,69 +407,28 @@ export function TeamManagement() {
           aria-label="Paginação da equipe"
           className="flex items-center justify-between gap-4"
         >
-          <PaginationLink
+          <Button
+            type="button"
+            variant="ghost"
             disabled={result.page <= 1}
-            href={teamUrl(query, result.page - 1)}
+            onClick={() => setPage((current) => Math.max(1, current - 1))}
           >
             Anterior
-          </PaginationLink>
+          </Button>
           <span className="text-sm text-muted-foreground">
             Página {result.page} de {Math.ceil(result.total / result.pageSize)}
           </span>
-          <PaginationLink
+          <Button
+            type="button"
+            variant="ghost"
             disabled={result.page * result.pageSize >= result.total}
-            href={teamUrl(query, result.page + 1)}
+            onClick={() => setPage((current) => current + 1)}
           >
             Próxima
-          </PaginationLink>
+          </Button>
         </nav>
       ) : null}
     </section>
-  )
-}
-
-function readQuery(params: URLSearchParams): ListUsersQuery {
-  const page = Number(params.get('page'))
-  const role = params.get('role')
-  const status = params.get('status')
-  return {
-    page: Number.isInteger(page) && page > 0 ? page : 1,
-    pageSize,
-    ...(params.get('search')?.trim()
-      ? { search: params.get('search')?.trim() }
-      : {}),
-    ...(role === 'OWNER' || role === 'ADMIN' || role === 'TECHNICIAN'
-      ? { role }
-      : {}),
-    ...(status === 'ACTIVE' || status === 'INACTIVE' ? { status } : {}),
-  }
-}
-
-function teamUrl(query: ListUsersQuery, page: number): string {
-  const params = new URLSearchParams({ page: String(page) })
-  if (query.search) params.set('search', query.search)
-  if (query.role) params.set('role', query.role)
-  if (query.status) params.set('status', query.status)
-  return `/app/equipe?${params.toString()}`
-}
-
-function PaginationLink({
-  children,
-  disabled,
-  href,
-}: {
-  children: React.ReactNode
-  disabled: boolean
-  href: string
-}) {
-  return disabled ? (
-    <span className="text-sm text-muted-foreground" aria-disabled="true">
-      {children}
-    </span>
-  ) : (
-    <Link className="text-sm font-semibold text-primary" href={href}>
-      {children}
-    </Link>
   )
 }
 

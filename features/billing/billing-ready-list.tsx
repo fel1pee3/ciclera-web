@@ -1,13 +1,12 @@
 'use client'
 
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { useEffect, useMemo, useState, type ComponentProps } from 'react'
 import {
   CalendarCheck,
   Download,
   Filter,
   ReceiptText,
-  RotateCcw,
   WalletCards,
 } from 'lucide-react'
 import { Alert } from '@/components/ui/alert'
@@ -26,16 +25,37 @@ import {
   listReadyForBilling,
   markWorkOrderBilled,
 } from './api'
+import type { BillingReadyQuery } from './api'
 import type { BillingReadyPage } from './contracts'
 
 const pageSize = 20
 type BillingReadyItem = BillingReadyPage['items'][number]
 
 export function BillingReadyList() {
-  const router = useRouter()
   const searchParams = useSearchParams()
-  const query = useMemo(() => parseQuery(searchParams), [searchParams])
-  const appliedFilterCount = getAppliedFilterCount(query)
+  const initialQuery = useMemo(() => parseQuery(searchParams), [searchParams])
+  const [customerId, setCustomerId] = useState(initialQuery.customerId ?? '')
+  const [completedFrom, setCompletedFrom] = useState(
+    displayDate(initialQuery.completedFrom) ?? '',
+  )
+  const [completedTo, setCompletedTo] = useState(
+    displayDate(initialQuery.completedTo) ?? '',
+  )
+  const [minimumAgingDays, setMinimumAgingDays] = useState(
+    initialQuery.minimumAgingDays?.toString() ?? '',
+  )
+  const [minimumAmount, setMinimumAmount] = useState(
+    displayMoneyInput(initialQuery.minimumAmountInCents) ?? '',
+  )
+  const [maximumAmount, setMaximumAmount] = useState(
+    displayMoneyInput(initialQuery.maximumAmountInCents) ?? '',
+  )
+  const [debouncedNumericFilters, setDebouncedNumericFilters] = useState({
+    minimumAgingDays,
+    minimumAmount,
+    maximumAmount,
+  })
+  const [page, setPage] = useState(initialQuery.page)
   const [result, setResult] = useState<BillingReadyPage | null>(null)
   const [customers, setCustomers] = useState<Customer[]>([])
   const [error, setError] = useState<string | null>(null)
@@ -45,17 +65,44 @@ export function BillingReadyList() {
     null,
   )
   const [exporting, setExporting] = useState(false)
+  const query = useMemo<BillingReadyQuery>(
+    () => ({
+      page,
+      pageSize,
+      customerId: customerId || undefined,
+      completedFrom: toDateFilter(completedFrom, false),
+      completedTo: toDateFilter(completedTo, true),
+      minimumAgingDays: toAgingFilter(debouncedNumericFilters.minimumAgingDays),
+      minimumAmountInCents: toMoneyFilter(
+        debouncedNumericFilters.minimumAmount,
+      ),
+      maximumAmountInCents: toMoneyFilter(
+        debouncedNumericFilters.maximumAmount,
+      ),
+    }),
+    [completedFrom, completedTo, customerId, debouncedNumericFilters, page],
+  )
+  const appliedFilterCount = getAppliedFilterCount(query)
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      setDebouncedNumericFilters({
+        minimumAgingDays,
+        minimumAmount,
+        maximumAmount,
+      })
+      setPage(1)
+    }, 300)
+
+    return () => window.clearTimeout(timeout)
+  }, [maximumAmount, minimumAgingDays, minimumAmount])
 
   useEffect(() => {
     let active = true
-    void Promise.all([
-      listReadyForBilling(query),
-      listCustomers({ page: 1, pageSize: 100, archive: 'ACTIVE' }),
-    ])
-      .then(([billing, customerPage]) => {
+    void listReadyForBilling(query)
+      .then((billing) => {
         if (!active) return
         setResult(billing)
-        setCustomers(customerPage.items)
         setError(null)
       })
       .catch(() => active && setError('Não foi possível carregar a fila.'))
@@ -64,24 +111,19 @@ export function BillingReadyList() {
     }
   }, [query])
 
-  function applyFilters(form: HTMLFormElement) {
-    const data = new FormData(form)
-    const params = new URLSearchParams()
-    setParam(params, 'customerId', data.get('customerId'))
-    setDateParam(params, 'completedFrom', data.get('completedFrom'), false)
-    setDateParam(params, 'completedTo', data.get('completedTo'), true)
-    setParam(params, 'minimumAgingDays', data.get('minimumAgingDays'))
-    setMoneyParam(params, 'minimumAmountInCents', data.get('minimumAmount'))
-    setMoneyParam(params, 'maximumAmountInCents', data.get('maximumAmount'))
-    router.push(`/app/faturamento${params.size ? `?${params}` : ''}`)
-  }
-
-  function navigate(page: number) {
-    const params = new URLSearchParams(searchParams)
-    if (page === 1) params.delete('page')
-    else params.set('page', String(page))
-    router.push(`/app/faturamento${params.size ? `?${params}` : ''}`)
-  }
+  useEffect(() => {
+    let active = true
+    void listCustomers({ page: 1, pageSize: 100, archive: 'ACTIVE' })
+      .then((customerPage) => {
+        if (active) setCustomers(customerPage.items)
+      })
+      .catch(() => {
+        if (active) setError('Não foi possível carregar os clientes.')
+      })
+    return () => {
+      active = false
+    }
+  }, [])
 
   async function markBilled(item: BillingReadyItem) {
     const { id, version } = item
@@ -182,21 +224,18 @@ export function BillingReadyList() {
             </span>
           ) : null}
         </div>
-        <form
-          key={searchParams.toString()}
-          className="space-y-5 p-5 sm:p-6"
-          onSubmit={(event) => {
-            event.preventDefault()
-            applyFilters(event.currentTarget)
-          }}
-        >
+        <div className="space-y-5 p-5 sm:p-6">
           <div className="grid gap-4 lg:grid-cols-12">
             <Label className="grid gap-2 lg:col-span-4">
               <span>Cliente</span>
               <select
                 className="input"
                 name="customerId"
-                defaultValue={query.customerId}
+                value={customerId}
+                onChange={(event) => {
+                  setCustomerId(event.target.value)
+                  setPage(1)
+                }}
               >
                 <option value="">Todos os clientes</option>
                 {customers.map((customer) => (
@@ -211,14 +250,22 @@ export function BillingReadyList() {
               label="Concluída a partir de"
               name="completedFrom"
               type="date"
-              defaultValue={displayDate(query.completedFrom)}
+              value={completedFrom}
+              onChange={(event) => {
+                setCompletedFrom(event.target.value)
+                setPage(1)
+              }}
             />
             <FilterInput
               containerClassName="lg:col-span-4"
               label="Concluída até"
               name="completedTo"
               type="date"
-              defaultValue={displayDate(query.completedTo)}
+              value={completedTo}
+              onChange={(event) => {
+                setCompletedTo(event.target.value)
+                setPage(1)
+              }}
             />
           </div>
           <div className="grid gap-4 md:grid-cols-3">
@@ -228,40 +275,27 @@ export function BillingReadyList() {
               type="number"
               min="0"
               placeholder="Dias"
-              defaultValue={query.minimumAgingDays?.toString()}
+              value={minimumAgingDays}
+              onChange={(event) => setMinimumAgingDays(event.target.value)}
             />
             <FilterInput
               label="Valor mínimo"
               name="minimumAmount"
               inputMode="decimal"
               placeholder="R$ 0,00"
-              defaultValue={displayMoneyInput(query.minimumAmountInCents)}
+              value={minimumAmount}
+              onChange={(event) => setMinimumAmount(event.target.value)}
             />
             <FilterInput
               label="Valor máximo"
               name="maximumAmount"
               inputMode="decimal"
               placeholder="R$ 0,00"
-              defaultValue={displayMoneyInput(query.maximumAmountInCents)}
+              value={maximumAmount}
+              onChange={(event) => setMaximumAmount(event.target.value)}
             />
           </div>
-          <div className="flex flex-col-reverse gap-3 border-t pt-5 sm:flex-row sm:justify-end">
-            <Button
-              className="w-full sm:w-auto"
-              type="button"
-              variant="ghost"
-              disabled={appliedFilterCount === 0}
-              onClick={() => router.push('/app/faturamento')}
-            >
-              <RotateCcw aria-hidden="true" />
-              Limpar filtros
-            </Button>
-            <Button className="w-full sm:w-auto" type="submit">
-              <Filter aria-hidden="true" />
-              Aplicar filtros
-            </Button>
-          </div>
-        </form>
+        </div>
       </Card>
       {error ? <Alert variant="destructive">{error}</Alert> : null}
       {notice ? <Alert variant="success">{notice}</Alert> : null}
@@ -388,7 +422,7 @@ export function BillingReadyList() {
           <Button
             variant="outline"
             disabled={result.page === 1}
-            onClick={() => navigate(result.page - 1)}
+            onClick={() => setPage(result.page - 1)}
           >
             Anterior
           </Button>
@@ -396,7 +430,7 @@ export function BillingReadyList() {
           <Button
             variant="outline"
             disabled={result.page * result.pageSize >= result.total}
-            onClick={() => navigate(result.page + 1)}
+            onClick={() => setPage(result.page + 1)}
           >
             Próxima
           </Button>
@@ -438,7 +472,7 @@ function parseQuery(params: Pick<URLSearchParams, 'get'>) {
   }
 }
 
-function getAppliedFilterCount(query: ReturnType<typeof parseQuery>) {
+function getAppliedFilterCount(query: BillingReadyQuery) {
   return [
     query.customerId,
     query.completedFrom,
@@ -449,37 +483,29 @@ function getAppliedFilterCount(query: ReturnType<typeof parseQuery>) {
   ].filter((value) => value !== undefined).length
 }
 
-function setParam(
-  params: URLSearchParams,
-  key: string,
-  value: FormDataEntryValue | null,
-) {
-  if (typeof value === 'string' && value) params.set(key, value)
+function toDateFilter(value: string, endOfDay: boolean) {
+  if (!value) return undefined
+  return `${value}T${endOfDay ? '23:59:59.999' : '00:00:00.000'}Z`
 }
 
-function setDateParam(
-  params: URLSearchParams,
-  key: string,
-  value: FormDataEntryValue | null,
-  endOfDay: boolean,
-) {
-  if (typeof value === 'string' && value)
-    params.set(key, `${value}T${endOfDay ? '23:59:59.999' : '00:00:00.000'}Z`)
+function toAgingFilter(value: string) {
+  if (!value.trim()) return undefined
+  const parsed = Number(value)
+  return Number.isInteger(parsed) && parsed >= 0 ? parsed : undefined
 }
 
-function setMoneyParam(
-  params: URLSearchParams,
-  key: string,
-  value: FormDataEntryValue | null,
-) {
-  if (typeof value !== 'string' || !value.trim()) return
-  const normalized = value.trim().replace(',', '.')
-  if (!/^\d+(\.\d{1,2})?$/.test(normalized)) return
+function toMoneyFilter(value: string) {
+  const raw = value.trim().replace(/\s|R\$/gi, '')
+  if (!raw) return undefined
+  const normalized = raw.includes(',')
+    ? raw.replace(/\./g, '').replace(',', '.')
+    : raw
+  if (!/^\d+(\.\d{1,2})?$/.test(normalized)) return undefined
   const [whole, fraction = ''] = normalized.split('.')
-  params.set(
-    key,
-    (BigInt(whole) * BigInt(100) + BigInt(fraction.padEnd(2, '0'))).toString(),
-  )
+  return (
+    BigInt(whole) * BigInt(100) +
+    BigInt(fraction.padEnd(2, '0'))
+  ).toString()
 }
 
 function displayMoneyInput(value?: string) {

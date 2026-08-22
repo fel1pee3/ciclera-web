@@ -10,7 +10,6 @@ import {
   FileCheck2,
   MapPin,
   Search,
-  Signature,
   Wrench,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -289,7 +288,7 @@ function Review() {
             {[
               ['Observações', 'Preenchidas', Check],
               ['Fotos', '3 evidências', Camera],
-              ['Assinatura', 'Recebida', Signature],
+              ['Materiais', 'Registrados', Wrench],
             ].map(([label, value, Icon]) => (
               <div key={label as string} className="rounded-xl bg-muted p-3">
                 <Icon className="size-4 text-primary" />

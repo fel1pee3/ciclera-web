@@ -1,9 +1,16 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
-import { CalendarClock, UserRound } from 'lucide-react'
+import {
+  CalendarClock,
+  Check,
+  ClipboardList,
+  Search,
+  UserRound,
+  X,
+} from 'lucide-react'
 
 import { Alert } from '@/components/ui/alert'
 import { Button, buttonVariants } from '@/components/ui/button'
@@ -36,10 +43,33 @@ interface AgendaQuery {
 }
 
 export function AdministrativeAgenda() {
-  const router = useRouter()
-  const pathname = usePathname()
   const searchParams = useSearchParams()
-  const query = useMemo(() => readAgendaQuery(searchParams), [searchParams])
+  const initialQuery = useMemo(
+    () => readAgendaQuery(searchParams),
+    [searchParams],
+  )
+  const [from, setFrom] = useState(initialQuery.from)
+  const [to, setTo] = useState(initialQuery.to)
+  const [technicianFilter, setTechnicianFilter] = useState(
+    initialQuery.technicianId ?? '',
+  )
+  const [statusFilter, setStatusFilter] = useState(initialQuery.status ?? '')
+  const query = useMemo<AgendaQuery>(
+    () => ({
+      from: validDate(from) ?? initialQuery.from,
+      to: validDate(to) ?? initialQuery.to,
+      ...(technicianFilter ? { technicianId: technicianFilter } : {}),
+      ...(statusFilter ? { status: statusFilter as AgendaItem['status'] } : {}),
+    }),
+    [
+      from,
+      initialQuery.from,
+      initialQuery.to,
+      statusFilter,
+      technicianFilter,
+      to,
+    ],
+  )
   const [agenda, setAgenda] = useState<Agenda | null>(null)
   const [technicians, setTechnicians] = useState<ManagedUser[]>([])
   const [drafts, setDrafts] = useState<WorkOrder[]>([])
@@ -74,16 +104,6 @@ export function AdministrativeAgenda() {
     }
   }, [query, revision])
 
-  const apply = (form: HTMLFormElement) => {
-    const data = new FormData(form)
-    const params = new URLSearchParams()
-    for (const key of ['from', 'to', 'technicianId', 'status']) {
-      const value = data.get(key)
-      if (typeof value === 'string' && value) params.set(key, value)
-    }
-    router.replace(`${pathname}?${params}`)
-  }
-
   return (
     <section className="mx-auto max-w-6xl space-y-6">
       <header className="flex flex-wrap items-end justify-between gap-4">
@@ -102,7 +122,7 @@ export function AdministrativeAgenda() {
         open={scheduling}
         onClose={() => setScheduling(false)}
         title="Agendar rascunho"
-        description="Escolha a ordem, o técnico responsável e o período planejado para o atendimento."
+        description="Escolha a ordem e o técnico responsável. O período definido no rascunho será mantido."
       >
         <ScheduleDraftForm
           drafts={drafts}
@@ -125,54 +145,54 @@ export function AdministrativeAgenda() {
         title="Período e agenda"
         description="Defina a janela de atendimento e refine por técnico ou status."
       >
-        <form
-          key={searchParams.toString()}
-          className="space-y-5"
-          onSubmit={(event) => {
-            event.preventDefault()
-            apply(event.currentTarget)
-          }}
-        >
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Field label="Data inicial">
-              <Input type="date" name="from" defaultValue={query.from} />
-            </Field>
-            <Field label="Data final">
-              <Input type="date" name="to" defaultValue={query.to} />
-            </Field>
-            <Field label="Técnico">
-              <TechnicianSelect
-                name="technicianId"
-                technicians={technicians}
-                value={query.technicianId ?? ''}
-                allLabel="Todos os técnicos"
-              />
-            </Field>
-            <Field label="Status">
-              <select
-                className="input"
-                name="status"
-                defaultValue={query.status ?? ''}
-              >
-                <option value="">Todos os status</option>
-                {workOrderStatuses.map((status) => (
-                  <option key={status} value={status}>
-                    {workOrderStatusLabel(status)}
-                  </option>
-                ))}
-              </select>
-            </Field>
-          </div>
-          <div className="flex flex-col-reverse gap-2 border-t pt-5 sm:flex-row sm:justify-end">
-            <Link
-              className={buttonVariants({ variant: 'ghost' })}
-              href="/app/agenda"
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <Field label="Data inicial">
+            <Input
+              type="date"
+              value={from}
+              onChange={(event) => {
+                const next = event.target.value
+                setFrom(next)
+                if (validDate(next) && validDate(to) && next > to) setTo(next)
+              }}
+            />
+          </Field>
+          <Field label="Data final">
+            <Input
+              type="date"
+              value={to}
+              onChange={(event) => {
+                const next = event.target.value
+                setTo(next)
+                if (validDate(next) && validDate(from) && next < from)
+                  setFrom(next)
+              }}
+            />
+          </Field>
+          <Field label="Técnico">
+            <TechnicianSelect
+              technicians={technicians}
+              value={technicianFilter}
+              onChange={setTechnicianFilter}
+              allLabel="Todos os técnicos"
+            />
+          </Field>
+          <Field label="Status">
+            <select
+              aria-label="Status"
+              className="input"
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value)}
             >
-              Restaurar período
-            </Link>
-            <Button type="submit">Aplicar filtros</Button>
-          </div>
-        </form>
+              <option value="">Todos os status</option>
+              {workOrderStatuses.map((status) => (
+                <option key={status} value={status}>
+                  {workOrderStatusLabel(status)}
+                </option>
+              ))}
+            </select>
+          </Field>
+        </div>
       </FilterPanel>
       {!agenda && !error ? (
         <Skeleton className="h-72 rounded-2xl" aria-label="Carregando agenda" />
@@ -223,19 +243,26 @@ function ScheduleDraftForm({
 }) {
   const [workOrderId, setWorkOrderId] = useState('')
   const [technicianId, setTechnicianId] = useState('')
-  const [start, setStart] = useState('')
-  const [end, setEnd] = useState('')
   const [pending, setPending] = useState(false)
+  const draft = drafts.find((item) => item.id === workOrderId)
+  const canSchedule = Boolean(
+    draft?.scheduledStartAt && draft.scheduledEndAt && technicianId && timezone,
+  )
   const submit = async () => {
-    const draft = drafts.find((item) => item.id === workOrderId)
-    if (!draft || !technicianId || !start || !end || !timezone) return
+    if (
+      !draft ||
+      !technicianId ||
+      !draft.scheduledStartAt ||
+      !draft.scheduledEndAt
+    )
+      return
     setPending(true)
     try {
       await scheduleWorkOrder(draft.id, {
         version: draft.version,
         technicianId,
-        scheduledStartAt: zonedLocalDateTimeToIso(start, timezone),
-        scheduledEndAt: zonedLocalDateTimeToIso(end, timezone),
+        scheduledStartAt: draft.scheduledStartAt,
+        scheduledEndAt: draft.scheduledEndAt,
       })
       setWorkOrderId('')
       onSaved()
@@ -247,60 +274,198 @@ function ScheduleDraftForm({
   }
   return (
     <div>
-      <div className="grid gap-4 md:grid-cols-2">
-        <Field label="Ordem">
-          <select
-            className="input"
-            value={workOrderId}
-            onChange={(event) => setWorkOrderId(event.target.value)}
-          >
-            <option value="">Selecione</option>
-            {drafts.map((draft) => (
-              <option key={draft.id} value={draft.id}>
-                {draft.number} · {draft.title}
-              </option>
-            ))}
-          </select>
-        </Field>
-        <Field label="Técnico">
-          <TechnicianSelect
-            technicians={technicians}
-            value={technicianId}
-            onChange={setTechnicianId}
-          />
-        </Field>
-        <Field label="Início">
-          <Input
-            type="datetime-local"
-            value={start}
-            onChange={(event) => setStart(event.target.value)}
-          />
-        </Field>
-        <Field label="Término">
-          <Input
-            type="datetime-local"
-            value={end}
-            onChange={(event) => setEnd(event.target.value)}
-          />
-        </Field>
+      <div className="grid items-start gap-5 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+        <ScheduleChoiceSelector
+          label="Ordem"
+          searchLabel="Buscar ordem para agendar"
+          placeholder="Busque pelo número ou título"
+          emptyMessage="Nenhum rascunho encontrado."
+          icon={<ClipboardList aria-hidden="true" className="size-5" />}
+          value={workOrderId}
+          options={drafts.map((item) => ({
+            id: item.id,
+            title: `${item.number} · ${item.title}`,
+            description:
+              item.scheduledStartAt && item.scheduledEndAt && timezone
+                ? `${formatInTimezone(item.scheduledStartAt, timezone)} — ${formatInTimezone(item.scheduledEndAt, timezone)}`
+                : 'Período não informado — edite o rascunho antes de agendar',
+            disabled: !item.scheduledStartAt || !item.scheduledEndAt,
+          }))}
+          onChange={(value) => setWorkOrderId(value)}
+        />
+        <ScheduleChoiceSelector
+          label="Técnico"
+          searchLabel="Buscar técnico responsável"
+          placeholder="Busque pelo nome ou e-mail"
+          emptyMessage="Nenhum técnico ativo encontrado."
+          icon={<UserRound aria-hidden="true" className="size-5" />}
+          value={technicianId}
+          options={technicians.map((technician) => ({
+            id: technician.id,
+            title: technician.name,
+            description: technician.email,
+          }))}
+          onChange={setTechnicianId}
+        />
       </div>
       <div className="mt-6 flex flex-col-reverse gap-3 border-t pt-5 sm:flex-row sm:justify-end">
         <Button variant="outline" onClick={onCancel}>
           Cancelar
         </Button>
         <Button
-          disabled={
-            pending ||
-            !timezone ||
-            !workOrderId ||
-            !technicianId ||
-            !start ||
-            !end
-          }
+          disabled={pending || !canSchedule}
           onClick={() => void submit()}
         >
           {pending ? 'Agendando…' : 'Agendar'}
         </Button>
+      </div>
+    </div>
+  )
+}
+
+interface ScheduleChoiceOption {
+  id: string
+  title: string
+  description: string
+  disabled?: boolean
+}
+
+function ScheduleChoiceSelector({
+  label,
+  searchLabel,
+  placeholder,
+  emptyMessage,
+  icon,
+  value,
+  options,
+  onChange,
+}: {
+  label: string
+  searchLabel: string
+  placeholder: string
+  emptyMessage: string
+  icon: React.ReactNode
+  value: string
+  options: ScheduleChoiceOption[]
+  onChange: (value: string) => void
+}) {
+  const [search, setSearch] = useState('')
+  const [choosing, setChoosing] = useState(!value)
+  const selected = options.find((option) => option.id === value)
+  const selectedLabel =
+    label === 'Técnico' ? 'Técnico selecionado' : 'Ordem selecionada'
+  const normalizedSearch = search.trim().toLocaleLowerCase('pt-BR')
+  const filteredOptions = options.filter(
+    (option) =>
+      !normalizedSearch ||
+      option.title.toLocaleLowerCase('pt-BR').includes(normalizedSearch) ||
+      option.description.toLocaleLowerCase('pt-BR').includes(normalizedSearch),
+  )
+
+  if (selected && !choosing) {
+    return (
+      <div className="grid min-w-0 gap-2">
+        <p className="text-sm font-medium">{label}</p>
+        <div className="grid min-h-24 min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 overflow-hidden rounded-xl border border-primary/20 bg-primary/[0.04] px-4 py-3 shadow-sm">
+          <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+            {icon}
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-primary">
+              {selectedLabel}
+            </p>
+            <p className="mt-0.5 truncate text-sm font-semibold text-foreground">
+              {selected.title}
+            </p>
+            <p className="mt-0.5 truncate text-xs text-muted-foreground">
+              {selected.description}
+            </p>
+          </div>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="shrink-0"
+            aria-label={`Alterar ${label.toLocaleLowerCase('pt-BR')}`}
+            onClick={() => setChoosing(true)}
+          >
+            Alterar
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="grid min-w-0 gap-2">
+      <p className="text-sm font-medium">{label}</p>
+      <div className="overflow-hidden rounded-xl border bg-card shadow-sm transition-shadow focus-within:border-primary/30 focus-within:shadow-md">
+        <div className="relative border-b">
+          <Search
+            aria-hidden="true"
+            className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+          />
+          <Input
+            aria-label={searchLabel}
+            className="rounded-none border-0 bg-transparent pl-10 pr-11 shadow-none focus-visible:ring-0"
+            placeholder={placeholder}
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+          />
+          {search ? (
+            <>
+              <span
+                aria-hidden="true"
+                className="absolute right-10 top-1/2 h-5 w-px -translate-y-1/2 bg-border"
+              />
+              <button
+                type="button"
+                aria-label={`Limpar ${searchLabel.toLocaleLowerCase('pt-BR')}`}
+                className="absolute right-1 top-1/2 grid size-9 -translate-y-1/2 place-items-center text-muted-foreground transition-colors hover:text-primary focus-visible:rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                onClick={() => setSearch('')}
+              >
+                <X aria-hidden="true" className="size-4" />
+              </button>
+            </>
+          ) : null}
+        </div>
+        <div className="max-h-56 overflow-y-auto p-2">
+          {filteredOptions.length === 0 ? (
+            <p className="px-3 py-6 text-center text-sm text-muted-foreground">
+              {emptyMessage}
+            </p>
+          ) : null}
+          {filteredOptions.map((option) => (
+            <button
+              key={option.id}
+              type="button"
+              disabled={option.disabled}
+              aria-label={`Selecionar ${label.toLocaleLowerCase('pt-BR')} ${option.title}`}
+              className="group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent"
+              onClick={() => {
+                onChange(option.id)
+                setChoosing(false)
+                setSearch('')
+              }}
+            >
+              <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground transition-colors group-hover:bg-primary/10 group-hover:text-primary">
+                {option.id === value ? (
+                  <Check aria-hidden="true" className="size-4" />
+                ) : (
+                  icon
+                )}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm font-semibold text-foreground">
+                  {option.title}
+                </span>
+                <span className="mt-0.5 block text-xs leading-relaxed text-muted-foreground">
+                  {option.description}
+                </span>
+              </span>
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   )

@@ -1,8 +1,16 @@
 import { useEffect, useRef, useState } from 'react'
+import {
+  Camera,
+  ChevronUp,
+  Eye,
+  ImagePlus,
+  RotateCcw,
+  Trash2,
+  Upload,
+} from 'lucide-react'
 import { Alert } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
 import { buildApiUrl } from '@/lib/api/config'
 import {
   confirmEvidence,
@@ -13,16 +21,16 @@ import {
 import type { FieldWorkOrder } from './contracts'
 import { getFieldWorkOrderErrorMessage } from './errors'
 import { uploadEvidenceFile } from './evidence-upload'
-import { SignaturePad } from './signature-pad'
 
 interface UploadJob {
   id: string
   file: File
-  kind: 'PHOTO' | 'SIGNATURE'
   previewUrl: string
   progress: number
   status: 'READY' | 'UPLOADING' | 'ERROR'
 }
+
+const acceptedImages = 'image/jpeg,image/png,image/webp'
 
 export function ExecutionEvidence({
   order,
@@ -35,6 +43,8 @@ export function ExecutionEvidence({
   const [error, setError] = useState<string | null>(null)
   const [viewUrls, setViewUrls] = useState<Record<string, string>>({})
   const previews = useRef(new Set<string>())
+  const cameraInput = useRef<HTMLInputElement>(null)
+  const galleryInput = useRef<HTMLInputElement>(null)
   const busy = jobs.some((job) => job.status === 'UPLOADING')
 
   useEffect(
@@ -45,17 +55,22 @@ export function ExecutionEvidence({
     [],
   )
 
-  function makeJob(file: File, kind: UploadJob['kind']): UploadJob {
+  function makeJob(file: File): UploadJob {
     const previewUrl = URL.createObjectURL(file)
     previews.current.add(previewUrl)
     return {
       id: crypto.randomUUID(),
       file,
-      kind,
       previewUrl,
       progress: 0,
       status: 'READY',
     }
+  }
+
+  function addFiles(files: FileList | null) {
+    const selected = Array.from(files ?? [])
+    if (!selected.length) return
+    setJobs((current) => [...current, ...selected.map(makeJob)])
   }
 
   function removeJob(job: UploadJob) {
@@ -77,7 +92,6 @@ export function ExecutionEvidence({
     try {
       const created = await createEvidenceIntent(order.id, {
         version: order.execution.version,
-        kind: job.kind,
         fileName: job.file.name,
         contentType: job.file.type,
         sizeBytes: job.file.size,
@@ -123,6 +137,14 @@ export function ExecutionEvidence({
     }
   }
 
+  function minimize(evidenceId: string) {
+    setViewUrls((current) => {
+      const next = { ...current }
+      delete next[evidenceId]
+      return next
+    })
+  }
+
   async function remove(evidenceId: string) {
     if (!order.execution) return
     try {
@@ -132,11 +154,7 @@ export function ExecutionEvidence({
         order.execution.version,
       )
       onOrderChange(updated)
-      setViewUrls((current) => {
-        const next = { ...current }
-        delete next[evidenceId]
-        return next
-      })
+      minimize(evidenceId)
     } catch (reason: unknown) {
       setError(getFieldWorkOrderErrorMessage(reason))
     }
@@ -145,123 +163,230 @@ export function ExecutionEvidence({
   return (
     <Card className="space-y-6 p-5 sm:p-6">
       <div>
-        <h2 className="font-heading text-xl font-bold">Fotos e assinatura</h2>
+        <h2 className="font-heading text-xl font-bold">Fotos do atendimento</h2>
         <p className="text-sm text-muted-foreground">
-          Os arquivos só aparecem como enviados depois da confirmação do
-          servidor.
+          Registre o serviço pela câmera ou envie imagens já salvas no
+          dispositivo.
         </p>
       </div>
 
-      <div className="space-y-2">
-        <label className="text-sm font-medium" htmlFor="evidence-photos">
-          Selecionar ou capturar fotos
-        </label>
-        <Input
-          id="evidence-photos"
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          capture="environment"
-          multiple
+      <input
+        ref={cameraInput}
+        hidden
+        type="file"
+        accept={acceptedImages}
+        capture="environment"
+        disabled={busy}
+        onChange={(event) => {
+          addFiles(event.target.files)
+          event.target.value = ''
+        }}
+      />
+      <input
+        ref={galleryInput}
+        hidden
+        type="file"
+        accept={acceptedImages}
+        multiple
+        disabled={busy}
+        onChange={(event) => {
+          addFiles(event.target.files)
+          event.target.value = ''
+        }}
+      />
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        <button
+          type="button"
+          aria-label="Tirar foto"
           disabled={busy}
-          onChange={(event) => {
-            const files = Array.from(event.target.files ?? [])
-            setJobs((current) => [
-              ...current,
-              ...files.map((file) => makeJob(file, 'PHOTO')),
-            ])
-            event.target.value = ''
-          }}
-        />
+          className="group flex min-h-24 items-center gap-4 rounded-xl border border-primary/25 bg-primary/[0.04] p-4 text-left transition-colors hover:border-primary/50 hover:bg-primary/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
+          onClick={() => cameraInput.current?.click()}
+        >
+          <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground shadow-sm">
+            <Camera aria-hidden="true" className="size-5" />
+          </span>
+          <span>
+            <span className="block font-semibold text-foreground">
+              Tirar foto
+            </span>
+            <span className="mt-0.5 block text-xs text-muted-foreground">
+              Abrir a câmera do dispositivo
+            </span>
+          </span>
+        </button>
+        <button
+          type="button"
+          aria-label="Escolher da galeria"
+          disabled={busy}
+          className="group flex min-h-24 items-center gap-4 rounded-xl border bg-card p-4 text-left transition-colors hover:border-primary/40 hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
+          onClick={() => galleryInput.current?.click()}
+        >
+          <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+            <ImagePlus aria-hidden="true" className="size-5" />
+          </span>
+          <span>
+            <span className="block font-semibold text-foreground">
+              Escolher da galeria
+            </span>
+            <span className="mt-0.5 block text-xs text-muted-foreground">
+              Selecionar uma ou várias imagens
+            </span>
+          </span>
+        </button>
       </div>
 
-      {jobs.map((job) => (
-        <div className="rounded-xl border border-border p-3" key={job.id}>
-          {/* eslint-disable-next-line @next/next/no-img-element -- local object URL preview */}
-          <img
-            className="max-h-56 w-full rounded-lg object-contain"
-            src={job.previewUrl}
-            alt="Prévia local"
-          />
-          <p className="mt-2 truncate text-sm font-medium">{job.file.name}</p>
-          {job.status === 'UPLOADING' ? (
-            <div className="mt-3" role="status">
-              <div className="h-2 overflow-hidden rounded-full bg-muted">
-                <div
-                  className="h-full bg-primary"
-                  style={{ width: `${job.progress}%` }}
-                />
+      {jobs.length ? (
+        <div className="space-y-3">
+          <div>
+            <h3 className="font-semibold">Prontas para enviar</h3>
+            <p className="text-xs text-muted-foreground">
+              Confira cada imagem antes de confirmar o envio.
+            </p>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {jobs.map((job) => (
+              <div
+                className="overflow-hidden rounded-xl border bg-card shadow-sm"
+                key={job.id}
+              >
+                <div className="flex aspect-[4/3] items-center justify-center bg-muted/50 p-2">
+                  {/* eslint-disable-next-line @next/next/no-img-element -- local object URL preview */}
+                  <img
+                    className="max-h-full max-w-full rounded-lg object-contain"
+                    src={job.previewUrl}
+                    alt={`Prévia de ${job.file.name}`}
+                  />
+                </div>
+                <div className="p-3">
+                  <p className="truncate text-sm font-semibold">
+                    {job.file.name}
+                  </p>
+                  {job.status === 'UPLOADING' ? (
+                    <div className="mt-3" role="status">
+                      <div className="h-2 overflow-hidden rounded-full bg-muted">
+                        <div
+                          className="h-full bg-primary transition-[width]"
+                          style={{ width: `${job.progress}%` }}
+                        />
+                      </div>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Enviando: {job.progress}%
+                      </p>
+                    </div>
+                  ) : null}
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={busy}
+                      onClick={() => removeJob(job)}
+                    >
+                      <Trash2 aria-hidden="true" className="size-4" />
+                      Remover
+                    </Button>
+                    <Button
+                      size="sm"
+                      disabled={busy}
+                      onClick={() => void upload(job)}
+                    >
+                      {job.status === 'ERROR' ? (
+                        <RotateCcw aria-hidden="true" className="size-4" />
+                      ) : (
+                        <Upload aria-hidden="true" className="size-4" />
+                      )}
+                      {job.status === 'ERROR' ? 'Tentar novamente' : 'Enviar'}
+                    </Button>
+                  </div>
+                </div>
               </div>
-              <p className="mt-1 text-xs">Enviando: {job.progress}%</p>
-            </div>
-          ) : null}
-          <div className="mt-3 grid grid-cols-2 gap-3">
-            <Button
-              variant="outline"
-              disabled={busy}
-              onClick={() => removeJob(job)}
-            >
-              Remover prévia
-            </Button>
-            <Button disabled={busy} onClick={() => void upload(job)}>
-              {job.status === 'ERROR' ? 'Tentar novamente' : 'Enviar'}
-            </Button>
+            ))}
           </div>
         </div>
-      ))}
+      ) : null}
 
       {error ? <Alert variant="destructive">{error}</Alert> : null}
 
-      <div className="space-y-3">
-        <h3 className="font-semibold">Evidências confirmadas</h3>
-        {order.execution?.evidence.length ? (
-          order.execution.evidence.map((item) => (
-            <div className="rounded-xl border border-border p-3" key={item.id}>
-              <p className="truncate text-sm font-semibold">
-                {item.kind === 'SIGNATURE' ? 'Assinatura' : item.fileName}
-              </p>
-              {viewUrls[item.id] ? (
-                // eslint-disable-next-line @next/next/no-img-element -- authorized temporary API URL
-                <img
-                  className="mt-3 max-h-64 w-full rounded-lg object-contain"
-                  crossOrigin="use-credentials"
-                  src={viewUrls[item.id]}
-                  alt={
-                    item.kind === 'SIGNATURE'
-                      ? 'Assinatura confirmada'
-                      : 'Evidência confirmada'
-                  }
-                />
-              ) : null}
-              <div className="mt-3 grid grid-cols-2 gap-3">
-                <Button variant="outline" onClick={() => void view(item.id)}>
-                  Visualizar
-                </Button>
-                <Button
-                  variant="destructive"
-                  onClick={() => void remove(item.id)}
-                >
-                  Remover
-                </Button>
-              </div>
-            </div>
-          ))
-        ) : (
-          <p className="text-sm text-muted-foreground">
-            Nenhuma evidência confirmada.
+      <div className="space-y-3 border-t pt-5">
+        <div>
+          <h3 className="font-semibold">Fotos enviadas</h3>
+          <p className="text-xs text-muted-foreground">
+            Evidências já confirmadas e protegidas pelo servidor.
           </p>
+        </div>
+        {order.execution?.evidence.length ? (
+          <div className="grid gap-4 sm:grid-cols-2">
+            {order.execution.evidence.map((item) => {
+              const isOpen = Boolean(viewUrls[item.id])
+              return (
+                <div
+                  className="overflow-hidden rounded-xl border bg-card shadow-sm"
+                  key={item.id}
+                >
+                  <div className="flex items-center gap-3 p-3">
+                    <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+                      <ImagePlus aria-hidden="true" className="size-4" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold">
+                        {item.fileName}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Envio confirmado
+                      </p>
+                    </div>
+                  </div>
+                  {isOpen ? (
+                    <div className="flex aspect-[4/3] items-center justify-center border-y bg-muted/40 p-2">
+                      {/* eslint-disable-next-line @next/next/no-img-element -- authorized temporary API URL */}
+                      <img
+                        className="max-h-full max-w-full rounded-lg object-contain"
+                        crossOrigin="use-credentials"
+                        src={viewUrls[item.id]}
+                        alt={`Foto enviada: ${item.fileName}`}
+                      />
+                    </div>
+                  ) : null}
+                  <div className="grid grid-cols-2 gap-2 p-3">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() =>
+                        isOpen ? minimize(item.id) : void view(item.id)
+                      }
+                    >
+                      {isOpen ? (
+                        <ChevronUp aria-hidden="true" className="size-4" />
+                      ) : (
+                        <Eye aria-hidden="true" className="size-4" />
+                      )}
+                      {isOpen ? 'Minimizar' : 'Visualizar'}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => void remove(item.id)}
+                    >
+                      <Trash2 aria-hidden="true" className="size-4" />
+                      Remover
+                    </Button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        ) : (
+          <div className="rounded-xl border border-dashed px-4 py-8 text-center">
+            <ImagePlus
+              aria-hidden="true"
+              className="mx-auto size-6 text-muted-foreground"
+            />
+            <p className="mt-2 text-sm font-medium">Nenhuma foto enviada</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Use a câmera ou escolha imagens da galeria.
+            </p>
+          </div>
         )}
-      </div>
-
-      <div className="space-y-3 border-t border-border pt-5">
-        <h3 className="font-semibold">Assinatura do responsável</h3>
-        <SignaturePad
-          disabled={busy}
-          onConfirm={(file) => {
-            const job = makeJob(file, 'SIGNATURE')
-            setJobs((current) => [...current, job])
-            void upload(job)
-          }}
-        />
       </div>
     </Card>
   )

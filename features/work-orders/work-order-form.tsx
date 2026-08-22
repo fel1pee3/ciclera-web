@@ -104,7 +104,7 @@ export function WorkOrderForm({
           {errorMessage}
         </Alert>
       ) : null}
-      <Field label="Cliente" error={errors.customerId?.message}>
+      <SelectorField label="Cliente" error={errors.customerId?.message}>
         <RemoteCustomerSelector
           value={customerId}
           onChange={(next) => {
@@ -113,9 +113,10 @@ export function WorkOrderForm({
             setValue('equipmentId', '')
           }}
         />
-      </Field>
-      <Field label="Local" error={errors.locationId?.message}>
+      </SelectorField>
+      <SelectorField label="Local" error={errors.locationId?.message}>
         <RemoteLocationSelector
+          key={customerId || 'no-customer'}
           customerId={customerId}
           value={locationId}
           onChange={(next) => {
@@ -123,15 +124,20 @@ export function WorkOrderForm({
             setValue('equipmentId', '')
           }}
         />
-      </Field>
-      <Field label="Equipamento (opcional)" error={errors.equipmentId?.message}>
+      </SelectorField>
+      <SelectorField
+        className="sm:col-span-2"
+        label="Equipamento (opcional)"
+        error={errors.equipmentId?.message}
+      >
         <RemoteEquipmentSelector
+          key={locationId || 'no-location'}
           customerId={customerId}
           locationId={locationId}
           value={equipmentId}
           onChange={(next) => setValue('equipmentId', next)}
         />
-      </Field>
+      </SelectorField>
       <Field label="Prioridade" error={errors.priority?.message}>
         <select className="input" {...register('priority')}>
           <option value="LOW">Baixa</option>
@@ -141,17 +147,27 @@ export function WorkOrderForm({
         </select>
       </Field>
       <Field label="Tipo de serviço" error={errors.serviceType?.message}>
-        <Input {...register('serviceType')} />
+        <Input
+          placeholder="Ex.: Manutenção preventiva"
+          {...register('serviceType')}
+        />
       </Field>
       <Field label="Título" error={errors.title?.message}>
-        <Input {...register('title')} />
+        <Input
+          placeholder="Ex.: Manutenção do ar-condicionado da recepção"
+          {...register('title')}
+        />
       </Field>
       <Field
         className="sm:col-span-2"
         label="Descrição"
         error={errors.description?.message}
       >
-        <Textarea rows={5} {...register('description')} />
+        <Textarea
+          rows={5}
+          placeholder="Descreva o serviço solicitado, o problema identificado e as orientações importantes para o técnico."
+          {...register('description')}
+        />
       </Field>
       <Field label="Início previsto" error={errors.scheduledStartAt?.message}>
         <Input type="datetime-local" {...register('scheduledStartAt')} />
@@ -197,5 +213,25 @@ function Field({
       {children}
       {error ? <span className="text-sm text-destructive">{error}</span> : null}
     </Label>
+  )
+}
+
+function SelectorField({
+  children,
+  className,
+  error,
+  label,
+}: {
+  children: React.ReactNode
+  className?: string
+  error?: string
+  label: string
+}) {
+  return (
+    <div className={`grid content-start gap-2 ${className ?? ''}`}>
+      <p className="text-sm font-medium">{label}</p>
+      {children}
+      {error ? <span className="text-sm text-destructive">{error}</span> : null}
+    </div>
   )
 }

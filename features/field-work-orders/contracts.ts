@@ -15,7 +15,6 @@ export type FieldView = z.infer<typeof fieldViewSchema>
 
 export const evidenceSchema = z.object({
   id: z.string().uuid(),
-  kind: z.enum(['PHOTO', 'SIGNATURE']),
   fileName: z.string(),
   contentType: z.string(),
   sizeBytes: z.string().regex(/^\d+$/),

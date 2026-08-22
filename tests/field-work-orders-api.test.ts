@@ -169,7 +169,6 @@ describe('field work orders API client', () => {
 
     await createEvidenceIntent(order.id, {
       version: 1,
-      kind: 'PHOTO',
       fileName: 'foto.jpg',
       contentType: 'image/jpeg',
       sizeBytes: 10,

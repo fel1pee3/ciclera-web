@@ -61,7 +61,6 @@ describe('review API client', () => {
         evidence: [
           {
             id: '71000000-0000-4000-8000-000000000005',
-            kind: 'PHOTO',
             fileName: 'foto.jpg',
             contentType: 'image/jpeg',
             sizeBytes: '10',

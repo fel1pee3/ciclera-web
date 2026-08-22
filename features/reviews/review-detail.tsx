@@ -156,9 +156,7 @@ export function ReviewDetail() {
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               {review.execution.evidence.map((item) => (
                 <div className="rounded-xl border p-3" key={item.id}>
-                  <p className="truncate font-semibold">
-                    {item.kind === 'SIGNATURE' ? 'Assinatura' : item.fileName}
-                  </p>
+                  <p className="truncate font-semibold">{item.fileName}</p>
                   {evidenceUrls[item.id] ? (
                     // eslint-disable-next-line @next/next/no-img-element -- authorized temporary URL
                     <img
@@ -312,7 +310,6 @@ function Data({ label, value }: { label: string; value: string }) {
 
 const reasonLabels: Record<ReviewReason, string> = {
   REQUIRED_PHOTO_MISSING: 'Foto obrigatória ausente',
-  SIGNATURE_MISSING: 'Assinatura ausente',
   MATERIAL_WITHOUT_VALUE: 'Material sem valor',
   ADDITIONAL_SERVICE_UNAPPROVED: 'Serviço adicional sem aprovação',
   EQUIPMENT_DATA_INCORRECT: 'Dados do equipamento incorretos',

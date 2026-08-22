@@ -435,6 +435,99 @@ describe('team management foundation', () => {
     expect(getTeamErrorMessage(conflict)).toContain('já está vinculado')
   })
 
+  it('filters the team while typing or changing selects without submitting', async () => {
+    const inactiveTechnician = {
+      ...technician,
+      status: 'INACTIVE' as const,
+    }
+    const users = [owner, administrator, inactiveTechnician]
+    mocks.listUsers.mockImplementation(
+      async (query: {
+        search?: string
+        role?: string
+        status?: string
+        page: number
+        pageSize: number
+      }) => {
+        const normalizedSearch = query.search?.toLowerCase()
+        const items = users.filter(
+          (user) =>
+            (!normalizedSearch ||
+              user.name.toLowerCase().includes(normalizedSearch) ||
+              user.email.toLowerCase().includes(normalizedSearch)) &&
+            (!query.role || user.role === query.role) &&
+            (!query.status || user.status === query.status),
+        )
+        return {
+          items,
+          page: query.page,
+          pageSize: query.pageSize,
+          total: items.length,
+        }
+      },
+    )
+
+    render(<TeamManagement />)
+
+    await screen.findByText(owner.name)
+    expect(
+      screen.queryByRole('button', { name: 'Aplicar filtros' }),
+    ).not.toBeInTheDocument()
+    expect(screen.queryByText('Limpar filtros')).not.toBeInTheDocument()
+
+    const search = screen.getByPlaceholderText('Nome ou e-mail')
+    fireEvent.change(search, { target: { value: technician.email } })
+    expect(
+      screen.getByRole('button', { name: 'Limpar busca' }),
+    ).toBeInTheDocument()
+    await waitFor(() =>
+      expect(mocks.listUsers).toHaveBeenLastCalledWith({
+        page: 1,
+        pageSize: 12,
+        search: technician.email,
+      }),
+    )
+    await waitFor(() =>
+      expect(screen.queryByText(owner.name)).not.toBeInTheDocument(),
+    )
+    expect(screen.getByText(technician.name)).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Limpar busca' }))
+    await screen.findByText(owner.name)
+    expect(
+      screen.queryByRole('button', { name: 'Limpar busca' }),
+    ).not.toBeInTheDocument()
+
+    fireEvent.change(screen.getByLabelText('Perfil'), {
+      target: { value: 'ADMIN' },
+    })
+    await waitFor(() =>
+      expect(mocks.listUsers).toHaveBeenLastCalledWith({
+        page: 1,
+        pageSize: 12,
+        role: 'ADMIN',
+      }),
+    )
+    expect(await screen.findByText(administrator.name)).toBeInTheDocument()
+    expect(screen.queryByText(technician.name)).not.toBeInTheDocument()
+
+    fireEvent.change(screen.getByLabelText('Perfil'), {
+      target: { value: '' },
+    })
+    fireEvent.change(screen.getByLabelText('Status'), {
+      target: { value: 'INACTIVE' },
+    })
+    await waitFor(() =>
+      expect(mocks.listUsers).toHaveBeenLastCalledWith({
+        page: 1,
+        pageSize: 12,
+        status: 'INACTIVE',
+      }),
+    )
+    expect(await screen.findByText(technician.name)).toBeInTheDocument()
+    expect(screen.queryByText(owner.name)).not.toBeInTheDocument()
+  })
+
   it('loads server-side pagination parameters', async () => {
     render(<TeamManagement />)
     await waitFor(() => expect(mocks.listUsers.mock.calls).toHaveLength(1))

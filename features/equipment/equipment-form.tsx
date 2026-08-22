@@ -118,7 +118,7 @@ export function EquipmentForm({
           </p>
         </div>
         <div className="grid gap-5 sm:grid-cols-2">
-          <Field label="Cliente" error={errors.customerId?.message}>
+          <SelectorField label="Cliente" error={errors.customerId?.message}>
             <RemoteCustomerSelector
               value={customerId}
               onChange={(nextCustomerId) => {
@@ -136,19 +136,20 @@ export function EquipmentForm({
                 )
               }}
             />
-          </Field>
-          <Field
+          </SelectorField>
+          <SelectorField
             label="Local de atendimento"
             error={errors.locationId?.message}
           >
             <RemoteLocationSelector
+              key={customerId || 'no-customer'}
               customerId={customerId}
               value={locationId}
               onChange={(value) =>
                 setValue('locationId', value, { shouldValidate: true })
               }
             />
-          </Field>
+          </SelectorField>
         </div>
       </section>
 
@@ -252,5 +253,23 @@ function Field({
       {children}
       {error ? <span className="text-sm text-destructive">{error}</span> : null}
     </Label>
+  )
+}
+
+function SelectorField({
+  children,
+  error,
+  label,
+}: {
+  children: React.ReactNode
+  error?: string
+  label: string
+}) {
+  return (
+    <div className="grid content-start gap-2">
+      <p className="text-sm font-medium">{label}</p>
+      {children}
+      {error ? <span className="text-sm text-destructive">{error}</span> : null}
+    </div>
   )
 }

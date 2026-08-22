@@ -47,7 +47,7 @@ export function PositioningStrip() {
     ['Chamado', 'Demanda registrada', MessageSquareText],
     ['Planejamento', 'Agenda e responsável', CalendarClock],
     ['Execução', 'Trabalho em campo', Wrench],
-    ['Evidências', 'Fotos e assinatura', Camera],
+    ['Evidências', 'Fotos do atendimento', Camera],
     ['Revisão', 'Conferência do serviço', ClipboardCheck],
     ['Faturamento', 'Receita liberada', ReceiptText],
   ] as const

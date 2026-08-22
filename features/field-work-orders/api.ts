@@ -30,7 +30,6 @@ export function createEvidenceIntent(
   workOrderId: string,
   input: {
     version: number
-    kind: 'PHOTO' | 'SIGNATURE'
     fileName: string
     contentType: string
     sizeBytes: number

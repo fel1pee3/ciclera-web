@@ -257,6 +257,85 @@ describe('customers web foundation', () => {
     ).toBeInTheDocument()
   })
 
+  it('filters customers immediately without navigation or a clear-filters row', async () => {
+    const activeCustomer: Customer = {
+      id: '30000000-0000-4000-8000-000000000001',
+      name: 'Hotel Serra Verde Ltda.',
+      document: '12345678000190',
+      email: 'manutencao@hotelserraverde.com.br',
+      phone: '551134567890',
+      notes: null,
+      archivedAt: null,
+      createdAt: '2026-08-17T12:00:00.000Z',
+      updatedAt: '2026-08-17T12:00:00.000Z',
+    }
+    const archivedCustomer: Customer = {
+      ...activeCustomer,
+      id: '30000000-0000-4000-8000-000000000002',
+      name: 'Clínica Bem-Estar',
+      document: '23456789000101',
+      email: 'infraestrutura@clinicabemestar.com.br',
+      archivedAt: '2026-08-18T12:00:00.000Z',
+    }
+
+    vi.mocked(listCustomers).mockImplementation(async (query) => {
+      const items = [activeCustomer, archivedCustomer].filter((customer) => {
+        const matchesArchive =
+          query.archive === 'ALL' ||
+          (query.archive === 'ACTIVE' && !customer.archivedAt) ||
+          (query.archive === 'ARCHIVED' && Boolean(customer.archivedAt))
+        const term = query.search?.toLocaleLowerCase('pt-BR')
+        const matchesSearch =
+          !term ||
+          customer.name.toLocaleLowerCase('pt-BR').includes(term) ||
+          customer.document?.includes(term)
+        return matchesArchive && matchesSearch
+      })
+      return {
+        items,
+        page: query.page,
+        pageSize: query.pageSize,
+        total: items.length,
+      }
+    })
+
+    render(<CustomerList />)
+
+    await screen.findByRole('heading', { name: activeCustomer.name })
+    expect(screen.queryByText('Limpar filtros')).not.toBeInTheDocument()
+
+    const search = screen.getByPlaceholderText('Nome ou documento')
+    fireEvent.change(search, { target: { value: 'Serra' } })
+    expect(
+      screen.getByRole('button', { name: 'Limpar busca' }),
+    ).toBeInTheDocument()
+    await waitFor(() =>
+      expect(listCustomers).toHaveBeenLastCalledWith({
+        page: 1,
+        pageSize: 12,
+        archive: 'ACTIVE',
+        search: 'Serra',
+      }),
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Limpar busca' }))
+    expect(search).toHaveValue('')
+
+    fireEvent.change(screen.getByRole('combobox'), {
+      target: { value: 'ARCHIVED' },
+    })
+    await waitFor(() =>
+      expect(listCustomers).toHaveBeenLastCalledWith({
+        page: 1,
+        pageSize: 12,
+        archive: 'ARCHIVED',
+      }),
+    )
+    expect(
+      await screen.findByRole('heading', { name: archivedCustomer.name }),
+    ).toBeInTheDocument()
+  })
+
   it('confirms archiving from the customer list in a dialog', async () => {
     const customer: Customer = {
       id: '30000000-0000-4000-8000-000000000001',

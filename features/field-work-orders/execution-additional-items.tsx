@@ -24,6 +24,12 @@ const labels = {
   ADDITIONAL_HOUR: 'Hora adicional',
 } as const
 
+const descriptionPlaceholders: Record<AdditionalItem['type'], string> = {
+  MATERIAL: 'Ex.: Borne elétrico de conexão 16 mm²',
+  SERVICE: 'Ex.: Reaperto das conexões do quadro elétrico',
+  ADDITIONAL_HOUR: 'Ex.: Diagnóstico além do período previsto',
+}
+
 export function ExecutionAdditionalItems({
   order,
   onOrderChange,
@@ -164,6 +170,7 @@ export function ExecutionAdditionalItems({
           <span>Descrição</span>
           <Input
             maxLength={500}
+            placeholder={descriptionPlaceholders[type]}
             value={description}
             onChange={(event) => setDescription(event.target.value)}
           />
@@ -173,6 +180,7 @@ export function ExecutionAdditionalItems({
             <span>Quantidade</span>
             <Input
               inputMode="decimal"
+              placeholder="Ex.: 1"
               value={quantity}
               onChange={(event) => setQuantity(event.target.value)}
             />
@@ -180,7 +188,7 @@ export function ExecutionAdditionalItems({
           <Label className="grid gap-2">
             <span>Valor unitário (R$)</span>
             <CurrencyInput
-              placeholder="0,00"
+              placeholder="Ex.: 85,00"
               value={unitAmount}
               onValueChange={setUnitAmount}
             />
