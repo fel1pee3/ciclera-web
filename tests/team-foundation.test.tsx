@@ -111,7 +111,7 @@ describe('team management foundation', () => {
   it('defines role permissions and validates safe creation input', () => {
     expect(canManageUser('ADMIN', owner)).toBe(false)
     expect(canManageUser('ADMIN', technician)).toBe(true)
-    expect(canManageUser('OWNER', owner, owner.id)).toBe(false)
+    expect(canManageUser('OWNER', owner)).toBe(true)
     expect(creatableRoles('OWNER')).toEqual(['OWNER', 'ADMIN', 'TECHNICIAN'])
     expect(
       createUserSchema.safeParse({
@@ -195,7 +195,7 @@ describe('team management foundation', () => {
     ).not.toBeInTheDocument()
   })
 
-  it('does not expose edit or status actions for the signed-in owner', async () => {
+  it('lets the owner edit access data without changing profile or status', async () => {
     Object.assign(mocks.account.user, {
       id: owner.id,
       name: owner.name,
@@ -206,13 +206,30 @@ describe('team management foundation', () => {
     render(<TeamManagement />)
 
     await screen.findByText('Proprietária')
+    const ownerCard = screen.getByText('Proprietária').closest('article')
+    expect(ownerCard).not.toBeNull()
+    const ownerActions = within(ownerCard as HTMLElement)
     expect(
-      screen.getByText(
-        'Sua conta de proprietário é protegida e não pode ser alterada por aqui.',
+      ownerActions.getByText(
+        'Você pode atualizar seus dados de acesso, mas o perfil e a ativação desta conta são protegidos.',
       ),
     ).toBeInTheDocument()
-    expect(screen.getAllByRole('button', { name: 'Editar' })).toHaveLength(1)
+    expect(ownerActions.getByRole('button', { name: 'Editar' })).toBeEnabled()
+    expect(
+      ownerActions.queryByRole('button', { name: 'Desativar' }),
+    ).not.toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: 'Editar' })).toHaveLength(2)
     expect(screen.getAllByRole('button', { name: 'Desativar' })).toHaveLength(1)
+
+    fireEvent.click(ownerActions.getByRole('button', { name: 'Editar' }))
+    const dialog = within(
+      screen.getByRole('dialog', { name: 'Editar integrante' }),
+    )
+    expect(dialog.getByLabelText('Nome')).toHaveValue(owner.name)
+    expect(dialog.getByLabelText('E-mail')).toHaveValue(owner.email)
+    expect(dialog.getByLabelText('Nova senha (opcional)')).toBeEnabled()
+    expect(dialog.getByLabelText('Perfil')).toHaveValue('OWNER')
+    expect(dialog.getByLabelText('Perfil')).toBeDisabled()
   })
 
   it('confirms activation changes in a modal before calling the API', async () => {

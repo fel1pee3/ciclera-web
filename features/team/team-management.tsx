@@ -256,11 +256,7 @@ export function TeamManagement() {
           {result.items.map((user) => {
             const isProtectedOwner =
               account.user.id === user.id && user.role === 'OWNER'
-            const manageable = canManageUser(
-              account.user.role,
-              user,
-              account.user.id,
-            )
+            const manageable = canManageUser(account.user.role, user)
             return (
               <article
                 key={user.id}
@@ -287,25 +283,31 @@ export function TeamManagement() {
                     <Button variant="outline" onClick={() => setEditing(user)}>
                       Editar
                     </Button>
-                    <Button
-                      variant="ghost"
-                      disabled={pendingUserId === user.id}
-                      onClick={() => setStatusTarget(user)}
-                    >
-                      {pendingUserId === user.id
-                        ? 'Processando…'
-                        : user.status === 'ACTIVE'
-                          ? 'Desativar'
-                          : 'Ativar'}
-                    </Button>
+                    {!isProtectedOwner ? (
+                      <Button
+                        variant="ghost"
+                        disabled={pendingUserId === user.id}
+                        onClick={() => setStatusTarget(user)}
+                      >
+                        {pendingUserId === user.id
+                          ? 'Processando…'
+                          : user.status === 'ACTIVE'
+                            ? 'Desativar'
+                            : 'Ativar'}
+                      </Button>
+                    ) : null}
                   </div>
                 ) : (
                   <p className="mt-4 text-xs text-muted-foreground">
-                    {isProtectedOwner
-                      ? 'Sua conta de proprietário é protegida e não pode ser alterada por aqui.'
-                      : 'Somente um proprietário pode gerenciar este perfil.'}
+                    Somente um proprietário pode gerenciar este perfil.
                   </p>
                 )}
+                {isProtectedOwner ? (
+                  <p className="mt-3 text-xs text-muted-foreground">
+                    Você pode atualizar seus dados de acesso, mas o perfil e a
+                    ativação desta conta são protegidos.
+                  </p>
+                ) : null}
               </article>
             )
           })}
