@@ -110,8 +110,8 @@ describe('team management foundation', () => {
     })
   })
 
-  it('lets an ADMIN manage other administrators and technicians', async () => {
-    mocks.listUsers.mockResolvedValueOnce({
+  it('lets an ADMIN manage technicians while protecting other administrators', async () => {
+    mocks.listUsers.mockResolvedValue({
       items: [owner, administrator, technician],
       page: 1,
       pageSize: 12,
@@ -120,22 +120,38 @@ describe('team management foundation', () => {
     render(<TeamManagement />)
 
     await screen.findByText('Proprietária')
-    expect(
-      screen.queryByText('Somente um proprietário pode gerenciar este perfil.'),
-    ).not.toBeInTheDocument()
-    const administratorCard = Array.from(
-      document.querySelectorAll('article'),
-    ).find((card) => card.textContent?.includes(administrator.name))
-    expect(administratorCard).toBeDefined()
+    const administratorCard = (
+      await screen.findByText(administrator.name)
+    ).closest('article')
+    expect(administratorCard).not.toBeNull()
     const administratorActions = within(administratorCard as HTMLElement)
     expect(
-      administratorActions.getByRole('button', { name: 'Editar' }),
+      administratorActions.getByText(
+        'Somente um proprietário pode gerenciar este perfil.',
+      ),
     ).toBeInTheDocument()
     expect(
-      administratorActions.getByRole('button', { name: 'Desativar' }),
+      administratorActions.queryByRole('button', { name: 'Editar' }),
+    ).not.toBeInTheDocument()
+    expect(
+      administratorActions.queryByRole('button', { name: 'Desativar' }),
+    ).not.toBeInTheDocument()
+    expect(
+      administratorActions.queryByRole('button', { name: 'Excluir' }),
+    ).not.toBeInTheDocument()
+    const technicianCard = (await screen.findByText(technician.name)).closest(
+      'article',
+    )
+    expect(technicianCard).not.toBeNull()
+    const technicianActions = within(technicianCard as HTMLElement)
+    expect(
+      technicianActions.getByRole('button', { name: 'Editar' }),
     ).toBeInTheDocument()
     expect(
-      administratorActions.getByRole('button', { name: 'Excluir' }),
+      technicianActions.getByRole('button', { name: 'Desativar' }),
+    ).toBeInTheDocument()
+    expect(
+      technicianActions.getByRole('button', { name: 'Excluir' }),
     ).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Adicionar pessoa' }))
     const createForm = screen
@@ -144,8 +160,8 @@ describe('team management foundation', () => {
     expect(createForm).not.toBeNull()
     const form = within(createForm as HTMLFormElement)
     expect(
-      form.getByRole('option', { name: 'Administrador' }),
-    ).toBeInTheDocument()
+      form.queryByRole('option', { name: 'Administrador' }),
+    ).not.toBeInTheDocument()
     expect(form.getByRole('option', { name: 'Técnico' })).toBeInTheDocument()
     expect(
       form.queryByRole('option', { name: 'Proprietário' }),
@@ -158,14 +174,14 @@ describe('team management foundation', () => {
       role: 'ADMIN' as const,
     }
     expect(canManageUser(adminActor, owner)).toBe(false)
-    expect(canManageUser(adminActor, administrator)).toBe(true)
+    expect(canManageUser(adminActor, administrator)).toBe(false)
     expect(canManageUser(adminActor, technician)).toBe(true)
     expect(
       canManageUser({ id: administrator.id, role: 'ADMIN' }, administrator),
     ).toBe(false)
     expect(canManageUser({ id: owner.id, role: 'OWNER' }, owner)).toBe(false)
     expect(creatableRoles('OWNER')).toEqual(['ADMIN', 'TECHNICIAN'])
-    expect(creatableRoles('ADMIN')).toEqual(['ADMIN', 'TECHNICIAN'])
+    expect(creatableRoles('ADMIN')).toEqual(['TECHNICIAN'])
     expect(
       createUserSchema.safeParse({
         name: 'A',
@@ -187,7 +203,7 @@ describe('team management foundation', () => {
   })
 
   it('lets an ADMIN edit their own access data without changing access level', async () => {
-    mocks.listUsers.mockResolvedValueOnce({
+    mocks.listUsers.mockResolvedValue({
       items: [owner, currentAdministrator, administrator],
       page: 1,
       pageSize: 12,
