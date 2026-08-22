@@ -149,6 +149,9 @@ export function TeamManagement() {
           <EditUserForm
             key={editing.id}
             actorRole={account.user.role}
+            allowRoleChange={
+              editing.role !== 'OWNER' && editing.id !== account.user.id
+            }
             user={editing}
             onCancel={() => setEditing(null)}
             onSaved={saved}
@@ -291,8 +294,16 @@ export function TeamManagement() {
         <div className="grid gap-3 sm:grid-cols-2">
           {ownerFirst(result.items).map((user) => {
             const isProtectedOwner = user.role === 'OWNER'
+            const canEditOwnOwner =
+              isProtectedOwner &&
+              account.user.role === 'OWNER' &&
+              account.user.id === user.id
+            const canEditOwnAdmin =
+              user.role === 'ADMIN' &&
+              account.user.role === 'ADMIN' &&
+              account.user.id === user.id
             const manageable =
-              !isProtectedOwner && canManageUser(account.user.role, user)
+              !isProtectedOwner && canManageUser(account.user, user)
             return (
               <article
                 key={user.id}
@@ -314,7 +325,13 @@ export function TeamManagement() {
                 <p className="mt-4 text-sm font-medium">
                   {roleLabel(user.role)}
                 </p>
-                {manageable ? (
+                {canEditOwnOwner || canEditOwnAdmin ? (
+                  <div className="mt-4">
+                    <Button variant="outline" onClick={() => setEditing(user)}>
+                      Editar
+                    </Button>
+                  </div>
+                ) : manageable ? (
                   <div className="mt-4 flex flex-wrap gap-2">
                     <Button variant="outline" onClick={() => setEditing(user)}>
                       Editar

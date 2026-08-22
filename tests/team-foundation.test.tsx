@@ -66,6 +66,19 @@ const technician = {
   email: 'tech@example.test',
   role: 'TECHNICIAN' as const,
 }
+const administrator = {
+  ...owner,
+  id: '20000000-0000-4000-8000-000000000003',
+  name: 'Outra administradora',
+  email: 'admin2@example.test',
+  role: 'ADMIN' as const,
+}
+const currentAdministrator = {
+  ...administrator,
+  id: '10000000-0000-4000-8000-000000000102',
+  name: 'Administrador atual',
+  email: 'admin@example.test',
+}
 
 describe('team management foundation', () => {
   beforeEach(() => {
@@ -97,20 +110,42 @@ describe('team management foundation', () => {
     })
   })
 
-  it('keeps ADMIN actions restricted to technicians', async () => {
+  it('lets an ADMIN manage other administrators and technicians', async () => {
+    mocks.listUsers.mockResolvedValueOnce({
+      items: [owner, administrator, technician],
+      page: 1,
+      pageSize: 12,
+      total: 3,
+    })
     render(<TeamManagement />)
 
     await screen.findByText('Proprietária')
     expect(
       screen.queryByText('Somente um proprietário pode gerenciar este perfil.'),
     ).not.toBeInTheDocument()
-    expect(screen.getAllByRole('button', { name: 'Editar' })).toHaveLength(1)
+    const administratorCard = Array.from(
+      document.querySelectorAll('article'),
+    ).find((card) => card.textContent?.includes(administrator.name))
+    expect(administratorCard).toBeDefined()
+    const administratorActions = within(administratorCard as HTMLElement)
+    expect(
+      administratorActions.getByRole('button', { name: 'Editar' }),
+    ).toBeInTheDocument()
+    expect(
+      administratorActions.getByRole('button', { name: 'Desativar' }),
+    ).toBeInTheDocument()
+    expect(
+      administratorActions.getByRole('button', { name: 'Excluir' }),
+    ).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Adicionar pessoa' }))
     const createForm = screen
       .getByRole('dialog', { name: 'Adicionar pessoa' })
       .querySelector('form')
     expect(createForm).not.toBeNull()
     const form = within(createForm as HTMLFormElement)
+    expect(
+      form.getByRole('option', { name: 'Administrador' }),
+    ).toBeInTheDocument()
     expect(form.getByRole('option', { name: 'Técnico' })).toBeInTheDocument()
     expect(
       form.queryByRole('option', { name: 'Proprietário' }),
@@ -118,10 +153,19 @@ describe('team management foundation', () => {
   })
 
   it('defines role permissions and validates safe creation input', () => {
-    expect(canManageUser('ADMIN', owner)).toBe(false)
-    expect(canManageUser('ADMIN', technician)).toBe(true)
-    expect(canManageUser('OWNER', owner)).toBe(false)
+    const adminActor = {
+      id: mocks.account.user.id,
+      role: 'ADMIN' as const,
+    }
+    expect(canManageUser(adminActor, owner)).toBe(false)
+    expect(canManageUser(adminActor, administrator)).toBe(true)
+    expect(canManageUser(adminActor, technician)).toBe(true)
+    expect(
+      canManageUser({ id: administrator.id, role: 'ADMIN' }, administrator),
+    ).toBe(false)
+    expect(canManageUser({ id: owner.id, role: 'OWNER' }, owner)).toBe(false)
     expect(creatableRoles('OWNER')).toEqual(['ADMIN', 'TECHNICIAN'])
+    expect(creatableRoles('ADMIN')).toEqual(['ADMIN', 'TECHNICIAN'])
     expect(
       createUserSchema.safeParse({
         name: 'A',
@@ -140,6 +184,43 @@ describe('team management foundation', () => {
         role: 'TECHNICIAN',
       }).success,
     ).toBe(true)
+  })
+
+  it('lets an ADMIN edit their own access data without changing access level', async () => {
+    mocks.listUsers.mockResolvedValueOnce({
+      items: [owner, currentAdministrator, administrator],
+      page: 1,
+      pageSize: 12,
+      total: 3,
+    })
+
+    render(<TeamManagement />)
+
+    const ownCard = (
+      await screen.findByText(currentAdministrator.name)
+    ).closest('article')
+    expect(ownCard).not.toBeNull()
+    const ownActions = within(ownCard as HTMLElement)
+    expect(
+      ownActions.getByRole('button', { name: 'Editar' }),
+    ).toBeInTheDocument()
+    expect(
+      ownActions.queryByRole('button', { name: 'Desativar' }),
+    ).not.toBeInTheDocument()
+    expect(
+      ownActions.queryByRole('button', { name: 'Excluir' }),
+    ).not.toBeInTheDocument()
+
+    fireEvent.click(ownActions.getByRole('button', { name: 'Editar' }))
+    const dialog = within(
+      screen.getByRole('dialog', { name: 'Editar integrante' }),
+    )
+    expect(dialog.getByLabelText('Nome')).toHaveValue(currentAdministrator.name)
+    expect(dialog.getByLabelText('E-mail')).toHaveValue(
+      currentAdministrator.email,
+    )
+    expect(dialog.getByLabelText('Nova senha (opcional)')).toBeInTheDocument()
+    expect(dialog.queryByLabelText('Perfil')).not.toBeInTheDocument()
   })
 
   it('requires a safe confirmed password and lets both values be revealed', async () => {
@@ -194,7 +275,15 @@ describe('team management foundation', () => {
     render(<TeamManagement />)
 
     await screen.findByText('Proprietária')
-    fireEvent.click(screen.getByRole('button', { name: 'Editar' }))
+    const technicianCard = Array.from(
+      document.querySelectorAll('article'),
+    ).find((card) => card.textContent?.includes('Técnica'))
+    expect(technicianCard).toBeDefined()
+    fireEvent.click(
+      within(technicianCard as HTMLElement).getByRole('button', {
+        name: 'Editar',
+      }),
+    )
 
     const dialog = within(
       screen.getByRole('dialog', { name: 'Editar integrante' }),
@@ -221,7 +310,7 @@ describe('team management foundation', () => {
     ).not.toBeInTheDocument()
   })
 
-  it('keeps the owner card first, static, and without extra messages', async () => {
+  it('lets the owner edit only their own access data', async () => {
     Object.assign(mocks.account.user, {
       id: owner.id,
       name: owner.name,
@@ -245,17 +334,29 @@ describe('team management foundation', () => {
     expect(ownerCard).not.toBeNull()
     const ownerActions = within(ownerCard as HTMLElement)
     expect(
-      ownerActions.queryByRole('button', { name: 'Editar' }),
-    ).not.toBeInTheDocument()
+      ownerActions.getByRole('button', { name: 'Editar' }),
+    ).toBeInTheDocument()
     expect(
       ownerActions.queryByRole('button', { name: 'Desativar' }),
     ).not.toBeInTheDocument()
     expect(
+      ownerActions.queryByRole('button', { name: 'Excluir' }),
+    ).not.toBeInTheDocument()
+    expect(
       ownerActions.queryByText(/protegida|gerenciar este perfil/i),
     ).not.toBeInTheDocument()
-    expect(screen.getAllByRole('button', { name: 'Editar' })).toHaveLength(1)
+    expect(screen.getAllByRole('button', { name: 'Editar' })).toHaveLength(2)
     expect(screen.getAllByRole('button', { name: 'Desativar' })).toHaveLength(1)
     expect(screen.getAllByRole('button', { name: 'Excluir' })).toHaveLength(1)
+
+    fireEvent.click(ownerActions.getByRole('button', { name: 'Editar' }))
+    const dialog = within(
+      screen.getByRole('dialog', { name: 'Editar integrante' }),
+    )
+    expect(dialog.getByLabelText('Nome')).toHaveValue(owner.name)
+    expect(dialog.getByLabelText('E-mail')).toHaveValue(owner.email)
+    expect(dialog.getByLabelText('Nova senha (opcional)')).toBeInTheDocument()
+    expect(dialog.queryByLabelText('Perfil')).not.toBeInTheDocument()
   })
 
   it('confirms deletion before removing a non-owner member', async () => {

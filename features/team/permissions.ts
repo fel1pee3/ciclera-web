@@ -2,13 +2,14 @@ import type { UserRole } from '@/features/auth/contracts'
 import type { ManagedUser } from './contracts'
 
 export function canManageUser(
-  actorRole: UserRole,
+  actor: { id: string; role: UserRole },
   target: ManagedUser,
 ): boolean {
   if (target.role === 'OWNER') return false
-  return actorRole === 'OWNER' || target.role === 'TECHNICIAN'
+  if (actor.role === 'ADMIN' && actor.id === target.id) return false
+  return actor.role === 'OWNER' || actor.role === 'ADMIN'
 }
 
 export function creatableRoles(actorRole: UserRole): readonly UserRole[] {
-  return actorRole === 'OWNER' ? ['ADMIN', 'TECHNICIAN'] : ['TECHNICIAN']
+  return actorRole === 'TECHNICIAN' ? [] : ['ADMIN', 'TECHNICIAN']
 }

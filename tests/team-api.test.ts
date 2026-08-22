@@ -94,6 +94,32 @@ describe('team API client', () => {
     expect(body).toContain('"role":"ADMIN"')
   })
 
+  it('updates the owner access data without sending a role', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      Response.json({
+        id: '20000000-0000-4000-8000-000000000001',
+        name: 'Proprietário atualizado',
+        email: 'owner.updated@example.test',
+        role: 'OWNER',
+        status: 'ACTIVE',
+        createdAt: '2026-08-16T00:00:00.000Z',
+        updatedAt: '2026-08-17T00:00:00.000Z',
+      }),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+
+    await updateUser('20000000-0000-4000-8000-000000000001', {
+      name: 'Proprietário atualizado',
+      email: 'owner.updated@example.test',
+      password: '',
+      confirmPassword: '',
+    })
+
+    const body = String(fetchMock.mock.calls[0]?.[1]?.body)
+    expect(body).not.toContain('role')
+    expect(body).not.toContain('password')
+  })
+
   it('deletes a team member through the dedicated endpoint', async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       Response.json({

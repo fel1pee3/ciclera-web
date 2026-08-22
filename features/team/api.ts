@@ -46,7 +46,7 @@ export function updateUser(userId: string, input: UpdateUserInput) {
   const request = {
     name: input.name,
     email: input.email,
-    role: input.role,
+    ...(input.role ? { role: input.role } : {}),
     ...(input.password ? { password: input.password } : {}),
   }
   return clientApiRequest(`users/${userId}`, managedUserSchema, {

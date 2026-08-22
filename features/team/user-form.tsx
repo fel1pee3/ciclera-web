@@ -157,11 +157,13 @@ export function CreateUserForm({
 
 export function EditUserForm({
   actorRole,
+  allowRoleChange = true,
   user,
   onCancel,
   onSaved,
 }: {
   actorRole: UserRole
+  allowRoleChange?: boolean
   user: ManagedUser
   onCancel: () => void
   onSaved: (message: string) => void
@@ -181,7 +183,7 @@ export function EditUserForm({
       email: user.email,
       password: '',
       confirmPassword: '',
-      role: user.role,
+      role: allowRoleChange ? user.role : undefined,
     },
   })
   const password = useWatch({ control, name: 'password', defaultValue: '' })
@@ -255,15 +257,17 @@ export function EditUserForm({
           Deixe os campos de senha vazios para manter a senha atual.
         </p>
       </div>
-      <FormField label="Perfil" error={errors.role?.message}>
-        <select className="input" {...register('role')}>
-          {creatableRoles(actorRole).map((role) => (
-            <option key={role} value={role}>
-              {roleLabels[role]}
-            </option>
-          ))}
-        </select>
-      </FormField>
+      {allowRoleChange ? (
+        <FormField label="Perfil" error={errors.role?.message}>
+          <select className="input" {...register('role')}>
+            {creatableRoles(actorRole).map((role) => (
+              <option key={role} value={role}>
+                {roleLabels[role]}
+              </option>
+            ))}
+          </select>
+        </FormField>
+      ) : null}
       <div className="flex flex-wrap justify-end gap-3 border-t pt-5 sm:col-span-2">
         <Button type="button" variant="ghost" onClick={onCancel}>
           Cancelar
