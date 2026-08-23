@@ -15,8 +15,8 @@ export function Hero() {
       id="inicio"
       className="overflow-hidden bg-background pb-20 pt-16 lg:pb-28 lg:pt-24"
     >
-      <div className="container-page grid items-center gap-14 lg:grid-cols-[1.02fr_.98fr]">
-        <div>
+      <div className="container-page grid min-w-0 items-center gap-14 lg:grid-cols-[minmax(0,1.02fr)_minmax(0,.98fr)]">
+        <div className="min-w-0">
           <p className="eyebrow">Sistema de gestão de ordens de serviço</p>
           <h1 className="mt-5 max-w-3xl text-balance font-heading text-4xl font-bold leading-tight tracking-tight text-foreground sm:text-5xl lg:text-6xl">
             Nenhum serviço executado deve ficar sem faturar.
@@ -57,7 +57,9 @@ export function Hero() {
             ))}
           </ul>
         </div>
-        <HeroMockup />
+        <div className="min-w-0 max-w-full">
+          <HeroMockup />
+        </div>
       </div>
     </section>
   )
@@ -85,27 +87,27 @@ function HeroMockup() {
   ]
 
   return (
-    <div className="relative" data-nosnippet="">
-      <div className="overflow-hidden rounded-3xl border border-primary-foreground/10 bg-institutional shadow-2xl">
-        <div className="flex items-center justify-between border-b border-border bg-card px-5 py-4 text-foreground">
-          <div className="flex items-center gap-3">
-            <span className="-mr-2 origin-left scale-75">
+    <div className="relative min-w-0 max-w-full" data-nosnippet="">
+      <div className="min-w-0 max-w-full overflow-hidden rounded-3xl border border-primary-foreground/10 bg-institutional shadow-2xl">
+        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 border-b border-border bg-card px-4 py-4 text-foreground sm:px-5">
+          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+            <span className="-mr-2 shrink-0 origin-left scale-75">
               <Brand />
             </span>
-            <div>
-              <p className="text-[10px] text-muted-foreground">
+            <div className="min-w-0">
+              <p className="text-[10px] leading-tight text-muted-foreground">
                 Operação demonstrativa
               </p>
             </div>
           </div>
-          <span className="rounded-full border border-border px-3 py-1 text-[10px] font-semibold text-muted-foreground">
+          <span className="max-w-24 rounded-full border border-border px-2.5 py-1 text-center text-[10px] font-semibold leading-tight text-muted-foreground sm:max-w-none sm:px-3">
             Agosto de 2026
           </span>
         </div>
 
         <div className="bg-[#f4f8f6] p-4 sm:p-6">
-          <div className="flex items-end justify-between gap-4">
-            <div>
+          <div className="flex min-w-0 items-end justify-between gap-4">
+            <div className="min-w-0">
               <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
                 Garantia de receita
               </p>
@@ -123,7 +125,7 @@ function HeroMockup() {
             {stages.map(({ label, count, value, icon: Icon }, index) => (
               <div
                 key={label}
-                className={`rounded-2xl border p-4 ${
+                className={`min-w-0 rounded-2xl border p-4 ${
                   index === 2
                     ? 'border-primary/25 bg-primary text-primary-foreground'
                     : 'border-border bg-card'
@@ -159,16 +161,16 @@ function HeroMockup() {
             ))}
           </div>
 
-          <div className="mt-3 rounded-2xl border border-border bg-card p-4">
+          <div className="mt-3 min-w-0 rounded-2xl border border-border bg-card p-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0">
                 <p className="text-xs font-bold uppercase tracking-wider text-primary">
                   OS-000184
                 </p>
-                <p className="truncate font-heading text-sm font-semibold">
+                <p className="break-words font-heading text-sm font-semibold sm:truncate">
                   Manutenção preventiva do ar-condicionado
                 </p>
-                <p className="mt-1 truncate text-xs text-muted-foreground">
+                <p className="mt-1 break-words text-xs text-muted-foreground sm:truncate">
                   Hotel Serra Verde · Unidade Centro
                 </p>
               </div>

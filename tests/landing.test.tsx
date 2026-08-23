@@ -45,11 +45,29 @@ describe('public pages', () => {
         level: 1,
       }),
     ).toBeVisible()
+    expect(
+      screen.getByRole('heading', {
+        name: /Dados pessoais e informações tratadas/i,
+      }),
+    ).toBeVisible()
+    expect(
+      screen.getByRole('heading', { name: /Direitos do titular/i }),
+    ).toBeVisible()
+    expect(
+      screen.getByText('A Ciclera não vende dados pessoais.'),
+    ).toBeVisible()
 
     unmount()
     render(<TermsPage />)
     expect(
       screen.getByRole('heading', { name: 'Termos de Uso', level: 1 }),
     ).toBeVisible()
+    expect(
+      screen.getByRole('heading', { name: /Planos, limites e cobrança/i }),
+    ).toBeVisible()
+    expect(screen.getByText(/três dias completos de carência/i)).toBeVisible()
+    expect(
+      screen.getByRole('link', { name: 'Política de Privacidade' }),
+    ).toHaveAttribute('href', '/politica-de-privacidade')
   })
 })

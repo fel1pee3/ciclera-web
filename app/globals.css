@@ -85,7 +85,7 @@
 
 @layer components {
   .container-page {
-    @apply mx-auto w-full max-w-7xl px-5 lg:px-8;
+    @apply mx-auto box-border w-full max-w-7xl px-5 lg:px-8;
   }
   .section {
     @apply py-20 lg:py-28;
@@ -109,10 +109,31 @@
     @apply fixed left-4 top-4 z-50 -translate-y-24 rounded-lg bg-primary px-4 py-3 font-semibold text-primary-foreground transition focus:translate-y-0;
   }
   .legal-copy {
-    @apply mt-10 flex flex-col gap-5 leading-relaxed text-muted-foreground;
+    @apply mt-10 flex flex-col gap-10 leading-relaxed text-muted-foreground;
+  }
+  .legal-copy section {
+    @apply flex flex-col gap-4;
   }
   .legal-copy h2 {
-    @apply mt-5 font-heading text-xl font-semibold text-foreground;
+    @apply font-heading text-2xl font-semibold tracking-tight text-foreground;
+  }
+  .legal-copy h3 {
+    @apply font-heading text-lg font-semibold text-foreground;
+  }
+  .legal-copy ul {
+    @apply ml-5 list-disc space-y-2 pl-2;
+  }
+  .legal-copy li {
+    @apply pl-1;
+  }
+  .legal-copy strong {
+    @apply font-semibold text-foreground;
+  }
+  .legal-copy a {
+    @apply font-semibold text-primary underline decoration-primary/30 underline-offset-4 hover:decoration-primary;
+  }
+  .legal-copy .legal-reference {
+    @apply inline-flex w-fit items-center gap-2 rounded-xl border border-border bg-card px-4 py-3 no-underline;
   }
 }
 
