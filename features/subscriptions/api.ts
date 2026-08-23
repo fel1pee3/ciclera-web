@@ -3,6 +3,7 @@ import {
   checkoutResponseSchema,
   currentSubscriptionSchema,
   plansResponseSchema,
+  subscriptionPaymentPageSchema,
   type PlanCode,
 } from './contracts'
 
@@ -16,6 +17,21 @@ export function getCurrentSubscription() {
   return clientApiRequest('subscriptions/current', currentSubscriptionSchema, {
     retryAfterUnauthorized: true,
   })
+}
+
+export function listSubscriptionPayments(input: {
+  page: number
+  pageSize: number
+}) {
+  const params = new URLSearchParams({
+    page: String(input.page),
+    pageSize: String(input.pageSize),
+  })
+  return clientApiRequest(
+    `subscriptions/payments?${params}`,
+    subscriptionPaymentPageSchema,
+    { retryAfterUnauthorized: true },
+  )
 }
 
 export function createSubscriptionCheckout(

@@ -48,3 +48,33 @@ export const checkoutResponseSchema = z.object({
   checkoutUrl: z.string().url(),
   expiresAt: z.string().datetime(),
 })
+
+export const subscriptionPaymentSchema = z.object({
+  id: z.string().uuid(),
+  status: z.enum([
+    'PENDING',
+    'CONFIRMED',
+    'RECEIVED',
+    'OVERDUE',
+    'REFUNDED',
+    'CHARGEBACK',
+    'CANCELED',
+  ]),
+  paymentMethod: z.enum(['CREDIT_CARD', 'PIX', 'BOLETO']),
+  amountInCents: z.string().regex(/^\d+$/),
+  dueDate: z.string().datetime(),
+  paidAt: z.string().datetime().nullable(),
+  invoiceUrl: z.string().url().nullable(),
+  createdAt: z.string().datetime(),
+})
+export type SubscriptionPayment = z.infer<typeof subscriptionPaymentSchema>
+
+export const subscriptionPaymentPageSchema = z.object({
+  items: z.array(subscriptionPaymentSchema),
+  page: z.number().int().positive(),
+  pageSize: z.number().int().positive(),
+  total: z.number().int().nonnegative(),
+})
+export type SubscriptionPaymentPage = z.infer<
+  typeof subscriptionPaymentPageSchema
+>

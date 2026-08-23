@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   createSubscriptionCheckout,
   getCurrentSubscription,
+  listSubscriptionPayments,
 } from '@/features/subscriptions/api'
 
 describe('subscription API client', () => {
@@ -44,6 +45,33 @@ describe('subscription API client', () => {
       }),
     )
     expect(String(fetchMock.mock.calls[0]?.[1]?.body)).not.toContain('amount')
+  })
+
+  it('parses the paginated payment history', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        Response.json({
+          items: [subscriptionPayment],
+          page: 1,
+          pageSize: 8,
+          total: 1,
+        }),
+      ),
+    )
+
+    await expect(
+      listSubscriptionPayments({ page: 1, pageSize: 8 }),
+    ).resolves.toMatchObject({
+      items: [
+        {
+          status: 'RECEIVED',
+          amountInCents: '19900',
+          invoiceUrl: 'https://www.asaas.com/i/payment-id',
+        },
+      ],
+      total: 1,
+    })
   })
 
   it('sends the Pix billing profile without a client-controlled amount', async () => {
@@ -107,4 +135,15 @@ const currentSubscription = {
     administrativeUsers: 1,
     evidenceStorageBytes: 1_024,
   },
+}
+
+const subscriptionPayment = {
+  id: '30000000-0000-4000-8000-000000000001',
+  status: 'RECEIVED',
+  paymentMethod: 'PIX',
+  amountInCents: '19900',
+  dueDate: '2026-08-21T00:00:00.000Z',
+  paidAt: '2026-08-21T14:00:00.000Z',
+  invoiceUrl: 'https://www.asaas.com/i/payment-id',
+  createdAt: '2026-08-21T12:00:00.000Z',
 }

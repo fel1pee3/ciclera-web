@@ -192,6 +192,10 @@ consumo de usuários e evidências, situação da cobrança e data final do cicl
 Somente `OWNER` pode contratar, programar troca de plano ou cancelar a renovação.
 Não há período de teste.
 
+O proprietário também visualiza um histórico paginado das mensalidades, com
+valor, vencimento, forma de pagamento, situação e link seguro para a cobrança ou
+comprovante no Asaas. A Ciclera não apresenta esse documento como nota fiscal.
+
 O frontend envia à API o código do plano, o método escolhido e, somente no Pix,
 o perfil de cobrança necessário para cadastrar o pagador no Asaas. Esses dados
 não são persistidos pela Ciclera. Valores e limites vêm da API. Cartão e boleto

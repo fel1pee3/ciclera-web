@@ -28,6 +28,7 @@ import {
 } from './api'
 import type { CurrentSubscription, SubscriptionPlan } from './contracts'
 import { PixBillingProfileForm } from './pix-billing-profile-form'
+import { SubscriptionPaymentHistory } from './subscription-payment-history'
 import { useSubscription } from './subscription-provider'
 
 export function SubscriptionManagement({
@@ -295,6 +296,12 @@ export function SubscriptionManagement({
           A cobrança está desativada neste ambiente. Configure o Asaas no
           backend para testar a contratação e aplicar os limites dos planos.
         </Alert>
+      ) : null}
+
+      {isOwner ? (
+        <SubscriptionPaymentHistory
+          organizationTimezone={account.organization.timezone}
+        />
       ) : null}
 
       <div className="grid gap-5 lg:grid-cols-3">
