@@ -1,5 +1,10 @@
 import Link from 'next/link'
-export const metadata = { title: 'Política de Privacidade | Ciclera' }
+export const metadata = {
+  title: 'Política de Privacidade',
+  description:
+    'Saiba como a Ciclera trata dados pessoais e informações operacionais.',
+  alternates: { canonical: '/politica-de-privacidade' },
+}
 export default function Page() {
   return (
     <main className="min-h-screen bg-background py-16">

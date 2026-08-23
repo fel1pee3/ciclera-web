@@ -30,6 +30,11 @@ describe('public pages', () => {
     expect(document.body).not.toHaveTextContent(/programa piloto/i)
     expect(document.body).not.toHaveTextContent(/solicitar acesso/i)
     expect(document.body).not.toHaveTextContent(/Fale com a equipe/i)
+    expect(
+      screen.getByText(
+        /Centralize ordens de serviço, técnicos, clientes, equipamentos/i,
+      ),
+    ).toHaveAttribute('data-nosnippet')
   })
 
   it('preserves the published legal pages', () => {

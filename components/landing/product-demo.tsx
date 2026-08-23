@@ -21,7 +21,10 @@ export function ProductDemo() {
   const [tab, setTab] = useState<(typeof tabs)[number]>('Visão operacional')
 
   return (
-    <div className="overflow-hidden rounded-3xl border border-primary-foreground/15 bg-[#f4f8f6] text-card-foreground shadow-2xl">
+    <div
+      className="overflow-hidden rounded-3xl border border-primary-foreground/15 bg-[#f4f8f6] text-card-foreground shadow-2xl"
+      data-nosnippet=""
+    >
       <div className="flex items-center justify-between border-b border-border bg-card px-4 py-3 sm:px-6">
         <div className="flex items-center gap-3">
           <span className="-mr-3 origin-left scale-75">

@@ -1,5 +1,9 @@
 import Link from 'next/link'
-export const metadata = { title: 'Termos de Uso | Ciclera' }
+export const metadata = {
+  title: 'Termos de Uso',
+  description: 'Consulte as condições de uso da plataforma Ciclera.',
+  alternates: { canonical: '/termos-de-uso' },
+}
 export default function Page() {
   return (
     <main className="min-h-screen bg-background py-16">

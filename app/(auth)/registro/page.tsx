@@ -4,8 +4,9 @@ import { RegistrationForm } from '@/features/auth/registration-form'
 import { PublicAuthRoute } from '@/features/auth/public-auth-route'
 
 export const metadata: Metadata = {
-  title: 'Criar conta | Ciclera',
-  robots: { index: true, follow: true },
+  title: 'Criar conta',
+  description: 'Crie sua organização e comece a usar a Ciclera.',
+  robots: { index: false, follow: false },
 }
 
 export default function RegistrationPage() {

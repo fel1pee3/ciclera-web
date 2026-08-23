@@ -242,7 +242,10 @@ export function FieldSection() {
 }
 function FieldMockups() {
   return (
-    <div className="relative mx-auto min-h-[31rem] w-full max-w-xl">
+    <div
+      className="relative mx-auto min-h-[31rem] w-full max-w-xl"
+      data-nosnippet=""
+    >
       <div className="absolute right-0 top-6 hidden w-[82%] overflow-hidden rounded-3xl border border-border bg-background shadow-xl sm:block">
         <div className="flex items-center justify-between border-b border-border bg-card px-5 py-4">
           <div className="flex items-center gap-3">
@@ -387,14 +390,15 @@ export function AudienceSection() {
     <section id="para-quem" className="section bg-background">
       <div className="container-page">
         <div className="max-w-3xl">
-          <Eyebrow>Construída para operações reais</Eyebrow>
+          <Eyebrow>Software para equipes técnicas externas</Eyebrow>
           <Title>
-            Para empresas que dependem do trabalho realizado fora do escritório.
+            Gestão de serviços para quem atende clientes fora do escritório.
           </Title>
-          <p className="section-copy">
-            A Ciclera foi pensada para operações B2B com equipes externas,
-            equipamentos atendidos e ordens que precisam chegar completas ao
-            administrativo.
+          <p className="section-copy" data-nosnippet="">
+            Centralize ordens de serviço, técnicos, clientes, equipamentos,
+            agenda, fotos do atendimento e revisão operacional. A Ciclera ajuda
+            empresas de manutenção e assistência técnica a transformar o
+            trabalho executado em serviços prontos para faturar.
           </p>
         </div>
         <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

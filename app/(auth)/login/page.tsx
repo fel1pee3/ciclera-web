@@ -5,7 +5,7 @@ import { LoginForm } from '@/features/auth/login-form'
 import { PublicAuthRoute } from '@/features/auth/public-auth-route'
 
 export const metadata: Metadata = {
-  title: 'Entrar | Ciclera',
+  title: 'Entrar',
   robots: { index: false, follow: false },
 }
 

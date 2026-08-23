@@ -17,16 +17,14 @@ export function Hero() {
     >
       <div className="container-page grid items-center gap-14 lg:grid-cols-[1.02fr_.98fr]">
         <div>
-          <p className="eyebrow">
-            Gestão de serviços externos orientada a receita
-          </p>
+          <p className="eyebrow">Sistema de gestão de ordens de serviço</p>
           <h1 className="mt-5 max-w-3xl text-balance font-heading text-4xl font-bold leading-tight tracking-tight text-foreground sm:text-5xl lg:text-6xl">
             Nenhum serviço executado deve ficar sem faturar.
           </h1>
           <p className="mt-6 max-w-2xl text-pretty text-lg leading-relaxed text-muted-foreground">
-            A Ciclera conecta planejamento, execução, evidências e revisão para
-            mostrar quais serviços foram concluídos, quais estão bloqueados e
-            quanto já está pronto para faturar.
+            A Ciclera organiza equipes externas, clientes, equipamentos, agenda,
+            execução em campo, fotos e revisão para mostrar o que foi concluído
+            e quanto já está pronto para faturar.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Link
@@ -87,7 +85,7 @@ function HeroMockup() {
   ]
 
   return (
-    <div className="relative">
+    <div className="relative" data-nosnippet="">
       <div className="overflow-hidden rounded-3xl border border-primary-foreground/10 bg-institutional shadow-2xl">
         <div className="flex items-center justify-between border-b border-border bg-card px-5 py-4 text-foreground">
           <div className="flex items-center gap-3">

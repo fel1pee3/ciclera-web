@@ -3,12 +3,11 @@ import { getAppUrl } from '@/lib/app-url'
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const base = getAppUrl()
-  return ['', '/registro', '/politica-de-privacidade', '/termos-de-uso'].map(
+  return ['', '/politica-de-privacidade', '/termos-de-uso'].map(
     (path, index) => ({
       url: `${base}${path}`,
-      lastModified: new Date(),
-      changeFrequency: index === 0 ? 'weekly' : 'monthly',
-      priority: index === 0 ? 1 : 0.4,
+      changeFrequency: index === 0 ? 'weekly' : 'yearly',
+      priority: index === 0 ? 1 : 0.3,
     }),
   )
 }
