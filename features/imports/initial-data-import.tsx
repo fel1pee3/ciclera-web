@@ -24,15 +24,19 @@ import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 import {
   commitInitialData,
-  downloadImportTemplate,
+  commitInitialDataWorkbook,
+  downloadImportWorkbook,
   previewInitialData,
+  previewInitialDataWorkbook,
 } from './api'
 import type { ImportPreview } from './contracts'
 
-const maxFileSize = 90_000
+const maxCsvFileSize = 90_000
+const maxWorkbookFileSize = 500_000
 
 export function InitialDataImport() {
   const [content, setContent] = useState('')
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [fileName, setFileName] = useState('')
   const [fileSize, setFileSize] = useState(0)
   const [inputKey, setInputKey] = useState(0)
@@ -48,7 +52,7 @@ export function InitialDataImport() {
     setDownloading(true)
     setError(null)
     try {
-      save(await downloadImportTemplate(), 'modelo-importacao-inicial.csv')
+      save(await downloadImportWorkbook(), 'modelo-importacao-inicial.xlsx')
     } catch {
       setError('Não foi possível baixar o modelo.')
     } finally {
@@ -62,45 +66,61 @@ export function InitialDataImport() {
     setNotice(null)
     setError(null)
     setContent('')
+    setSelectedFile(null)
     setFileName('')
     setFileSize(0)
     if (!file) return
-    if (!file.name.toLowerCase().endsWith('.csv')) {
-      setError('Selecione um arquivo no formato CSV.')
+    const extension = file.name.toLowerCase().split('.').at(-1)
+    if (extension !== 'xlsx' && extension !== 'csv') {
+      setError('Selecione a planilha Excel oficial ou um arquivo CSV.')
       return
     }
-    if (file.size > maxFileSize) {
-      setError('O CSV deve possuir no máximo 90 KB.')
+    const maximumSize =
+      extension === 'xlsx' ? maxWorkbookFileSize : maxCsvFileSize
+    if (!file.size || file.size > maximumSize) {
+      setError(
+        extension === 'xlsx'
+          ? 'A planilha Excel deve possuir no máximo 500 KB.'
+          : 'O CSV deve possuir no máximo 90 KB.',
+      )
       return
     }
     try {
+      setSelectedFile(file)
       setFileName(file.name)
       setFileSize(file.size)
-      setContent(await file.text())
+      if (extension === 'csv') setContent(await file.text())
     } catch {
       setError('Não foi possível ler o arquivo selecionado.')
     }
   }
 
   async function validate() {
+    if (!selectedFile) return
     setPending(true)
     setError(null)
     setNotice(null)
     try {
-      setPreview(await previewInitialData(content))
+      setPreview(
+        selectedFile.name.toLowerCase().endsWith('.xlsx')
+          ? await previewInitialDataWorkbook(selectedFile)
+          : await previewInitialData(content),
+      )
     } catch {
-      setError('O CSV não pôde ser validado. Use o modelo oficial.')
+      setError('A planilha não pôde ser validada. Use o modelo oficial.')
     } finally {
       setPending(false)
     }
   }
 
   async function commit() {
-    if (!preview?.ready) return
+    if (!preview?.ready || !selectedFile) return
     setPending(true)
     setError(null)
     try {
-      const result = await commitInitialData(content, preview.checksum)
+      const result = selectedFile.name.toLowerCase().endsWith('.xlsx')
+        ? await commitInitialDataWorkbook(selectedFile, preview.checksum)
+        : await commitInitialData(content, preview.checksum)
       setNotice(
         result.status === 'ALREADY_IMPORTED'
           ? 'Este mesmo arquivo já havia sido importado. Nenhum registro foi duplicado.'
@@ -120,7 +140,7 @@ export function InitialDataImport() {
     void selectFile(event.dataTransfer.files[0])
   }
 
-  const currentStep = preview ? 3 : content ? 2 : 1
+  const currentStep = preview ? 3 : selectedFile ? 2 : 1
 
   return (
     <section className="mx-auto max-w-6xl space-y-6">
@@ -145,7 +165,7 @@ export function InitialDataImport() {
         />
         <Step
           number={2}
-          title="Envie o CSV"
+          title="Envie a planilha"
           description="Validamos linha por linha"
           active={currentStep === 2}
           complete={currentStep > 2}
@@ -175,8 +195,9 @@ export function InitialDataImport() {
               Prepare sua planilha
             </h2>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-              Baixe o arquivo oficial, abra no Excel ou Google Planilhas e
-              mantenha os nomes das colunas.
+              Baixe o arquivo oficial com instruções, exemplos e colunas
+              organizadas. Preencha no Excel ou Google Planilhas sem alterar os
+              títulos.
             </p>
             <ul className="mt-5 space-y-3 text-sm">
               <ImportEntity icon={<Building2 />} label="Clientes" />
@@ -191,7 +212,7 @@ export function InitialDataImport() {
             onClick={() => void downloadTemplate()}
           >
             <Download aria-hidden="true" />
-            {downloading ? 'Baixando…' : 'Baixar modelo CSV'}
+            {downloading ? 'Baixando…' : 'Baixar modelo Excel'}
           </Button>
         </Card>
 
@@ -203,7 +224,8 @@ export function InitialDataImport() {
             Selecione o arquivo preenchido
           </h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Arquivo CSV de até 90 KB. A prévia não grava nenhum dado.
+            Planilha Excel de até 500 KB ou CSV de até 90 KB. A prévia não grava
+            nenhum dado.
           </p>
 
           <label
@@ -226,10 +248,10 @@ export function InitialDataImport() {
               <UploadCloud aria-hidden="true" className="size-7" />
             </span>
             <strong className="mt-4">
-              Arraste o CSV aqui ou clique para procurar
+              Arraste a planilha aqui ou clique para procurar
             </strong>
             <span className="mt-1 text-sm text-muted-foreground">
-              Somente arquivos .csv
+              Arquivos .xlsx e .csv
             </span>
           </label>
           <Input
@@ -237,7 +259,7 @@ export function InitialDataImport() {
             className="sr-only"
             id="initial-import-file"
             type="file"
-            accept=".csv,text/csv"
+            accept=".xlsx,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv"
             onChange={(event) => void selectFile(event.target.files?.[0])}
           />
 
@@ -269,7 +291,7 @@ export function InitialDataImport() {
           <Button
             className="mt-5 w-full"
             size="lg"
-            disabled={!content || pending}
+            disabled={!selectedFile || pending}
             onClick={() => void validate()}
           >
             <ShieldCheck aria-hidden="true" />
@@ -319,7 +341,7 @@ export function InitialDataImport() {
                   : 'border-destructive/20 bg-destructive/5 text-destructive',
               )}
             >
-              {preview.ready ? 'Validação aprovada' : 'Há erros no CSV'}
+              {preview.ready ? 'Validação aprovada' : 'Há erros na planilha'}
             </Badge>
           </div>
 

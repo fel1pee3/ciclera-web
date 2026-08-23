@@ -31,6 +31,31 @@ export async function clientApiRequest<T>(
   return parseApiResponse(response, schema)
 }
 
+export async function clientApiFormDataRequest<T>(
+  path: string,
+  schema: z.ZodType<T>,
+  formData: FormData,
+  options: Omit<ClientRequestOptions, 'json'> = {},
+): Promise<T> {
+  const { retryAfterUnauthorized = false, ...requestInit } = options
+  const response = await sendFormData(path, formData, requestInit)
+
+  if (
+    response.status === 401 &&
+    retryAfterUnauthorized &&
+    path !== 'auth/refresh'
+  ) {
+    if (await refreshSession()) {
+      return parseApiResponse(
+        await sendFormData(path, formData, requestInit),
+        schema,
+      )
+    }
+  }
+
+  return parseApiResponse(response, schema)
+}
+
 export async function clientApiDownload(path: string): Promise<Blob> {
   let response = await send(path, undefined, { method: 'GET' })
   if (response.status === 401) {
@@ -69,6 +94,19 @@ function send(
     ...requestInit,
     headers,
     body: json === undefined ? undefined : JSON.stringify(json),
+    credentials: 'include',
+    cache: 'no-store',
+  })
+}
+
+function sendFormData(
+  path: string,
+  formData: FormData,
+  requestInit: Omit<RequestInit, 'body'>,
+): Promise<Response> {
+  return fetch(buildApiUrl(path), {
+    ...requestInit,
+    body: formData,
     credentials: 'include',
     cache: 'no-store',
   })

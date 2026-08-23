@@ -30,6 +30,7 @@ import type { CurrentSubscription, SubscriptionPlan } from './contracts'
 import { PixBillingProfileForm } from './pix-billing-profile-form'
 import { SubscriptionPaymentHistory } from './subscription-payment-history'
 import { useSubscription } from './subscription-provider'
+import { formatEvidenceStorage } from './usage-format'
 
 export function SubscriptionManagement({
   account,
@@ -271,8 +272,12 @@ export function SubscriptionManagement({
               />
               <Usage
                 label="Evidências armazenadas"
-                value={formatBytes(subscription.usage.evidenceStorageBytes)}
-                maximum={formatBytes(subscription.plan.evidenceStorageBytes)}
+                value={formatEvidenceStorage(
+                  subscription.usage.evidenceStorageBytes,
+                )}
+                maximum={formatEvidenceStorage(
+                  subscription.plan.evidenceStorageBytes,
+                )}
                 icon={<Database />}
               />
             </div>
@@ -331,8 +336,8 @@ export function SubscriptionManagement({
                   incluindo proprietários
                 </Feature>
                 <Feature>
-                  {formatBytes(plan.evidenceStorageBytes)} para fotos e
-                  assinaturas
+                  {formatEvidenceStorage(plan.evidenceStorageBytes)} para
+                  evidências
                 </Feature>
                 <Feature>Clientes, equipamentos e ordens ilimitados</Feature>
                 <Feature>Todos os recursos operacionais do MVP</Feature>
@@ -603,9 +608,6 @@ function formatMoney(cents: number) {
     currency: 'BRL',
     maximumFractionDigits: 0,
   }).format(cents / 100)
-}
-function formatBytes(bytes: number) {
-  return `${new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 }).format(bytes / 1024 / 1024 / 1024)} GB`
 }
 function formatDate(value: string) {
   return new Intl.DateTimeFormat('pt-BR', { dateStyle: 'long' }).format(

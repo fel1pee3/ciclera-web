@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { previewInitialData } from '@/features/imports/api'
+import {
+  previewInitialData,
+  previewInitialDataWorkbook,
+} from '@/features/imports/api'
 
 describe('initial data import API', () => {
   beforeEach(() => vi.restoreAllMocks())
@@ -34,5 +37,33 @@ describe('initial data import API', () => {
     expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({
       credentials: 'include',
     })
+  })
+
+  it('uploads the Excel workbook as multipart data without JSON headers', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          checksum: 'b'.repeat(64),
+          ready: true,
+          totals: { total: 3, valid: 3, invalid: 0 },
+          entities: { customers: 1, locations: 1, equipment: 1 },
+          rows: [],
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } },
+      ),
+    )
+    const file = new File(['workbook'], 'modelo.xlsx', {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    })
+
+    await expect(previewInitialDataWorkbook(file)).resolves.toMatchObject({
+      ready: true,
+    })
+    const request = fetchMock.mock.calls[0]
+    expect(request?.[0].toString()).toContain(
+      'imports/initial-data/preview-file',
+    )
+    expect(request?.[1]?.body).toBeInstanceOf(FormData)
+    expect(new Headers(request?.[1]?.headers).has('Content-Type')).toBe(false)
   })
 })
