@@ -24,8 +24,10 @@ import {
   changeSubscriptionPlan,
   createSubscriptionCheckout,
   listSubscriptionPlans,
+  type PixBillingProfile,
 } from './api'
 import type { CurrentSubscription, SubscriptionPlan } from './contracts'
+import { PixBillingProfileForm } from './pix-billing-profile-form'
 import { useSubscription } from './subscription-provider'
 
 export function SubscriptionManagement({
@@ -38,9 +40,13 @@ export function SubscriptionManagement({
   const [plans, setPlans] = useState<SubscriptionPlan[]>([])
   const { refresh, subscription, update } = useSubscription()
   const [selected, setSelected] = useState<SubscriptionPlan | null>(null)
+  const [paymentStep, setPaymentStep] = useState<'METHODS' | 'PIX_PROFILE'>(
+    'METHODS',
+  )
   const [changingTo, setChangingTo] = useState<SubscriptionPlan | null>(null)
   const [cancelOpen, setCancelOpen] = useState(false)
   const [pending, setPending] = useState(false)
+  const [checkoutError, setCheckoutError] = useState<string | null>(null)
   const [confirmingPayment, setConfirmingPayment] = useState(
     () => searchParams.get('retorno') === 'sucesso',
   )
@@ -128,18 +134,25 @@ export function SubscriptionManagement({
     [subscription],
   )
 
-  async function openCheckout(method: 'CREDIT_CARD' | 'PIX' | 'BOLETO') {
+  async function openCheckout(
+    method: 'CREDIT_CARD' | 'PIX' | 'BOLETO',
+    billingProfile?: PixBillingProfile,
+  ) {
     if (!selected) return
     setPending(true)
     setError(null)
+    setCheckoutError(null)
     try {
-      const checkout = await createSubscriptionCheckout(selected.code, method)
+      const checkout = await createSubscriptionCheckout(
+        selected.code,
+        method,
+        billingProfile,
+      )
       window.location.assign(checkout.checkoutUrl)
     } catch {
-      setError(
+      setCheckoutError(
         'Não foi possível abrir o pagamento seguro. Tente novamente em instantes.',
       )
-      setSelected(null)
     } finally {
       setPending(false)
     }
@@ -326,11 +339,15 @@ export function SubscriptionManagement({
                   subscription?.cancelAtPeriodEnd ||
                   subscription?.enforcementEnabled === false
                 }
-                onClick={() =>
-                  subscription?.planCode
-                    ? setChangingTo(plan)
-                    : setSelected(plan)
-                }
+                onClick={() => {
+                  if (subscription?.planCode) {
+                    setChangingTo(plan)
+                    return
+                  }
+                  setPaymentStep('METHODS')
+                  setCheckoutError(null)
+                  setSelected(plan)
+                }}
               >
                 {current
                   ? 'Plano atual'
@@ -357,14 +374,18 @@ export function SubscriptionManagement({
               </span>
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                  Renovação automática
+                  {subscription.paymentMethod === 'CREDIT_CARD'
+                    ? 'Renovação automática'
+                    : 'Cobrança mensal'}
                 </p>
                 <h2 className="mt-1 font-heading text-lg font-semibold">
                   Gerenciar renovação
                 </h2>
                 <p className="mt-1 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-                  Você pode impedir a próxima cobrança sem perder seus dados. O
-                  acesso continua até{' '}
+                  {subscription.paymentMethod === 'PIX'
+                    ? 'O Asaas gera uma nova cobrança Pix todos os meses; cada mensalidade é paga manualmente. '
+                    : 'Você pode impedir a próxima cobrança sem perder seus dados. '}
+                  O acesso continua até{' '}
                   {subscription.currentPeriodEnd
                     ? formatDate(subscription.currentPeriodEnd)
                     : 'o fim do período já pago'}
@@ -388,35 +409,61 @@ export function SubscriptionManagement({
 
       <Modal
         open={Boolean(selected)}
-        onClose={() => !pending && setSelected(null)}
+        onClose={() => {
+          if (pending) return
+          setSelected(null)
+          setPaymentStep('METHODS')
+          setCheckoutError(null)
+        }}
         title={
-          selected ? `Assinar o plano ${selected.name}` : 'Escolher pagamento'
+          paymentStep === 'PIX_PROFILE'
+            ? 'Dados para cobrança Pix'
+            : selected
+              ? `Assinar o plano ${selected.name}`
+              : 'Escolher pagamento'
         }
-        description="Você será encaminhado ao ambiente seguro do Asaas. A Ciclera não recebe nem armazena os dados do seu cartão."
+        description={
+          paymentStep === 'PIX_PROFILE'
+            ? 'O Asaas criará uma cobrança mensal. O pagamento de cada mês será feito manualmente por Pix.'
+            : 'Você será encaminhado ao ambiente seguro do Asaas. A Ciclera não recebe nem armazena os dados do seu cartão.'
+        }
       >
-        <div className="grid gap-3">
-          <PaymentButton
-            icon={<CreditCard />}
-            title="Cartão de crédito"
-            detail="Cobrança mensal automática."
-            disabled={pending}
-            onClick={() => void openCheckout('CREDIT_CARD')}
+        {checkoutError ? (
+          <Alert className="mb-4" variant="destructive">
+            {checkoutError}
+          </Alert>
+        ) : null}
+        {paymentStep === 'PIX_PROFILE' ? (
+          <PixBillingProfileForm
+            pending={pending}
+            onBack={() => setPaymentStep('METHODS')}
+            onSubmit={(profile) => openCheckout('PIX', profile)}
           />
-          <PaymentButton
-            icon={<Smartphone />}
-            title="Pix"
-            detail="Pagamento mensal confirmado por Pix."
-            disabled={pending}
-            onClick={() => void openCheckout('PIX')}
-          />
-          <PaymentButton
-            icon={<Database />}
-            title="Boleto bancário"
-            detail="Um boleto é disponibilizado a cada mensalidade."
-            disabled={pending}
-            onClick={() => void openCheckout('BOLETO')}
-          />
-        </div>
+        ) : (
+          <div className="grid gap-3">
+            <PaymentButton
+              icon={<CreditCard />}
+              title="Cartão de crédito"
+              detail="Cobrança mensal automática."
+              disabled={pending}
+              onClick={() => void openCheckout('CREDIT_CARD')}
+            />
+            <PaymentButton
+              icon={<Smartphone />}
+              title="Pix mensal"
+              detail="Uma nova cobrança será paga manualmente a cada mês."
+              disabled={pending}
+              onClick={() => setPaymentStep('PIX_PROFILE')}
+            />
+            <PaymentButton
+              icon={<Database />}
+              title="Boleto bancário"
+              detail="Um boleto é disponibilizado a cada mensalidade."
+              disabled={pending}
+              onClick={() => void openCheckout('BOLETO')}
+            />
+          </div>
+        )}
       </Modal>
 
       <ConfirmDialog

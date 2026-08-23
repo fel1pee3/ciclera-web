@@ -21,12 +21,23 @@ export function getCurrentSubscription() {
 export function createSubscriptionCheckout(
   planCode: PlanCode,
   paymentMethod: 'CREDIT_CARD' | 'PIX' | 'BOLETO',
+  billingProfile?: PixBillingProfile,
 ) {
   return clientApiRequest('subscriptions/checkout', checkoutResponseSchema, {
     method: 'POST',
-    json: { planCode, paymentMethod },
+    json: { planCode, paymentMethod, billingProfile },
     retryAfterUnauthorized: true,
   })
+}
+
+export interface PixBillingProfile {
+  cpfCnpj: string
+  mobilePhone: string
+  postalCode: string
+  address: string
+  addressNumber: string
+  complement?: string
+  province: string
 }
 
 export function changeSubscriptionPlan(planCode: PlanCode) {

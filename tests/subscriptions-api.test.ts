@@ -45,6 +45,36 @@ describe('subscription API client', () => {
     )
     expect(String(fetchMock.mock.calls[0]?.[1]?.body)).not.toContain('amount')
   })
+
+  it('sends the Pix billing profile without a client-controlled amount', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      Response.json({
+        checkoutUrl: 'https://www.asaas.com/i/payment-id',
+        expiresAt: '2026-08-21T16:00:00.000Z',
+      }),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+
+    await createSubscriptionCheckout('ESSENTIAL', 'PIX', {
+      cpfCnpj: '12345678901',
+      mobilePhone: '5511999999999',
+      postalCode: '01310100',
+      address: 'Avenida Paulista',
+      addressNumber: '1578',
+      province: 'Bela Vista',
+    })
+
+    const requestBody = String(fetchMock.mock.calls[0]?.[1]?.body)
+    expect(JSON.parse(requestBody)).toMatchObject({
+      planCode: 'ESSENTIAL',
+      paymentMethod: 'PIX',
+      billingProfile: {
+        cpfCnpj: '12345678901',
+        postalCode: '01310100',
+      },
+    })
+    expect(requestBody).not.toContain('amount')
+  })
 })
 
 const currentSubscription = {

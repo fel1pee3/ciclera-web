@@ -192,9 +192,11 @@ consumo de usuários e evidências, situação da cobrança e data final do cicl
 Somente `OWNER` pode contratar, programar troca de plano ou cancelar a renovação.
 Não há período de teste.
 
-O frontend envia à API apenas o código do plano e o método escolhido. Valores e
-limites vêm da API, e cartão, Pix ou boleto são preenchidos no ambiente hospedado
-do Asaas. A volta para a Ciclera apenas informa que o pagamento foi enviado; a
+O frontend envia à API o código do plano, o método escolhido e, somente no Pix,
+o perfil de cobrança necessário para cadastrar o pagador no Asaas. Esses dados
+não são persistidos pela Ciclera. Valores e limites vêm da API. Cartão e boleto
+abrem o ambiente hospedado do Asaas; no Pix, o Asaas gera uma cobrança nova a
+cada mês para pagamento manual. A volta para a Ciclera apenas informa que o pagamento foi enviado; a
 ativação depende da confirmação recebida pelo webhook da API. No retorno de
 pagamento, a página acompanha essa confirmação por um período curto e libera a
 operação somente quando a API informar acesso completo. Nenhuma chave do Asaas
