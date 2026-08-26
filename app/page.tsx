@@ -5,15 +5,10 @@ import { Hero } from '@/components/landing/hero'
 import {
   PositioningStrip,
   ProblemSection,
-  WorkflowSection,
   DemoSection,
-  FeaturesSection,
-  FieldSection,
-  AudienceSection,
-  BenefitsSection,
   GetStartedSection,
-  FaqSection,
 } from '@/components/landing/sections'
+import { HomeExploreSection } from '@/components/landing/public-pages'
 import { Footer } from '@/components/landing/footer'
 import { getAppUrl } from '@/lib/app-url'
 import {
@@ -74,13 +69,8 @@ export default function Page() {
         <Hero />
         <PositioningStrip />
         <ProblemSection />
-        <WorkflowSection />
+        <HomeExploreSection />
         <DemoSection />
-        <FeaturesSection />
-        <FieldSection />
-        <AudienceSection />
-        <BenefitsSection />
-        <FaqSection />
         <GetStartedSection />
       </main>
       <Footer />

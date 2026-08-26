@@ -58,6 +58,13 @@ describe('public search metadata', () => {
 
     expect(urls).toEqual([
       'http://localhost:3000',
+      'http://localhost:3000/como-funciona',
+      'http://localhost:3000/para-quem',
+      'http://localhost:3000/planos',
+      'http://localhost:3000/duvidas',
+      'http://localhost:3000/produto/gestao-operacional',
+      'http://localhost:3000/produto/execucao-em-campo',
+      'http://localhost:3000/produto/revisao-e-faturamento',
       'http://localhost:3000/politica-de-privacidade',
       'http://localhost:3000/termos-de-uso',
     ])

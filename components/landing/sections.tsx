@@ -1,90 +1,96 @@
+import Image from 'next/image'
+import Link from 'next/link'
 import {
-  CalendarClock,
+  ArrowRight,
+  ArrowUpRight,
   CalendarDays,
   Camera,
   Check,
   ChevronDown,
   CircleDollarSign,
-  ClipboardCheck,
-  ClipboardList,
-  FileSpreadsheet,
-  Globe2,
-  Home,
-  MessageSquareText,
-  Monitor,
+  Clock3,
   ReceiptText,
-  Route,
-  Search,
-  Wrench,
+  ShieldCheck,
 } from 'lucide-react'
-import { benefits, faqs, features, problems, segments, steps } from './content'
-import { ProductDemo } from './product-demo'
-import { Brand } from './brand'
 
-const Eyebrow = ({
+import { cn } from '@/lib/utils'
+import {
+  capabilityGroups,
+  commonPlanFeatures,
+  faqs,
+  pipeline,
+  plans,
+  problems,
+  segments,
+  steps,
+} from './content'
+import { ProductDemo } from './product-demo'
+
+function Eyebrow({
   children,
   dark = false,
 }: {
   children: React.ReactNode
   dark?: boolean
-}) => <p className={dark ? 'eyebrow text-active' : 'eyebrow'}>{children}</p>
-const Title = ({
+}) {
+  return (
+    <p
+      className={cn(
+        'text-xs font-bold uppercase tracking-[0.2em]',
+        dark ? 'text-active' : 'text-primary',
+      )}
+    >
+      {children}
+    </p>
+  )
+}
+
+function Title({
   children,
   dark = false,
 }: {
   children: React.ReactNode
   dark?: boolean
-}) => (
-  <h2
-    className={dark ? 'section-title text-primary-foreground' : 'section-title'}
-  >
-    {children}
-  </h2>
-)
+}) {
+  return (
+    <h2
+      className={cn(
+        'mt-4 max-w-4xl text-balance font-heading text-[clamp(2rem,4vw,3.6rem)] font-semibold leading-[1.08] tracking-[-0.035em]',
+        dark ? 'text-primary-foreground' : 'text-foreground',
+      )}
+    >
+      {children}
+    </h2>
+  )
+}
 
 export function PositioningStrip() {
-  const stages = [
-    ['Chamado', 'Demanda registrada', MessageSquareText],
-    ['Planejamento', 'Agenda e responsável', CalendarClock],
-    ['Execução', 'Trabalho em campo', Wrench],
-    ['Evidências', 'Fotos do atendimento', Camera],
-    ['Revisão', 'Conferência do serviço', ClipboardCheck],
-    ['Faturamento', 'Receita liberada', ReceiptText],
-  ] as const
-
   return (
-    <section className="border-y border-border bg-card py-10">
-      <div className="mx-auto max-w-7xl px-5 lg:px-8">
-        <p className="text-center font-heading text-xl font-semibold">
-          Do chamado ao caixa, cada etapa sob controle.
-        </p>
-        <p className="mx-auto mt-2 max-w-2xl text-center text-sm text-muted-foreground">
-          A informação acompanha a ordem do primeiro contato até a liberação da
-          receita.
-        </p>
-        <div className="relative mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
-          <div className="absolute left-[8%] right-[8%] top-6 hidden h-px bg-primary/20 lg:block" />
-          {stages.map(([title, description, Icon], index) => (
-            <div
-              key={title}
-              className="relative rounded-2xl border border-border bg-background p-4 lg:border-0 lg:bg-transparent lg:p-0 lg:text-center"
-            >
-              <div className="relative z-10 flex items-center gap-3 lg:flex-col">
-                <span className="grid size-12 shrink-0 place-items-center rounded-2xl border border-primary/20 bg-card text-primary shadow-sm">
-                  <Icon className="size-5" />
-                </span>
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-primary">
-                    0{index + 1}
-                  </p>
-                  <p className="font-heading text-sm font-semibold">{title}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {description}
-                  </p>
-                </div>
-              </div>
-            </div>
-          ))}
+    <section
+      className="border-b border-border bg-card"
+      aria-label="Fluxo da Ciclera"
+    >
+      <div className="container-page py-8 lg:py-10">
+        <div className="grid gap-7 lg:grid-cols-[16rem_minmax(0,1fr)] lg:items-center">
+          <p className="font-heading text-lg font-semibold leading-snug">
+            Uma ordem acompanha o trabalho inteiro.
+          </p>
+          <ol className="grid gap-px overflow-hidden border border-border bg-border sm:grid-cols-5">
+            {pipeline.map(([title, description], index) => (
+              <li key={title} className="relative bg-card px-4 py-4">
+                <p className="text-[9px] font-bold tracking-[.16em] text-primary">
+                  0{index + 1}
+                </p>
+                <p className="mt-1 text-sm font-semibold">{title}</p>
+                <p className="mt-1 text-[10px] leading-relaxed text-muted-foreground">
+                  {description}
+                </p>
+                {index < pipeline.length - 1 ? (
+                  <ArrowRight className="absolute -right-2.5 top-1/2 z-10 hidden size-5 -translate-y-1/2 bg-card text-primary sm:block" />
+                ) : null}
+              </li>
+            ))}
+          </ol>
         </div>
       </div>
     </section>
@@ -93,345 +99,61 @@ export function PositioningStrip() {
 
 export function ProblemSection() {
   return (
-    <section id="problema" className="section bg-background">
-      <div className="container-page">
-        <div className="max-w-3xl">
-          <Eyebrow>Onde a receita se perde</Eyebrow>
-          <Title>Serviço realizado não deveria virar receita esquecida.</Title>
-          <p className="section-copy">
-            Quando campo e escritório trabalham em ferramentas diferentes,
-            informações somem, a revisão atrasa e o faturamento depende de
-            conferências manuais.
+    <section id="problema" className="section-shell bg-background">
+      <div className="container-page grid gap-14 lg:grid-cols-[.82fr_1.18fr] lg:gap-20">
+        <div className="lg:sticky lg:top-32 lg:self-start">
+          <Eyebrow>O intervalo que custa caro</Eyebrow>
+          <Title>O serviço aconteceu. A informação ainda não chegou.</Title>
+          <p className="mt-6 max-w-lg text-pretty leading-7 text-muted-foreground">
+            A perda não acontece apenas quando uma OS é esquecida. Ela começa
+            sempre que campo e escritório precisam reconstruir o que já deveria
+            estar documentado.
           </p>
-        </div>
-        <div className="mt-12 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {problems.map(({ title, text, icon: Icon }) => (
-            <article
-              key={title}
-              className="rounded-2xl border border-border bg-card p-6"
-            >
-              <span className="flex size-10 items-center justify-center rounded-xl bg-muted text-primary">
-                <Icon className="size-5" />
-              </span>
-              <h3 className="mt-6 font-heading text-lg font-semibold">
-                {title}
-              </h3>
-              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-                {text}
-              </p>
-            </article>
-          ))}
-        </div>
-      </div>
-    </section>
-  )
-}
-
-export function WorkflowSection() {
-  return (
-    <section id="como-funciona" className="section bg-card">
-      <div className="container-page">
-        <div className="max-w-3xl">
-          <Eyebrow>Um ciclo, não ferramentas isoladas</Eyebrow>
-          <Title>
-            Acompanhe cada serviço até ele estar pronto para faturar.
-          </Title>
-        </div>
-        <ol className="mt-12 grid gap-4 lg:grid-cols-5">
-          {steps.map(([title, text], i) => (
-            <li
-              key={title}
-              className="relative rounded-2xl border border-border bg-background p-6"
-            >
-              <span className="font-heading text-sm font-bold text-primary">
-                0{i + 1}
-              </span>
-              <h3 className="mt-8 font-heading text-lg font-semibold">
-                {title}
-              </h3>
-              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-                {text}
-              </p>
-            </li>
-          ))}
-        </ol>
-      </div>
-    </section>
-  )
-}
-
-export function DemoSection() {
-  return (
-    <section className="section bg-institutional">
-      <div className="container-page">
-        <div className="max-w-3xl">
-          <Eyebrow dark>Visibilidade operacional</Eyebrow>
-          <Title dark>
-            Veja o que foi executado, o que está bloqueado e o que já pode virar
-            receita.
-          </Title>
-          <p className="mt-5 text-primary-foreground/65">
-            Dados exclusivamente demonstrativos para apresentar o fluxo do
-            produto.
-          </p>
-        </div>
-        <div className="mt-12">
-          <ProductDemo />
-        </div>
-      </div>
-    </section>
-  )
-}
-
-export function FeaturesSection() {
-  return (
-    <section id="funcionalidades" className="section bg-background">
-      <div className="container-page">
-        <div className="max-w-3xl">
-          <Eyebrow>O essencial para controlar a operação</Eyebrow>
-          <Title>
-            Menos recursos dispersos. Mais controle sobre o ciclo completo.
-          </Title>
-        </div>
-        <div className="mt-12 grid gap-px overflow-hidden rounded-2xl border border-border bg-border md:grid-cols-2 lg:grid-cols-3">
-          {features.map(({ title, text, icon: Icon }) => (
-            <article key={title} className="bg-card p-6">
-              <Icon className="size-5 text-primary" />
-              <h3 className="mt-5 font-heading font-semibold">{title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                {text}
-              </p>
-            </article>
-          ))}
-        </div>
-      </div>
-    </section>
-  )
-}
-
-export function FieldSection() {
-  return (
-    <section className="section overflow-hidden bg-card">
-      <div className="container-page grid items-center gap-14 lg:grid-cols-2">
-        <div>
-          <Eyebrow>Acesso web para o técnico</Eyebrow>
-          <Title>
-            Simples para quem executa. Completo para quem administra.
-          </Title>
-          <p className="section-copy">
-            O técnico acessa a Ciclera pelo navegador e registra o atendimento
-            sem precisar instalar um aplicativo. No escritório, a equipe
-            acompanha as etapas, revisa evidências e libera o serviço para
-            faturamento.
-          </p>
-          <div className="mt-8 flex flex-wrap gap-3 text-sm">
-            <span className="chip">
-              <Globe2 className="size-4" />
-              Acesso pelo navegador
-            </span>
-            <span className="chip">
-              <Monitor className="size-4" />
-              Computador, tablet ou celular
-            </span>
+          <div className="mt-9 flex items-center gap-3 border-t border-border pt-5 text-sm font-semibold text-primary">
+            <span className="h-px w-10 bg-primary" />A Ciclera fecha esse
+            intervalo.
           </div>
         </div>
-        <FieldMockups />
-      </div>
-    </section>
-  )
-}
-function FieldMockups() {
-  return (
-    <div
-      className="relative mx-auto min-h-[31rem] w-full max-w-xl"
-      data-nosnippet=""
-    >
-      <div className="absolute right-0 top-6 hidden w-[82%] overflow-hidden rounded-3xl border border-border bg-background shadow-xl sm:block">
-        <div className="flex items-center justify-between border-b border-border bg-card px-5 py-4">
-          <div className="flex items-center gap-3">
-            <span className="-mr-3 origin-left scale-75">
-              <Brand />
-            </span>
-            <div>
-              <p className="text-[10px] text-muted-foreground">
-                Juarez Silva · Técnico
-              </p>
-            </div>
-          </div>
-          <span className="rounded-full bg-primary/10 px-3 py-1 text-[10px] font-semibold text-primary">
-            Área de campo
-          </span>
-        </div>
-        <div className="p-5 pl-28">
-          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
-            Atendimentos
-          </p>
-          <h3 className="mt-1 font-heading text-xl font-semibold">
-            Minhas ordens
-          </h3>
-          <div className="mt-4 flex gap-2 text-[10px]">
-            <span className="rounded-lg bg-primary px-3 py-2 font-semibold text-primary-foreground">
-              Todas
-            </span>
-            {['Hoje', 'Próximas', 'Em execução'].map((filter) => (
-              <span key={filter} className="rounded-lg bg-card px-3 py-2">
-                {filter}
-              </span>
-            ))}
-          </div>
-          <div className="mt-4 rounded-2xl border border-border bg-card p-4">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-primary">
-                  OS-000184
-                </p>
-                <p className="mt-1 font-heading text-sm font-semibold">
-                  Manutenção preventiva do ar-condicionado
-                </p>
-              </div>
-              <span className="rounded-full bg-active/15 px-2 py-1 text-[9px] font-semibold text-primary">
-                Agendada
-              </span>
-            </div>
-            <div className="mt-4 grid gap-2 text-[10px] text-muted-foreground">
-              <p className="flex items-center gap-2">
-                <CalendarDays className="size-3.5 text-primary" /> 20 ago. 2026
-                · 09:00
-              </p>
-              <p className="flex items-center gap-2">
-                <Home className="size-3.5 text-primary" /> Hotel Serra Verde ·
-                Unidade Centro
-              </p>
-            </div>
-            <div className="mt-4 rounded-xl bg-primary px-3 py-2 text-center text-[10px] font-semibold text-primary-foreground">
-              Ver atendimento
-            </div>
-          </div>
-        </div>
-      </div>
 
-      <div className="absolute bottom-0 left-1/2 w-64 -translate-x-1/2 overflow-hidden rounded-[2rem] border-[5px] border-institutional bg-background shadow-2xl sm:left-0 sm:translate-x-0">
-        <div className="flex items-center justify-between border-b border-border bg-card px-4 py-3">
-          <div className="flex items-center">
-            <span className="-mr-4 origin-left scale-[.62]">
-              <Brand />
-            </span>
-          </div>
-          <span className="text-[9px] text-muted-foreground">
-            ciclera.online
-          </span>
-        </div>
-        <div className="p-4">
-          <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-primary">
-            Área de campo
-          </p>
-          <h3 className="mt-1 font-heading text-lg font-semibold">
-            Seus atendimentos
-          </h3>
-          <p className="mt-1 text-[10px] leading-relaxed text-muted-foreground">
-            Acompanhe sua agenda e retome serviços iniciados.
-          </p>
-
-          <div className="mt-4 grid grid-cols-2 gap-2">
-            {[
-              ['Hoje', '1', CalendarDays],
-              ['Próximas', '3', CalendarClock],
-              ['Em execução', '1', Wrench],
-              ['Pendentes', '0', ClipboardList],
-            ].map(([label, value, Icon]) => (
-              <div
-                key={label as string}
-                className="rounded-xl border border-border bg-card p-3"
-              >
-                <div className="flex items-center justify-between">
-                  <Icon className="size-3.5 text-primary" />
-                  <strong className="font-heading text-lg">
-                    {value as string}
-                  </strong>
-                </div>
-                <p className="mt-2 text-[9px] font-semibold">
-                  {label as string}
-                </p>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-4 rounded-xl border border-border bg-card p-3">
-            <p className="text-[9px] font-bold text-primary">PRÓXIMO</p>
-            <p className="mt-1 text-[10px] font-semibold">
-              OS-000184 · Hotel Serra Verde
+        <div className="border border-border bg-card shadow-[0_24px_70px_rgba(16,42,39,.06)]">
+          <div className="grid gap-2 border-b border-border px-6 py-5 sm:px-8 lg:grid-cols-[1fr_auto] lg:items-end">
+            <p className="text-xs font-bold uppercase tracking-[.18em] text-primary">
+              Diagnóstico operacional
             </p>
-            <p className="mt-1 text-[9px] text-muted-foreground">
-              Hoje, 09:00 · Unidade Centro
+            <p className="max-w-sm text-sm leading-6 text-muted-foreground lg:text-right">
+              Onde o fluxo perde contexto, tempo e receita.
             </p>
           </div>
-        </div>
-        <div className="grid grid-cols-2 border-t border-border bg-card p-2 text-center text-[9px]">
-          <span className="rounded-lg bg-primary/10 py-2 font-semibold text-primary">
-            Resumo
-          </span>
-          <span className="py-2 text-muted-foreground">Ordens</span>
-        </div>
-      </div>
-    </div>
-  )
-}
 
-export function AudienceSection() {
-  const qualifiers = [
-    'Possui entre 5 e 30 técnicos externos.',
-    'Executa dezenas ou centenas de ordens por mês.',
-    'Usa WhatsApp, papel ou planilhas durante a operação.',
-    'Tem dificuldade para acompanhar serviços concluídos.',
-    'Demora para revisar evidências e liberar faturamento.',
-    'Perde informações sobre serviços ou materiais adicionais.',
-  ]
-  return (
-    <section id="para-quem" className="section bg-background">
-      <div className="container-page">
-        <div className="max-w-3xl">
-          <Eyebrow>Software para equipes técnicas externas</Eyebrow>
-          <Title>
-            Gestão de serviços para quem atende clientes fora do escritório.
-          </Title>
-          <p className="section-copy" data-nosnippet="">
-            Centralize ordens de serviço, técnicos, clientes, equipamentos,
-            agenda, fotos do atendimento e revisão operacional. A Ciclera ajuda
-            empresas de manutenção e assistência técnica a transformar o
-            trabalho executado em serviços prontos para faturar.
-          </p>
-        </div>
-        <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {segments.map(({ title, icon: Icon }) => (
-            <div
-              key={title}
-              className="flex items-center gap-4 rounded-2xl border border-border bg-card p-5"
-            >
-              <Icon className="size-5 text-primary" />
-              <span className="font-semibold">{title}</span>
-            </div>
-          ))}
-        </div>
-        <div className="mt-12 grid gap-8 rounded-2xl bg-institutional p-7 text-primary-foreground lg:grid-cols-2 lg:p-10">
-          <div>
-            <p className="font-heading text-2xl font-semibold">
-              A Ciclera faz sentido se sua empresa:
-            </p>
-            <a
-              href="/registro"
-              className="mt-8 inline-flex rounded-xl bg-active px-5 py-3 font-semibold text-institutional"
-            >
-              Criar minha conta
-            </a>
-          </div>
-          <ul className="grid gap-3">
-            {qualifiers.map((q) => (
+          <ul>
+            {problems.map(({ category, title, text, impact }) => (
               <li
-                key={q}
-                className="flex gap-3 text-sm text-primary-foreground/80"
+                key={title}
+                className="group relative grid gap-5 overflow-hidden border-b border-border px-6 py-8 last:border-b-0 before:absolute before:inset-y-0 before:left-0 before:w-1 before:origin-center before:scale-y-0 before:bg-primary before:transition-transform before:duration-300 hover:before:scale-y-100 sm:px-8 sm:py-9 lg:grid-cols-[10.5rem_minmax(0,1fr)] lg:gap-8"
               >
-                <Check className="size-5 shrink-0 text-active" />
-                {q}
+                <p className="max-w-40 text-[10px] font-bold uppercase leading-5 tracking-[.16em] text-primary">
+                  {category}
+                </p>
+                <div>
+                  <h3 className="max-w-xl text-xl font-semibold leading-snug sm:text-2xl">
+                    {title}
+                  </h3>
+                  <p className="mt-3 max-w-xl leading-7 text-muted-foreground">
+                    {text}
+                  </p>
+                  <p className="mt-6 flex items-center gap-3 text-sm font-semibold text-foreground">
+                    <span
+                      className="h-px w-8 shrink-0 bg-primary"
+                      aria-hidden="true"
+                    />
+                    <span>
+                      <span className="mr-1.5 text-muted-foreground">
+                        Impacto:
+                      </span>
+                      {impact}
+                    </span>
+                  </p>
+                </div>
               </li>
             ))}
           </ul>
@@ -441,93 +163,341 @@ export function AudienceSection() {
   )
 }
 
-export function BenefitsSection() {
+export function WorkflowSection() {
+  const stageDetails = [
+    ['Planejamento', 'Contexto reunido'],
+    ['Campo', 'Execução registrada'],
+    ['Conferência', 'Entrega conferida'],
+    ['Administrativo', 'Receita liberada'],
+  ] as const
+
   return (
-    <section className="section bg-card">
+    <section id="como-funciona" className="section-shell bg-card">
       <div className="container-page">
-        <Title>O resultado começa com visibilidade.</Title>
-        <div className="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
-          {benefits.map(([title, text]) => (
-            <article key={title}>
-              <CircleDollarSign className="size-5 text-primary" />
-              <h3 className="mt-5 font-heading text-lg font-semibold">
-                {title}
-              </h3>
-              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-                {text}
-              </p>
-            </article>
-          ))}
+        <div className="grid gap-8 lg:grid-cols-[1fr_.75fr] lg:items-end">
+          <div>
+            <Eyebrow>Como funciona</Eyebrow>
+            <Title>Uma linha contínua entre planejamento e receita.</Title>
+          </div>
+          <p className="max-w-xl text-pretty leading-7 text-muted-foreground lg:pb-1">
+            Cada etapa deixa um registro para a próxima. Assim, o escritório
+            acompanha a operação sem depender de mensagens paralelas ou
+            conferências de última hora.
+          </p>
         </div>
-        <div className="mt-12 grid gap-5 lg:grid-cols-2">
-          <div className="rounded-3xl border border-border bg-muted/60 p-6 sm:p-8">
-            <div className="flex items-center gap-3">
-              <span className="grid size-11 place-items-center rounded-2xl bg-card text-muted-foreground shadow-sm">
-                <FileSpreadsheet className="size-5" />
-              </span>
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
-                  Antes · informação espalhada
-                </span>
-                <p className="font-heading text-lg font-semibold">
-                  Cada etapa em um lugar diferente
+
+        <div className="mt-12 grid gap-8 lg:mt-16 lg:grid-cols-[minmax(0,1.08fr)_minmax(20rem,.62fr)] lg:items-start lg:gap-12">
+          <figure className="relative order-1 min-h-[26rem] overflow-hidden border border-border bg-background sm:min-h-[34rem] lg:order-2 lg:sticky lg:top-28 lg:min-h-[39rem]">
+            <Image
+              src="/workflow-bench-ciclera.png"
+              alt="Ferramentas, identificação de equipamento e ordem de serviço organizadas no fluxo operacional da Ciclera"
+              fill
+              sizes="(max-width: 1024px) 100vw, 38vw"
+              className="object-cover object-center"
+            />
+            <div className="absolute left-4 top-4 border border-white/40 bg-card/94 px-3 py-2 text-[10px] font-bold uppercase tracking-[.13em] text-primary shadow-lg backdrop-blur sm:left-6 sm:top-6">
+              Evidência confirmada
+            </div>
+            <figcaption className="absolute inset-x-4 bottom-4 bg-institutional/94 p-4 text-primary-foreground shadow-2xl backdrop-blur sm:inset-x-6 sm:bottom-6 sm:p-5">
+              <p className="text-[10px] font-bold uppercase tracking-[.16em] text-active">
+                Um registro alimenta o próximo
+              </p>
+              <div className="mt-3 flex items-end justify-between gap-5">
+                <p className="max-w-xs text-sm font-semibold leading-relaxed">
+                  Ordem, execução e valor permanecem conectados até a cobrança.
                 </p>
+                <span className="shrink-0 border border-active/30 bg-active/10 px-2.5 py-1.5 text-[9px] font-bold text-active">
+                  Pronta para faturar
+                </span>
               </div>
-            </div>
-            <div className="mt-6 grid grid-cols-2 gap-3 text-sm">
-              {[
-                ['WhatsApp', MessageSquareText],
-                ['Papel', ClipboardList],
-                ['Planilha', FileSpreadsheet],
-                ['Conferência manual', Search],
-              ].map(([label, Icon]) => (
+            </figcaption>
+          </figure>
+
+          <ol
+            aria-label="Etapas do fluxo operacional"
+            className="order-2 border-t border-border lg:order-1"
+          >
+            {steps.map(({ title, text }, index) => (
+              <li
+                key={title}
+                className={cn(
+                  'grid border-b border-border sm:grid-cols-[9.5rem_minmax(0,1fr)]',
+                  index === steps.length - 1 &&
+                    'border-primary bg-institutional text-primary-foreground',
+                )}
+              >
                 <div
-                  key={label as string}
-                  className="flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-3"
+                  className={cn(
+                    'border-b border-border px-5 py-5 sm:border-b-0 sm:border-r sm:px-6 sm:py-7',
+                    index === steps.length - 1 &&
+                      'border-primary-foreground/15',
+                  )}
                 >
-                  <Icon className="size-4 text-muted-foreground" />
-                  <span>{label as string}</span>
+                  <p
+                    className={cn(
+                      'text-[10px] font-bold uppercase tracking-[.17em] text-primary',
+                      index === steps.length - 1 && 'text-active',
+                    )}
+                  >
+                    {stageDetails[index][0]}
+                  </p>
+                  <p
+                    className={cn(
+                      'mt-2 text-xs leading-5 text-muted-foreground',
+                      index === steps.length - 1 &&
+                        'text-primary-foreground/60',
+                    )}
+                  >
+                    {stageDetails[index][1]}
+                  </p>
                 </div>
-              ))}
-            </div>
-            <p className="mt-5 text-sm leading-relaxed text-muted-foreground">
-              A equipe precisa reconstruir o atendimento antes de saber se ele
-              pode ser faturado.
+                <div className="px-5 py-6 sm:px-7 sm:py-7">
+                  <h3 className="text-xl font-semibold leading-snug sm:text-2xl">
+                    {title}
+                  </h3>
+                  <p
+                    className={cn(
+                      'mt-3 max-w-xl leading-7 text-muted-foreground',
+                      index === steps.length - 1 &&
+                        'text-primary-foreground/65',
+                    )}
+                  >
+                    {text}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+export function DemoSection() {
+  return (
+    <section
+      id="produto"
+      className="section-shell bg-institutional text-primary-foreground"
+    >
+      <div className="container-page">
+        <div className="grid gap-8 lg:grid-cols-[.78fr_1.22fr] lg:items-end">
+          <div>
+            <Eyebrow dark>Produto, não promessa</Eyebrow>
+            <Title dark>Veja o trabalho avançar dentro da Ciclera.</Title>
+          </div>
+          <div className="lg:pb-1">
+            <p className="max-w-xl leading-7 text-primary-foreground/65">
+              Explore quatro recortes do produto. Os dados são demonstrativos; o
+              fluxo, os estados e a experiência refletem a plataforma real.
+            </p>
+            <p className="mt-4 flex items-center gap-2 text-xs font-semibold text-active">
+              <span className="size-1.5 rounded-full bg-active" />
+              Selecione uma etapa abaixo para navegar
             </p>
           </div>
+        </div>
+        <div className="mt-12 lg:mt-16">
+          <ProductDemo />
+        </div>
+      </div>
+    </section>
+  )
+}
 
-          <div className="rounded-3xl border border-primary/20 bg-primary p-6 text-primary-foreground sm:p-8">
-            <div className="flex items-center gap-3">
-              <span className="grid size-11 place-items-center rounded-2xl bg-primary-foreground/10 text-accent">
-                <Route className="size-5" />
-              </span>
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-active">
-                  Com a Ciclera · fluxo rastreável
-                </span>
-                <p className="font-heading text-lg font-semibold">
-                  Uma ordem, do campo à receita
+export function FeaturesSection() {
+  const groupStates = [
+    ['Preparar', 'Ordem pronta'],
+    ['Executar', 'Execução documentada'],
+    ['Conferir', 'Receita liberada'],
+  ] as const
+
+  return (
+    <section id="controle" className="section-shell bg-background">
+      <div className="container-page">
+        <div className="max-w-4xl">
+          <Eyebrow>O ciclo completo</Eyebrow>
+          <Title>Três momentos. A mesma fonte de verdade.</Title>
+          <p className="mt-6 max-w-2xl text-pretty leading-7 text-muted-foreground">
+            A Ciclera não tenta substituir todos os sistemas da empresa. Ela
+            organiza o trecho crítico entre a demanda do cliente e a liberação
+            do serviço para faturamento.
+          </p>
+        </div>
+
+        <ol
+          aria-label="Momentos do ciclo operacional"
+          className="mt-12 border border-border lg:mt-16"
+        >
+          {capabilityGroups.map(
+            ({ label, title, description, items }, groupIndex) => (
+              <li
+                key={label}
+                className={cn(
+                  'border-b border-border last:border-b-0',
+                  groupIndex === 1 &&
+                    'border-primary bg-institutional text-primary-foreground',
+                )}
+              >
+                <article className="grid gap-8 p-6 md:grid-cols-[.88fr_1.12fr] md:p-9 lg:gap-14 lg:p-12">
+                  <div>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <p
+                        className={cn(
+                          'text-xs font-bold uppercase tracking-[.18em] text-primary',
+                          groupIndex === 1 && 'text-active',
+                        )}
+                      >
+                        {label}
+                      </p>
+                      <span
+                        className={cn(
+                          'border border-primary/20 px-2.5 py-1 text-[9px] font-bold uppercase tracking-[.13em] text-primary',
+                          groupIndex === 1 &&
+                            'border-active/30 bg-active/10 text-active',
+                        )}
+                      >
+                        {groupStates[groupIndex][0]}
+                      </span>
+                    </div>
+                    <h3 className="mt-5 max-w-lg font-heading text-2xl font-semibold leading-tight sm:text-3xl">
+                      {title}
+                    </h3>
+                    <p
+                      className={cn(
+                        'mt-4 max-w-lg leading-7 text-muted-foreground',
+                        groupIndex === 1 && 'text-primary-foreground/65',
+                      )}
+                    >
+                      {description}
+                    </p>
+                    <p
+                      className={cn(
+                        'mt-7 border-t border-border pt-4 text-xs font-semibold text-foreground',
+                        groupIndex === 1 &&
+                          'border-primary-foreground/15 text-primary-foreground',
+                      )}
+                    >
+                      Resultado: {groupStates[groupIndex][1]}
+                    </p>
+                  </div>
+                  <ul
+                    className={cn(
+                      'border-y border-border',
+                      groupIndex === 1 && 'border-primary-foreground/15',
+                    )}
+                  >
+                    {items.map((item) => (
+                      <li
+                        key={item}
+                        className={cn(
+                          'flex items-start gap-4 border-b border-border py-4 text-sm font-medium leading-6 last:border-b-0',
+                          groupIndex === 1 && 'border-primary-foreground/15',
+                        )}
+                      >
+                        <span
+                          aria-hidden="true"
+                          className={cn(
+                            'mt-3 h-px w-6 shrink-0 bg-primary',
+                            groupIndex === 1 && 'bg-active',
+                          )}
+                        />
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                </article>
+              </li>
+            ),
+          )}
+        </ol>
+      </div>
+    </section>
+  )
+}
+
+export function FieldSection() {
+  return (
+    <section
+      id="campo"
+      className="overflow-hidden bg-card py-6 sm:py-10 lg:py-16"
+    >
+      <div className="container-page">
+        <div className="grid overflow-hidden border border-border bg-background lg:grid-cols-[1.08fr_.92fr]">
+          <div className="relative min-h-[31rem] overflow-hidden sm:min-h-[38rem] lg:min-h-[44rem]">
+            <Image
+              src="/field-technician-ciclera.png"
+              alt="Técnico registrando evidências de um equipamento durante atendimento em campo"
+              fill
+              sizes="(max-width: 1024px) 100vw, 55vw"
+              className="object-cover object-center"
+            />
+            <div className="absolute inset-x-4 bottom-4 border border-white/25 bg-institutional/94 p-4 text-primary-foreground shadow-2xl backdrop-blur sm:inset-x-auto sm:bottom-6 sm:right-6 sm:w-[21rem] sm:p-5">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-[10px] font-bold tracking-[.14em] text-active">
+                  OS-000184
                 </p>
+                <span className="bg-active/15 px-2 py-1 text-[9px] font-semibold text-active">
+                  Em execução
+                </span>
+              </div>
+              <p className="mt-2 font-heading text-sm font-semibold leading-snug">
+                Manutenção preventiva do ar-condicionado
+              </p>
+              <div className="mt-4 grid grid-cols-2 border-t border-primary-foreground/15 pt-3 text-[10px] text-primary-foreground/65">
+                <span className="flex items-center gap-1.5">
+                  <Camera className="size-3.5 text-active" /> 2 fotos
+                  confirmadas
+                </span>
+                <span className="flex items-center justify-end gap-1.5">
+                  <Clock3 className="size-3.5 text-active" /> Salvo agora
+                </span>
               </div>
             </div>
-            <div className="mt-6 grid gap-2 sm:grid-cols-4">
-              {['Execução', 'Evidências', 'Revisão', 'Faturamento'].map(
-                (stage, index) => (
-                  <div
-                    key={stage}
-                    className="relative rounded-xl border border-primary-foreground/15 bg-primary-foreground/5 p-3"
-                  >
-                    <p className="text-[9px] font-bold text-active">
-                      0{index + 1}
-                    </p>
-                    <p className="mt-1 text-xs font-semibold">{stage}</p>
-                  </div>
-                ),
-              )}
+          </div>
+
+          <div className="flex flex-col justify-between p-7 sm:p-10 lg:p-12 xl:p-16">
+            <div>
+              <Eyebrow>Feita para o campo</Eyebrow>
+              <Title>Direta para o técnico. Visível para o escritório.</Title>
+              <p className="mt-6 max-w-xl leading-7 text-muted-foreground">
+                Quem executa acessa pelo celular, vê as ordens atribuídas e
+                registra o atendimento no mesmo lugar. Quem administra acompanha
+                o avanço sem interromper a equipe para pedir atualização.
+              </p>
             </div>
-            <div className="mt-5 flex items-center justify-between gap-4 rounded-xl bg-active px-4 py-3 text-institutional">
-              <span className="text-sm font-semibold">Pronta para faturar</span>
-              <CircleDollarSign className="size-5" />
+
+            <div className="mt-12 border-t border-border">
+              {[
+                [
+                  'Agenda pessoal',
+                  'Somente as ordens atribuídas ao técnico',
+                  CalendarDays,
+                ],
+                [
+                  'Evidência confirmada',
+                  'Fotos privadas após confirmação do servidor',
+                  Camera,
+                ],
+                [
+                  'Execução protegida',
+                  'Versão e histórico preservados em cada alteração',
+                  ShieldCheck,
+                ],
+              ].map(([title, text, Icon]) => (
+                <div
+                  key={title as string}
+                  className="grid grid-cols-[2.5rem_1fr] gap-3 border-b border-border py-5"
+                >
+                  <Icon className="mt-0.5 size-4.5 text-primary" />
+                  <div>
+                    <p className="text-sm font-semibold">{title as string}</p>
+                    <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                      {text as string}
+                    </p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -536,53 +506,238 @@ export function BenefitsSection() {
   )
 }
 
-export function GetStartedSection() {
-  const items = [
-    'Cadastre sua organização e acesse imediatamente.',
-    'Adicione equipe, clientes, locais e equipamentos.',
-    'Planeje ordens e acompanhe a execução em campo.',
-    'Revise evidências antes de liberar o faturamento.',
-    'Mantenha histórico, valores e responsáveis rastreáveis.',
-  ]
+export function AudienceSection() {
   return (
-    <section
-      id="comece"
-      className="section bg-institutional text-primary-foreground"
-    >
-      <div className="container-page grid gap-12 lg:grid-cols-2">
-        <div>
-          <Eyebrow dark>Comece com sua operação</Eyebrow>
-          <Title dark>
-            Organize o caminho do chamado ao caixa em um só lugar.
-          </Title>
-          <p className="mt-5 max-w-xl leading-relaxed text-primary-foreground/70">
-            Crie a organização, convide sua equipe e configure os cadastros
-            essenciais para iniciar as primeiras ordens de serviço.
-          </p>
-          <a
-            href="/registro"
-            className="mt-8 inline-flex rounded-xl bg-active px-6 py-3.5 font-semibold text-institutional"
-          >
-            Criar minha conta
-          </a>
-          <p className="mt-3 text-sm text-primary-foreground/55">
-            Já possui conta?{' '}
-            <a href="/login" className="underline">
-              Entrar
-            </a>
+    <section id="para-quem" className="bg-background py-16 sm:py-20 lg:py-24">
+      <div className="container-page">
+        <div className="grid gap-8 lg:grid-cols-[1.04fr_.96fr] lg:items-start lg:gap-14">
+          <div>
+            <Eyebrow>Para operações que acontecem fora do escritório</Eyebrow>
+            <Title>O setor muda. O desafio operacional é o mesmo.</Title>
+          </div>
+          <p className="max-w-xl border-l border-primary pl-5 text-pretty leading-7 text-muted-foreground lg:mt-7">
+            A Ciclera atende empresas B2B que instalam, inspecionam, reparam ou
+            mantêm equipamentos nos locais de seus clientes — especialmente
+            equipes com 5 a 30 técnicos externos.
           </p>
         </div>
-        <ul className="flex flex-col gap-3">
-          {items.map((x) => (
+
+        <ul
+          aria-label="Segmentos atendidos"
+          className="mt-10 grid border-l border-t border-border sm:grid-cols-2 lg:grid-cols-3"
+        >
+          {segments.map(({ title, description }, index) => (
             <li
-              key={x}
-              className="flex gap-3 rounded-xl border border-primary-foreground/10 bg-primary-foreground/5 p-4 text-sm text-primary-foreground/80"
+              key={title}
+              className={cn(
+                'border-b border-r border-border bg-card',
+                index === segments.length - 1 &&
+                  'border-primary bg-institutional text-primary-foreground',
+              )}
             >
-              <Check className="size-5 shrink-0 text-active" />
-              {x}
+              <article className="flex h-full min-h-48 flex-col p-6 sm:p-7">
+                <p
+                  className={cn(
+                    'text-[10px] font-bold uppercase tracking-[.16em] text-primary',
+                    index === segments.length - 1 && 'text-active',
+                  )}
+                >
+                  Atendimento técnico externo
+                </p>
+                <h3 className="mt-5 max-w-[16rem] font-heading text-xl font-semibold leading-snug">
+                  {title}
+                </h3>
+                <p
+                  className={cn(
+                    'mt-3 text-sm leading-6 text-muted-foreground',
+                    index === segments.length - 1 &&
+                      'text-primary-foreground/65',
+                  )}
+                >
+                  {description}
+                </p>
+                <p
+                  className={cn(
+                    'mt-auto border-t border-border pt-4 text-[10px] font-semibold uppercase tracking-[.12em] text-muted-foreground',
+                    index === segments.length - 1 &&
+                      'border-primary-foreground/15 text-primary-foreground/55',
+                  )}
+                >
+                  Cliente · local · equipamento
+                </p>
+              </article>
             </li>
           ))}
         </ul>
+
+        <div className="mt-10 grid gap-px overflow-hidden border border-primary-foreground/10 bg-primary-foreground/10 lg:grid-cols-[1.05fr_.95fr]">
+          <div className="bg-institutional p-7 text-primary-foreground sm:p-10 lg:p-12">
+            <p className="text-xs font-bold uppercase tracking-[.18em] text-active">
+              Um bom sinal de aderência
+            </p>
+            <p className="mt-5 max-w-lg font-heading text-2xl font-semibold leading-tight sm:text-3xl">
+              Sua empresa já executa bem. O que falta é a informação chegar
+              completa ao administrativo.
+            </p>
+          </div>
+          <ul className="grid gap-px bg-primary-foreground/10">
+            {[
+              'A equipe ainda usa WhatsApp, papel ou planilhas em parte do fluxo.',
+              'Serviços concluídos demoram para ser revisados e cobrados.',
+              'Fotos, materiais ou observações precisam ser cobrados depois.',
+              'O histórico de cada equipamento depende de buscas manuais.',
+            ].map((item) => (
+              <li
+                key={item}
+                className="flex items-start gap-3 bg-institutional px-6 py-4 text-sm leading-relaxed text-primary-foreground/75"
+              >
+                <Check className="mt-0.5 size-4 shrink-0 text-active" />
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+export function PricingSection() {
+  return (
+    <section id="planos" className="section-shell bg-card">
+      <div className="container-page">
+        <div className="grid gap-8 lg:grid-cols-[1fr_.7fr] lg:items-end">
+          <div>
+            <Eyebrow>Planos transparentes</Eyebrow>
+            <Title>Escolha a capacidade da sua operação.</Title>
+          </div>
+          <p className="max-w-xl leading-7 text-muted-foreground lg:pb-1">
+            Todos os planos incluem o fluxo operacional completo. Você escolhe
+            conforme o tamanho da equipe e o volume de evidências armazenadas.
+          </p>
+        </div>
+
+        <div className="mt-12 grid border border-border lg:mt-16 lg:grid-cols-3">
+          {plans.map((plan, index) => (
+            <article
+              key={plan.code}
+              className={cn(
+                'relative flex min-h-full flex-col border-b border-border p-6 last:border-b-0 sm:p-8 lg:border-b-0 lg:border-r lg:last:border-r-0',
+                plan.recommended
+                  ? 'bg-institutional text-primary-foreground'
+                  : 'bg-background',
+              )}
+            >
+              {plan.recommended ? (
+                <span className="absolute right-5 top-5 bg-active px-3 py-1 text-[9px] font-bold uppercase tracking-[.15em] text-institutional">
+                  Recomendado
+                </span>
+              ) : null}
+              <p
+                className={cn(
+                  'text-xs font-bold uppercase tracking-[.17em]',
+                  plan.recommended ? 'text-active' : 'text-primary',
+                )}
+              >
+                {plan.name}
+              </p>
+              <p
+                className={cn(
+                  'mt-4 min-h-12 max-w-xs text-sm leading-relaxed',
+                  plan.recommended
+                    ? 'text-primary-foreground/65'
+                    : 'text-muted-foreground',
+                )}
+              >
+                {plan.description}
+              </p>
+              <div className="mt-7 flex items-end gap-1">
+                <span className="mb-1 text-sm font-semibold">R$</span>
+                <strong className="font-heading text-5xl font-semibold tracking-[-.05em]">
+                  {plan.price}
+                </strong>
+                <span
+                  className={cn(
+                    'mb-1 text-sm',
+                    plan.recommended
+                      ? 'text-primary-foreground/55'
+                      : 'text-muted-foreground',
+                  )}
+                >
+                  /mês
+                </span>
+              </div>
+
+              <div
+                className={cn(
+                  'mt-8 border-y py-5',
+                  plan.recommended
+                    ? 'border-primary-foreground/15'
+                    : 'border-border',
+                )}
+              >
+                {[plan.technicians, plan.administrators, plan.storage].map(
+                  (item) => (
+                    <p
+                      key={item}
+                      className="flex items-center gap-2 py-1.5 text-sm"
+                    >
+                      <Check
+                        className={cn(
+                          'size-4 shrink-0',
+                          plan.recommended ? 'text-active' : 'text-primary',
+                        )}
+                      />
+                      {item}
+                    </p>
+                  ),
+                )}
+              </div>
+
+              <Link
+                href="/registro"
+                className={cn(
+                  'mt-8 flex min-h-12 items-center justify-between px-4 text-sm font-semibold transition-colors',
+                  plan.recommended
+                    ? 'bg-active text-institutional hover:bg-accent'
+                    : 'bg-primary text-primary-foreground hover:bg-institutional',
+                )}
+              >
+                Começar com {plan.name}
+                <ArrowUpRight className="size-4" />
+              </Link>
+              <span
+                className={cn(
+                  'mt-4 text-[10px]',
+                  plan.recommended
+                    ? 'text-primary-foreground'
+                    : 'text-muted-foreground',
+                )}
+              >
+                Plano {index + 1} de {plans.length} · cobrança mensal
+              </span>
+            </article>
+          ))}
+        </div>
+
+        <div className="grid border-x border-b border-border bg-background md:grid-cols-2 lg:grid-cols-4">
+          {commonPlanFeatures.map((feature, index) => (
+            <p
+              key={feature}
+              className={cn(
+                'flex items-start gap-2 border-b border-border px-5 py-4 text-xs leading-relaxed last:border-b-0 md:[&:nth-child(3)]:border-b-0 lg:border-b-0 lg:border-r lg:last:border-r-0',
+              )}
+            >
+              <Check className="mt-0.5 size-3.5 shrink-0 text-primary" />
+              {feature}
+              <span className="sr-only">Item {index + 1}</span>
+            </p>
+          ))}
+        </div>
+        <p className="mt-5 text-center text-xs text-muted-foreground">
+          Sem período de teste. Pagamento processado em ambiente seguro. A
+          operação é liberada após a confirmação da cobrança.
+        </p>
       </div>
     </section>
   )
@@ -590,27 +745,82 @@ export function GetStartedSection() {
 
 export function FaqSection() {
   return (
-    <section className="section bg-background">
-      <div className="container-page grid gap-12 lg:grid-cols-[.7fr_1.3fr]">
+    <section id="duvidas" className="section-shell bg-background">
+      <div className="container-page grid gap-12 lg:grid-cols-[.72fr_1.28fr] lg:gap-20">
         <div>
           <Eyebrow>Dúvidas frequentes</Eyebrow>
-          <Title>O que você precisa saber antes de conversar.</Title>
+          <Title>Informação clara antes da sua escolha.</Title>
+          <p className="mt-6 max-w-md leading-7 text-muted-foreground">
+            Se a resposta que procura não estiver aqui, fale diretamente com a
+            Ciclera pelos canais no rodapé.
+          </p>
         </div>
-        <div className="flex flex-col gap-3">
-          {faqs.map(([q, a]) => (
-            <details
-              key={q}
-              className="group rounded-xl border border-border bg-card p-5"
-            >
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-semibold">
-                {q}
-                <ChevronDown className="size-5 shrink-0 transition-transform group-open:rotate-180" />
+        <div className="border-t border-border">
+          {faqs.map(([question, answer]) => (
+            <details key={question} className="group border-b border-border">
+              <summary className="flex min-h-20 cursor-pointer list-none items-center justify-between gap-5 py-5 font-semibold marker:hidden">
+                {question}
+                <span className="grid size-9 shrink-0 place-items-center border border-border transition-colors group-open:bg-primary group-open:text-primary-foreground">
+                  <ChevronDown className="size-4 transition-transform duration-200 group-open:rotate-180" />
+                </span>
               </summary>
-              <p className="mt-4 pr-8 text-sm leading-relaxed text-muted-foreground">
-                {a}
+              <p className="max-w-2xl pb-7 pr-12 text-sm leading-7 text-muted-foreground">
+                {answer}
               </p>
             </details>
           ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+export function GetStartedSection() {
+  return (
+    <section id="comece" className="bg-background pb-6 sm:pb-10">
+      <div className="container-page">
+        <div className="landing-blueprint relative overflow-hidden bg-institutional px-6 py-12 text-primary-foreground sm:px-10 sm:py-16 lg:px-16 lg:py-20">
+          <div className="relative z-10 grid gap-10 lg:grid-cols-[1fr_auto] lg:items-end">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[.2em] text-active">
+                Sua operação em movimento
+              </p>
+              <h2 className="mt-5 max-w-3xl text-balance font-heading text-[clamp(2rem,4.6vw,4.25rem)] font-semibold leading-[1.05] tracking-[-.04em]">
+                O próximo serviço já pode nascer organizado.
+              </h2>
+              <p className="mt-6 max-w-xl leading-7 text-primary-foreground/65">
+                Crie sua organização, escolha o plano adequado e conecte equipe,
+                clientes, equipamentos e ordens em um único fluxo.
+              </p>
+            </div>
+            <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
+              <Link
+                href="/registro"
+                className="inline-flex min-h-13 items-center justify-between gap-8 bg-active px-6 font-semibold text-institutional transition-colors hover:bg-accent"
+              >
+                Criar minha conta
+                <ArrowRight className="size-4" />
+              </Link>
+              <Link
+                href="/login"
+                className="inline-flex min-h-13 items-center justify-start border border-primary-foreground/20 px-6 font-semibold"
+              >
+                Já tenho uma conta
+              </Link>
+            </div>
+          </div>
+          <div className="relative z-10 mt-12 grid border-t border-primary-foreground/15 pt-5 text-xs text-primary-foreground/55 sm:grid-cols-3">
+            <span className="flex items-center gap-2 py-2">
+              <ShieldCheck className="size-4 text-active" /> Acesso protegido
+            </span>
+            <span className="flex items-center gap-2 py-2">
+              <ReceiptText className="size-4 text-active" /> Planos mensais
+            </span>
+            <span className="flex items-center gap-2 py-2">
+              <CircleDollarSign className="size-4 text-active" /> Sem período de
+              teste
+            </span>
+          </div>
         </div>
       </div>
     </section>

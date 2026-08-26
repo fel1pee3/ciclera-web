@@ -90,6 +90,31 @@
   .section {
     @apply py-20 lg:py-28;
   }
+  .section-shell {
+    @apply py-20 sm:py-24 lg:py-32;
+  }
+  .landing-blueprint {
+    position: relative;
+    isolation: isolate;
+  }
+  .landing-blueprint::before {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background-image:
+      linear-gradient(rgb(255 255 255 / 0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(255 255 255 / 0.035) 1px, transparent 1px);
+    background-position: center;
+    background-size: 5rem 5rem;
+    content: '';
+    pointer-events: none;
+  }
+  .product-preview-window {
+    @apply overflow-hidden border border-primary-foreground/12 bg-institutional text-primary-foreground shadow-[0_30px_70px_rgba(0,0,0,.22)];
+  }
+  main section[id] {
+    scroll-margin-top: 5rem;
+  }
   .eyebrow {
     @apply text-sm font-bold uppercase tracking-widest text-primary;
   }
@@ -106,25 +131,25 @@
     @apply min-h-11 w-full rounded-xl border border-input bg-card px-3 py-2 text-sm outline-none transition placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/15 aria-invalid:border-destructive;
   }
   .skip-link {
-    @apply fixed left-4 top-4 z-50 -translate-y-24 rounded-lg bg-primary px-4 py-3 font-semibold text-primary-foreground transition focus:translate-y-0;
+    @apply fixed left-4 top-4 z-[100] -translate-y-24 rounded-lg bg-primary px-4 py-3 font-semibold text-primary-foreground transition focus:translate-y-0;
   }
   .legal-copy {
-    @apply mt-10 flex flex-col gap-10 leading-relaxed text-muted-foreground;
+    @apply flex flex-col leading-relaxed text-muted-foreground;
   }
   .legal-copy section {
-    @apply flex flex-col gap-4;
+    @apply flex scroll-mt-28 flex-col gap-5 border-t border-border py-10 first:border-t-0 first:pt-0 sm:py-12;
   }
   .legal-copy h2 {
-    @apply font-heading text-2xl font-semibold tracking-tight text-foreground;
+    @apply max-w-2xl text-balance font-heading text-2xl font-semibold leading-tight tracking-tight text-foreground sm:text-3xl;
   }
   .legal-copy h3 {
     @apply font-heading text-lg font-semibold text-foreground;
   }
   .legal-copy ul {
-    @apply ml-5 list-disc space-y-2 pl-2;
+    @apply ml-0 list-none space-y-3 pl-0;
   }
   .legal-copy li {
-    @apply pl-1;
+    @apply relative border-l border-border py-1 pl-5 before:absolute before:-left-[3px] before:top-3 before:size-[5px] before:bg-primary;
   }
   .legal-copy strong {
     @apply font-semibold text-foreground;
@@ -133,7 +158,13 @@
     @apply font-semibold text-primary underline decoration-primary/30 underline-offset-4 hover:decoration-primary;
   }
   .legal-copy .legal-reference {
-    @apply inline-flex w-fit items-center gap-2 rounded-xl border border-border bg-card px-4 py-3 no-underline;
+    @apply inline-flex w-fit items-center gap-2 rounded-none border border-border bg-card px-4 py-3 no-underline;
+  }
+  .legal-copy section > div {
+    @apply rounded-none;
+  }
+  .legal-copy section > div a {
+    @apply text-institutional decoration-institutional/35 hover:decoration-institutional;
   }
 }
 

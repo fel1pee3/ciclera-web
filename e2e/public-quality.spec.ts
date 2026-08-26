@@ -56,3 +56,43 @@ test('landing supports keyboard navigation and WCAG A/AA rules', async ({
     ),
   ).toEqual([])
 })
+
+const newPublicRoutes = [
+  '/como-funciona',
+  '/para-quem',
+  '/planos',
+  '/duvidas',
+  '/produto/gestao-operacional',
+  '/produto/execucao-em-campo',
+  '/produto/revisao-e-faturamento',
+  '/politica-de-privacidade',
+  '/termos-de-uso',
+]
+
+for (const route of newPublicRoutes) {
+  test(`${route} is responsive and meets WCAG A/AA`, async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto(route)
+
+    await expect(page.locator('h1')).toBeVisible()
+    const hasHorizontalOverflow = await page.evaluate(
+      () =>
+        document.documentElement.scrollWidth >
+        document.documentElement.clientWidth,
+    )
+    expect(hasHorizontalOverflow).toBe(false)
+
+    const results = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+      .analyze()
+    expect(
+      results.violations.flatMap((violation) =>
+        violation.nodes.map((node) => ({
+          rule: violation.id,
+          target: node.target.join(' '),
+          html: node.html,
+        })),
+      ),
+    ).toEqual([])
+  })
+}

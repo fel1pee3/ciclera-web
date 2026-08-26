@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { type KeyboardEvent, useState } from 'react'
 import {
   CalendarClock,
   Camera,
@@ -19,10 +19,31 @@ const tabs = ['Visão operacional', 'Ordens', 'Revisão', 'Faturamento'] as cons
 
 export function ProductDemo() {
   const [tab, setTab] = useState<(typeof tabs)[number]>('Visão operacional')
+  const selectedIndex = tabs.indexOf(tab)
+
+  const handleTabKeyDown = (
+    event: KeyboardEvent<HTMLButtonElement>,
+    index: number,
+  ) => {
+    let nextIndex: number | null = null
+
+    if (event.key === 'ArrowRight') nextIndex = (index + 1) % tabs.length
+    if (event.key === 'ArrowLeft') {
+      nextIndex = (index - 1 + tabs.length) % tabs.length
+    }
+    if (event.key === 'Home') nextIndex = 0
+    if (event.key === 'End') nextIndex = tabs.length - 1
+
+    if (nextIndex === null) return
+
+    event.preventDefault()
+    setTab(tabs[nextIndex])
+    document.getElementById(`product-demo-tab-${nextIndex}`)?.focus()
+  }
 
   return (
     <div
-      className="overflow-hidden rounded-3xl border border-primary-foreground/15 bg-[#f4f8f6] text-card-foreground shadow-2xl"
+      className="overflow-hidden border border-primary-foreground/15 bg-[#f4f8f6] text-card-foreground shadow-[0_32px_90px_rgba(0,0,0,.25)]"
       data-nosnippet=""
     >
       <div className="flex items-center justify-between border-b border-border bg-card px-4 py-3 sm:px-6">
@@ -36,7 +57,7 @@ export function ProductDemo() {
             </p>
           </div>
         </div>
-        <span className="rounded-full bg-primary/10 px-3 py-1 text-[10px] font-semibold text-primary">
+        <span className="border border-primary/20 bg-muted px-3 py-1 text-[10px] font-bold text-institutional">
           Demonstração
         </span>
       </div>
@@ -46,12 +67,16 @@ export function ProductDemo() {
         role="tablist"
         aria-label="Demonstração do produto"
       >
-        {tabs.map((item) => (
+        {tabs.map((item, index) => (
           <button
             key={item}
+            id={`product-demo-tab-${index}`}
             role="tab"
             aria-selected={tab === item}
+            aria-controls={`product-demo-panel-${index}`}
+            tabIndex={tab === item ? 0 : -1}
             onClick={() => setTab(item)}
+            onKeyDown={(event) => handleTabKeyDown(event, index)}
             className={cn(
               'shrink-0 border-b-2 px-4 py-3 text-sm font-semibold transition-colors',
               tab === item
@@ -64,7 +89,13 @@ export function ProductDemo() {
         ))}
       </div>
 
-      <div className="min-h-[28rem] p-4 sm:p-6 md:p-8" role="tabpanel">
+      <div
+        id={`product-demo-panel-${selectedIndex}`}
+        className="min-h-[28rem] p-4 sm:p-6 md:p-8"
+        role="tabpanel"
+        aria-labelledby={`product-demo-tab-${selectedIndex}`}
+        tabIndex={0}
+      >
         {tab === 'Visão operacional' && <Overview />}
         {tab === 'Ordens' && <Orders />}
         {tab === 'Revisão' && <Review />}
@@ -134,7 +165,7 @@ function Overview() {
                 className={cn(
                   'text-xs',
                   index === 3
-                    ? 'text-primary-foreground/70'
+                    ? 'text-primary-foreground'
                     : 'text-muted-foreground',
                 )}
               >
@@ -143,7 +174,7 @@ function Overview() {
               <Icon
                 className={cn(
                   'size-4 shrink-0',
-                  index === 3 ? 'text-accent' : 'text-primary',
+                  index === 3 ? 'text-primary-foreground' : 'text-primary',
                 )}
               />
             </div>
@@ -151,7 +182,7 @@ function Overview() {
             <p
               className={cn(
                 'mt-1 text-xs font-semibold',
-                index === 3 ? 'text-accent' : 'text-primary',
+                index === 3 ? 'text-primary-foreground' : 'text-primary',
               )}
             >
               {value}
@@ -339,10 +370,10 @@ function Billing() {
           <p className="mt-2 font-heading text-2xl font-semibold">4</p>
         </div>
         <div className="rounded-2xl border border-primary/20 bg-primary p-4 text-primary-foreground">
-          <p className="text-xs text-primary-foreground/70">
+          <p className="text-xs text-primary-foreground">
             Valor pronto para faturar
           </p>
-          <p className="mt-2 font-heading text-2xl font-semibold text-accent">
+          <p className="mt-2 font-heading text-2xl font-semibold text-primary-foreground">
             R$ 7.920,00
           </p>
         </div>
